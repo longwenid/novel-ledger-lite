@@ -1,0 +1,201 @@
+"""Scene identities and explicit narrative dependencies; no persistence or inferred facts.
+
+lite 版：从完整版裁剪改造一处——`bind` 的协议复核按章号水位增量进行（完整版每次章纲
+提交都 `for accepted in previous.values(): require_current(accepted)` 全量重遍历，累计
+O(N²)——完整版架构报告 §5.1 第一刀「bind 索引化」登记的修复）。判定语义不变：所有
+已登记章纲都必须使用当前协议；变化只是不再重复遍历已校验过的章号区间。
+"""
+from __future__ import annotations
+
+import copy
+from .contracts import (READING_DEPENDENCIES_CAPABILITY, SCENE_IDENTITY_CAPABILITY,
+                        digest, require, text)
+
+KINDS = ('entities', 'facts', 'knowledge', 'resources', 'relations', 'placements', 'places',
+         'character_current', 'reader_knowledge', 'hooks', 'node', 'clock', 'clock_threads',
+         'thread_progress', 'historical_assertions', 'developments')
+# The coordinate names a chapter outline uses for its enter/exit rows, mapped onto the projection
+# fields the state stores. A chapter says `character`/`thread`/`places`; the projection is
+# `character_current`/`thread_progress`/`placements`.
+COORDINATE_ALIASES = {'character': 'character_current', 'characters': 'character_current',
+                      'characters_current': 'character_current', 'thread': 'thread_progress',
+                      'threads': 'thread_progress', 'places': 'placements', 'place': 'placements',
+                      'resources': 'resources', 'node': 'node', 'clock': 'clock', 'knowledge': 'knowledge'}
+READING_KINDS = ('character', 'relationship', 'theme', 'voice', 'disclosure')
+READING_SCHEMA = READING_DEPENDENCIES_CAPABILITY
+PLAN_PROTOCOLS = (('scene_schema', SCENE_IDENTITY_CAPABILITY), ('reading_schema', READING_SCHEMA))
+
+
+def require_current(plan):
+    for field, expected in PLAN_PROTOCOLS:
+        require(plan.get(field) == expected, 'story_protocol',
+                '已提交章纲必须使用当前场景与阅读协议；旧章纲须按当前流程重新规划。',
+                {'field': field, 'expected': expected, 'got': plan.get(field)})
+
+
+def reading_coordinate(value):
+    require(isinstance(value, dict) and set(value) == {'kind', 'key'}
+            and value.get('kind') in READING_KINDS and text(value.get('key')),
+            'reading_dependency', '阅读关联须为 {kind:character|relationship|theme|voice|disclosure,key:ID}。')
+    return value['kind'], value['key']
+
+
+def reading_refs(plan):
+    refs = set()
+    refs.update(reading_coordinate(r) for r in plan.get('reading_refs', []))
+    refs.update(reading_coordinate(r) for scene in plan.get('scenes', []) for r in scene.get('reading_refs', []))
+    refs.update((kind, p) for p in plan.get('participants', []) for kind in ('character', 'voice'))
+    refs.update(('disclosure', d['topic']) for d in plan.get('disclosures', []))
+    return refs
+
+
+def coordinate(value):
+    require(isinstance(value, dict) and text(value.get('key')),
+            'story_dependency', '依赖坐标须为 {kind,key}，kind 使用事实投影种类。', {'valid_kinds': list(KINDS)})
+    kind = COORDINATE_ALIASES.get(value.get('kind'), value.get('kind'))
+    require(kind in KINDS, 'story_dependency', '依赖坐标须为 {kind,key}，kind 使用事实投影种类。',
+            {'valid_kinds': list(KINDS), 'got': value.get('kind')})
+    # One main clock, whatever a chapter outline calls its key: both spellings are normalized so no
+    # call site has to remember which vocabulary it is holding.
+    key = 'main' if kind == 'clock' and value['key'] in ('clock', 'main') else value['key']
+    require(kind != 'clock' or key == 'main', 'story_dependency', '主时钟坐标使用 clock/main。')
+    return kind, key
+
+
+def bind(plan, previous, checked_through=0):
+    """Freeze new plans under the one identity and reading protocol in force.
+
+    `checked_through` 是协议校验水位：章号 ≤ 水位的行已在前次提交（或安装门的全量首轮）校验过，
+    本次跳过；只复核章号高于水位的行。水位语义由调用方维护（lite pipeline 存在 book 上），
+    引擎侧保证的等价式是：凡被本函数冻结过的纲，其全部行都通过了 require_current。
+    """
+    for field, expected in PLAN_PROTOCOLS:
+        require(field not in plan or plan[field] == expected, 'story_protocol',
+                '章纲声明的协议已失效，须按当前模板重新规划。',
+                {'field': field, 'expected': expected, 'got': plan.get(field)})
+    for accepted in previous.values():
+        if accepted['chapter'] <= checked_through:
+            continue
+        require_current(accepted)
+    coverage = plan.get('dependency_coverage', 'partial')
+    require(coverage in ('partial', 'complete'), 'story_dependency', 'dependency_coverage 为 partial 或 complete。')
+    scenes = plan.get('scenes', [])
+    require(isinstance(scenes, list) and all(isinstance(s, dict) for s in scenes),
+            'story_dependency', 'scenes 须为场景对象数组。')
+    require(coverage != 'complete' or scenes, 'story_dependency', '完整依赖声明须有实际场景。')
+    if scenes:
+        plan['dependency_coverage'] = coverage
+    known = {s['id'] for p in previous.values() if p['chapter'] < plan['chapter']
+             for s in p.get('scenes', []) if 'id' in s}
+    occupied = {s['id'] for p in previous.values() if p['chapter'] != plan['chapter']
+                for s in p.get('scenes', []) if 'id' in s}
+    plan['scene_schema'] = SCENE_IDENTITY_CAPABILITY
+    plan['reading_schema'] = READING_SCHEMA
+    require(plan.get('reading_coverage', 'partial') in ('partial', 'complete'),
+            'reading_dependency', 'reading_coverage 为 partial 或 complete。')
+    require(plan.get('reading_coverage') != 'complete' or scenes,
+            'reading_dependency', '完整阅读关联声明须有实际场景。')
+    for key in ('reading_refs', 'understanding_refs'):
+        require(isinstance(plan.get(key, []), list), 'reading_dependency', key + ' 须为数组。')
+    require(all(text(r) for r in plan.get('understanding_refs', [])),
+            'understanding_reference', 'understanding_refs 须为理解 ID 数组。')
+    for index, scene in enumerate(scenes, 1):
+        default = 'scene:' + digest([plan['chapter'], index, scene.get('label')])[:20]
+        ident = scene.setdefault('id', default)
+        require(text(ident) and ident not in occupied,
+                'scene_identity', '场景 ID 须唯一且保留移动前的 id。')
+        occupied.add(ident)
+        require('story_time' not in scene or text(scene['story_time']),
+                'scene_time', 'story_time 为故事发生时间说明，独立于正文阅读顺序，不直接推进事实时钟。')
+        require(isinstance(scene.get('reading_refs', []), list), 'reading_dependency', '场景 reading_refs 须为数组。')
+        require(plan.get('reading_coverage') != 'complete' or 'reading_refs' in scene,
+                'reading_dependency', '完整阅读关联声明须逐场列 reading_refs，无额外关联给空数组。')
+        require(coverage != 'complete' or 'reads' in scene and 'depends_on' in scene,
+                'story_dependency', '完整依赖声明须为每场列出 reads 和 depends_on，无依赖明确给空数组。')
+        reads, links = scene.setdefault('reads', []), scene.setdefault('depends_on', [])
+        require(isinstance(reads, list) and isinstance(links, list) and all(text(s) for s in links),
+                'story_dependency', 'reads 为坐标数组，depends_on 为场景 ID 数组。')
+        coords = [coordinate(r) for r in reads]
+        intents = scene.get('dialogue_intents', [])
+        require(isinstance(intents, list) and all(isinstance(i, dict) and text(i.get('entity'))
+                and isinstance(i.get('knowledge_topics', []), list)
+                and all(text(topic) for topic in i.get('knowledge_topics', [])) for i in intents),
+                'story_dependency', '对白依赖须有 entity 和 knowledge_topics 字符串数组。')
+        require(len(coords) == len(set(coords)) and len(links) == len(set(links)) and set(links) <= known,
+                'story_dependency', '依赖不得重复，只能引用已登记的前章或本章前场；禁止前向引用和环。',
+                {'scene': ident, 'unknown_scenes': sorted(set(links) - known)})
+        known.add(ident)
+    reading_refs(plan)
+    return plan
+
+
+def reads(plan):
+    """Every state coordinate this row reads, from the plan shape and the chapter-outline shape."""
+    result = {coordinate(r) for scene in plan.get('scenes', []) for r in scene.get('reads', [])}
+    result.update(coordinate(r) for r in plan.get('preconditions', []))
+    result.update(coordinate(r) for r in plan.get('enter', []) if isinstance(r, dict) and 'expected' in r)
+    for row in plan.get('exit', []) if isinstance(plan.get('exit'), list) else []:
+        if isinstance(row, dict) and text(row.get('key')):
+            result.add(coordinate({'kind': row.get('kind'), 'key': row.get('key')}))
+    result.update(('node', ident) for ident in plan.get('node_ids', []))
+    for definition in plan.get('node_contracts', {}).values():
+        result.update(('node', ident) for ident in definition.get('depends_on', []))
+        if text(definition.get('line')):
+            result.add(('thread_progress', definition['line']))
+    for row in plan.get('resources') or []:
+        if isinstance(row, dict) and text(row.get('key')):
+            result.add(('resources', row['key']))
+    for row in plan.get('places') or []:
+        if isinstance(row, dict) and text(row.get('entity')):
+            result.add(('placements', row['entity']))
+    for row in plan.get('knowledge') or []:
+        if isinstance(row, dict) and text(row.get('who')) and text(row.get('topic')):
+            result.add(('knowledge', row['who'] + ':' + row['topic']))
+    for row in plan.get('characters') or []:
+        if isinstance(row, dict) and text(row.get('entity')):
+            result.add(('character_current', row['entity']))
+    plot = plan.get('plot') if isinstance(plan.get('plot'), dict) else {}
+    result.update(('node', row['node']) for row in plot.get('nodes') or []
+                  if isinstance(row, dict) and text(row.get('node')))
+    result.update(('thread_progress', row['thread']) for row in plot.get('threads') or []
+                  if isinstance(row, dict) and text(row.get('thread')))
+    result.update(('reader_knowledge', row['topic']) for row in plan.get('disclosures') or []
+                  if isinstance(row, dict) and text(row.get('topic')))
+    result.update(('hooks', ident) for ident in plan.get('hook_refs', []))
+    # A chapter that opens or closes a promise reads that promise's own state (its status and its
+    # deadline); without this a revision touching the promise would not reach the chapter acting on it.
+    result.update(('hooks', row['hook']) for row in plan.get('hooks') or []
+                  if isinstance(row, dict) and text(row.get('hook')))
+    result.update(('reader_knowledge', ident) for ident in plan.get('reader_refs', []))
+    result.update(('historical_assertions', ident) for ident in plan.get('history_refs', []))
+    result.update(('entities', ident) for ident in plan.get('participants', []))
+    result.update((kind, ident) for ident in plan.get('participants', [])
+                  for kind in ('placements', 'character_current'))
+    result.update(('knowledge', intent['entity'] + ':' + topic)
+                  for scene in plan.get('scenes', []) for intent in scene.get('dialogue_intents', [])
+                  for topic in intent.get('knowledge_topics', []))
+    if plan.get('schedule'):
+        result.add(('clock', 'main'))
+    return result
+
+
+def lookup(state, kind, key):
+    if kind == 'clock':
+        return True, state['clock']
+    field = 'story_nodes' if kind == 'node' else kind
+    values = state.get(field, {})
+    return key in values, copy.deepcopy(values.get(key))
+
+
+def packet(plan, state):
+    """Role-independent scene inputs with exact state provenance, not generated summaries."""
+    inputs = []
+    for kind, key in sorted(reads(plan)):
+        present, value = lookup(state, kind, key)
+        inputs.append({'kind': kind, 'key': key, 'present': present, 'value': value})
+    return {'schema': 'novel-ledger-lite.scene-context/1', 'chapter': plan['chapter'],
+            'plan_hash': digest(plan), 'state_hash': digest(state),
+            'coverage': plan.get('dependency_coverage', 'partial'),
+            'plan_record': 'chapter_outline', 'inputs': inputs,
+            'note': '场景与章纲全文见必读 chapter_outline，plan_hash 绑定同一版本，不重复交付。'
+                    'inputs 是作者可用前态；人物实际知情仍按 knowledge 与对白意图核对。缺失项不代表已成立。'}
