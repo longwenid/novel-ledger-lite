@@ -322,9 +322,20 @@ def drift_slice(book, plan, chapter, contract):
             'rule': '当前卷未吸收无条件必达；更早卷未吸收按登记 id 交集或点名必达；已吸收归档不再出现。'}
 
 
+def _style_archive(contract):
+    """外部《文风档案.md》全文记录（style-distill 产出；契约 style_source 登记）。"""
+    with open(contract['style_source'], 'r', encoding='utf-8') as handle:
+        content = handle.read()
+    return {'path': contract['style_source'], 'content': content,
+            'note': '外部文风档案（style-distill 产出）：本档案是生效文风源，覆盖内置档注册锚；'
+                    '档名登记仅作标识。组内续章经组包引用补读，不每章重复携带。'}
+
+
 def group_pack(book, store, volume_id, first, last):
-    """组级共享包（完整版报告第五刀，方案二「每组一份」）：L0/L1＋投影基线＋文风锚＋
-    世界核心＋活跃 hooks 基线。组冻结时点＝组首章派工前；组内其余章差量引用本包。"""
+    """组级共享包（完整版报告第五刀，方案二「每组一份」）：L0/L1＋投影基线＋文风卷首锚
+    ＋外部文风档案全文（外部源时）＋世界核心＋活跃 hooks 基线。组冻结时点＝组首章派工前；
+    组内其余章差量引用本包。基线投影以组首章的章纲为视角：首章声明完整则走索引化
+    （近窗/远窗/pinned/点名），声明缺失则 conservative 全量（与该章自己的信封同口径）。"""
     plan0 = None
     for n in range(first, last + 1):
         candidate = (book.get('plans') or {}).get(str(n))
@@ -333,17 +344,20 @@ def group_pack(book, store, volume_id, first, last):
             break
     people = participants(plan0, book)
     near = book['contract'].get('near_window_chapters') or DEFAULTS['near_window_chapters']
-    baseline, _ = scoped_state(book['state'], book.get('delta_index') or {}, people, None,
-                               first, near=near, pinned=book['contract'].get('pinned') or ())
+    baseline, baseline_warnings = scoped_state(book['state'], book.get('delta_index') or {}, people,
+                                               plan0, first, near=near,
+                                               pinned=book['contract'].get('pinned') or ())
+    external = text(book['contract'].get('style_source') or '')
     pack = {
         'contract': book['contract'],
-        'style_anchor': book.get('style_volume_anchor') or None,
-        'style': {'profile': resolve_style_profile(book['contract'].get('style_profile')),
+        'style_volume_anchor': book.get('style_volume_anchor') or None,
+        'style': {'profile': resolve_style_profile(book['contract'].get('style_profile')) or '',
                   'style_source': book['contract'].get('style_source') or '',
-                  'source_kind': ('external_archive' if text(book['contract'].get('style_source') or '')
-                                  else 'builtin_catalog')},
+                  'source_kind': 'external_archive' if external else 'builtin_catalog'},
+        'style_archive': _style_archive(book['contract']) if external else None,
         'volume_outline': book.get('volumes_outline', {}).get(volume_id),
         'baseline_state': baseline,
+        'baseline_warnings': baseline_warnings,
         'world_core': ({'premise': book['world']['premise'], 'rules': book['world']['rules']}
                        if book.get('world') else None),
         'open_hooks': {k: v for k, v in book['state'].get('hooks', {}).items() if v.get('status') == 'open'},
@@ -351,6 +365,17 @@ def group_pack(book, store, volume_id, first, last):
     }
     pack['hash'] = digest(pack)
     return pack
+
+
+def require_style_selected(contract):
+    """执笔链路的文风前置强制（2026-11-02 作者要求）：文风未显式选定（内置档名或外部档案
+    路径）即拒绝，并列出可选项供主控拿去问作者——引擎不提问、不猜偏好、不用默认档放行。
+    派工（build）与直提（pipeline.submit）两条路径共用本检查，绕过信封直提同样被拒。"""
+    selected = text(contract.get('style_profile') or '') or text(contract.get('style_source') or '')
+    require(selected, 'style_profile',
+            '文风未选定：正文执笔前须作者本人显式选定文风（内置档名或外部《文风档案.md》路径），'
+            '引擎不使用默认档放行。',
+            {'status': 'style_not_selected', 'options': style_options_board()})
 
 
 def build(book, store, chapter, group=None):
@@ -362,14 +387,7 @@ def build(book, store, chapter, group=None):
     contract = book['contract']
     plan = (book.get('plans') or {}).get(str(chapter))
     require(plan is not None, 'chapter_outline', '本章尚无已登记的章纲，不能执笔。', {'chapter': chapter})
-    # 执笔前置强制检查（2026-11-02 作者要求）：文风未显式选定（内置档名或外部档案路径）
-    # 时拒绝写章派工，并列出可选项供主控拿去问作者——引擎不提问、不猜偏好、
-    # 不用默认档悄悄放行。选定的项目此检查恒通过，行为不变。
-    selected = text(contract.get('style_profile') or '') or text(contract.get('style_source') or '')
-    require(selected, 'style_profile',
-            '文风未选定：正文执笔前须作者本人显式选定文风（内置档名或外部《文风档案.md》路径），'
-            '引擎不使用默认档放行。',
-            {'status': 'style_not_selected', 'options': style_options_board()})
+    require_style_selected(contract)
     volume = planning.volume_for(contract, chapter)
     near = contract.get('near_window_chapters') or DEFAULTS['near_window_chapters']
     pinned = contract.get('pinned') or []
@@ -381,21 +399,23 @@ def build(book, store, chapter, group=None):
 
     def add(name, value, needed=True):
         records[name] = store.document(value)
-        if needed:
+        if needed and name not in required:
             required.append(name)
 
     members = (group or {}).get('members') or [chapter, chapter]
     is_group_head = chapter == members[0]
     group_hash = (group or {}).get('hash')
-    if group is not None and not is_group_head:
+    head_or_solo = group is None or is_group_head
+    if not head_or_solo:
         # 组内续章：L0/L1 以组包引用形式在场（可选读，不重复计费）；章层照常全带。
         add('group_pack', {'ref': group_hash,
-                           'note': '组级共享包（契约/卷纲/投影基线/文风锚）已随组首章交付；'
-                                   '本章上下文只带差量。需要完整基线时按此引用补读。'}, False)
+                           'note': '组级共享包（契约/卷纲/投影基线/文风卷首锚/外部文风档案全文）已随组首章交付；'
+                                   '本章上下文只带差量。需要完整基线或档案全文时按此引用补读。'}, False)
     else:
         add('contract', contract)
         if book.get('style_volume_anchor'):
-            add('style_anchor', book['style_volume_anchor'])
+            # 文风卷首锚（首个 checkpoint 后冻结）：L0 件，组首章随契约一并交付。
+            add('style_volume_anchor', book['style_volume_anchor'])
     add('chapter_outline', plan)
     if volume is not None:
         volume_row = book.get('volumes_outline', {}).get(volume['id'])
@@ -436,18 +456,17 @@ def build(book, store, chapter, group=None):
     if contract.get('narrative_tracking'):
         add('word_budget', narrative.budget_for(book, chapter))
     # 文风规格（作者要求：写章派工简报必须带所选档的文风规格）。
-    # 内置档：style.profile 点名目录档名，style_anchor 是该档注册锚（首章认可前的地板）；
-    # 外部档案（style-distill《文风档案.md》，契约 style_source 登记）：style_archive 记录
-    # 携带档案全文，与内置档二选一——source_kind 标明生效侧。
+    # - style：每章必读的规格＋当前基线锚（与提交门比对同源）；
+    # - style_anchor：内置档注册锚（style.baseline；外部源且无档名时为 None 则不登记）；
+    # - style_archive：外部《文风档案.md》全文只在组首章（或无组时）内嵌必读，组内续章经
+    #   组包引用补读——与 L0 的组级均摊纪律一致，不每章重复携带整份档案。
     spec = style_spec(book, store, volume, plan, chapter)
     add('style', spec)
-    add('style_anchor', style.baseline(book))
-    if spec['source_kind'] == 'external_archive':
-        with open(contract['style_source'], 'r', encoding='utf-8') as handle:
-            add('style_archive', {'path': contract['style_source'],
-                                  'content': handle.read(),
-                                  'note': '外部文风档案（style-distill 产出）：本档案是生效文风源，'
-                                          '覆盖内置档注册锚；档名登记仅作标识。'})
+    registered_anchor = style.baseline(book)
+    if registered_anchor is not None:
+        add('style_anchor', registered_anchor)
+    if spec['source_kind'] == 'external_archive' and head_or_solo:
+        add('style_archive', _style_archive(contract))
     # L3：组内前章 delta（重放段）＋两类锚句＋跨章场景定义。
     if group is not None and not is_group_head:
         prior_deltas = []

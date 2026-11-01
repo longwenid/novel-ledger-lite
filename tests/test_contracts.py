@@ -82,7 +82,7 @@ def test_style_catalog_five_profiles_and_enum_gate():
             assert entry['anchor'].get(key), (name, key)
 
 
-def test_style_profile_into_contract_with_default_fallback():
+def test_style_profile_explicit_only_no_default_fallback():
     """style_profile 契约口径（2026-11-02 作者要求收紧）：选定档名逐字进契约；
     缺失＝「未选定」状态（validate 后无该字段），不落默认档——执笔派工被
     compose.build 前置检查拒绝，杜撰值仍被 choices 枚举拒绝。"""

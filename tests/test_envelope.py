@@ -157,3 +157,23 @@ def test_envelope_requires_frozen_outline():
     store = store_module.LiteStore()
     with pytest.raises(Error):
         pipeline.envelope(book, store, 99)
+
+
+def test_volume_anchor_record_name_and_required_dedup():
+    """卷首锚与注册锚是两条记录：style_volume_anchor（L0，组首章/无组时，首个 checkpoint
+    后冻结）与 style_anchor（内置档注册锚，每章）；required 清单不重复登记。"""
+    book, _, _ = open_installed_book()
+    store = store_module.LiteStore()
+    book['style_volume_anchor'] = {'frozen_at': 1, 'state_hash': 'f' * 64}
+    envelope = pipeline.envelope(book, store, 1)
+    assert 'style_volume_anchor' in envelope['required']
+    assert store.read_document(envelope['records']['style_volume_anchor'])['frozen_at'] == 1
+    assert store.read_document(envelope['records']['style_anchor'])['origin'] == 'default'
+    assert envelope['required'].count('style_anchor') == 1
+    assert len(envelope['required']) == len(set(envelope['required']))
+    # 组内续章：卷首锚不重复携带（走组包），注册锚照常。
+    group_row = pipeline.group(book, store, 'v1', size=2)
+    assert group_row['pack']['style_volume_anchor']['frozen_at'] == 1
+    assert pipeline.submit(book, store, 1, draft_for(book, 1))['ok']
+    tail = pipeline.envelope(book, store, 2, group_row)
+    assert 'style_volume_anchor' not in tail['records'] and 'style_anchor' in tail['records']

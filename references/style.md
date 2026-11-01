@@ -35,7 +35,7 @@ lite 的文风能力说明：档位、两条文风源路径、换档与基线门
    `source_kind='builtin_catalog'`；`style_anchor` 记录是该档注册锚。
 2. **外部档案**：契约 `style_source` 登记 style-distill 产出的《文风档案.md》文件路径
    （绝对路径）。开书时校验文件存在（contracts 层无 I/O，校验在 `pipeline.open_book`）；
-   信封 `style_archive` 记录携带档案全文下发 Worker，`source_kind='external_archive'`，
+   信封 `style_archive` 记录在组首章（或无组时）携带档案全文下发 Worker，`source_kind='external_archive'`，
    `style_profile` 保留作标识。最小样例档案在 `tests/fixtures/style_archive_sample.md`
    驱动测试。
 
@@ -47,10 +47,12 @@ lite 的文风能力说明：档位、两条文风源路径、换档与基线门
   档案）、契约声线（voice/tone/pov）、声线特质、基线说明、本卷走向（卷纲 style.trend）、
   本章执行点（章纲 style.rhythm）。与信封 `style` 记录同源：写进简报的就是提交门将
   比对的同一组数字。
-- **信封记录**：`style`（规格＋当前基线锚＋合并容差）、`style_anchor`（`style.baseline(book)`
-  的结果：lite 无「认可首章」流程，故为内置档注册锚；外部源且无档名时为 None）、
-  `style_archive`（外部档案全文，仅外部源路径）。
-- **组级共享包**：登记生效档标识（profile/style_source/source_kind）。
+- **信封记录**：`style`（规格＋当前基线锚＋合并容差，每章必读）、`style_anchor`（内置档
+  注册锚＝`style.baseline(book)`，lite 无「认可首章」流程；外部源且无档名时为 None 则不
+  登记）、`style_archive`（外部档案全文：只在组首章或无组时内嵌必读，组内续章经组包引用
+  补读，不每章重复携带）、`style_volume_anchor`（文风卷首锚，首个 checkpoint 后冻结，组首章随
+  契约交付）。
+- **组级共享包**：登记生效档标识（profile/style_source/source_kind）、卷首锚、外部档案全文。
 
 ## 四、运行中换档（参数级变更）
 

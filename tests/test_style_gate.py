@@ -47,6 +47,62 @@ def test_envelope_refused_without_author_style_and_lists_options():
     assert envelope['brief'].find('文风规格') >= 0 and '账房掌门' in envelope['brief']
 
 
+def test_submit_refused_without_author_style_direct_path():
+    """直提路径同样强制：绕过 envelope 直接 submit，未选定文风时被拒（code=style_profile），
+    账本不落任何行——SKILL「作者显式选定是执笔前置条件」在两条路径上都成立。"""
+    raw = contract()
+    raw.pop('style_profile', None)
+    book = pipeline.open_book(raw, '夹具导入', fixtures.world_fixture())
+    volume = book['contract']['volumes'][0]
+    pipeline.install_outlines(book, volume['id'], fixtures.volume_row(volume),
+                              fixtures.chapter_rows(book))
+    store = LiteStore()
+    with pytest.raises(Error) as caught:
+        pipeline.submit(book, store, 1, draft_for(book, 1))
+    assert caught.value.code == 'style_profile'
+    assert caught.value.details['status'] == 'style_not_selected'
+    assert store.last_chapter() == 0 and book['written_han'] == 0
+
+
+def test_external_archive_group_amortized_and_registered_anchor_absent():
+    """外部档案走组级均摊：组首章内嵌必读 style_archive，组内续章不再携带（组包引用补读，
+    组包自带档案全文）；外部源且无内置档名时注册锚 style_anchor 不登记。"""
+    raw = contract()
+    raw.pop('style_profile', None)
+    raw['style_source'] = ARCHIVE
+    book = pipeline.open_book(raw, '夹具导入', fixtures.world_fixture())
+    volume = book['contract']['volumes'][0]
+    pipeline.install_outlines(book, volume['id'], fixtures.volume_row(volume),
+                              fixtures.chapter_rows(book))
+    store = LiteStore()
+    group_row = pipeline.group(book, store, 'v1', size=2)
+    assert '文风档案' in group_row['pack']['style_archive']['content']
+    head = pipeline.envelope(book, store, 1, group_row)
+    assert 'style_archive' in head['required']
+    assert 'style_anchor' not in head['records']               # 无内置档名 → 无注册锚
+    assert pipeline.submit(book, store, 1, draft_for(book, 1))['ok']
+    tail = pipeline.envelope(book, store, 2, group_row)
+    assert 'style_archive' not in tail['records']              # 续章不重复携带整份档案
+    assert 'group_pack' in tail['records']
+    assert len(tail['required']) == len(set(tail['required']))
+
+
+def test_anchor_review_chapters_is_a_live_contract_knob():
+    """anchor_review_chapters 是可按书覆盖的真旋钮：契约可携带（不再报未知字段），
+    回比周期按契约值生效。"""
+    from novel_ledger_lite import planning
+    validated = planning.validate_contract({**contract(), 'anchor_review_chapters': 2})
+    assert validated['anchor_review_chapters'] == 2
+    book, _, _ = open_installed_book()
+    book['contract']['anchor_review_chapters'] = 2
+    book['style_volume_anchor'] = {'frozen_at': 1, 'state_hash': 'x' * 64}
+    assert pipeline._style_anchor_review(book, 2) is None                 # 距冻结 1 章 < 2
+    review = pipeline._style_anchor_review(book, 3)                       # 距冻结 2 章 ≥ 2
+    assert review and review['chapter'] == 3 and book['anchor_reviews'][-1] is review
+    book['contract']['anchor_review_chapters'] = 50
+    assert pipeline._style_anchor_review(book, 10) is None
+
+
 def test_envelope_and_brief_carry_selected_profile_spec():
     """用例二（选定后放行）：契约显式选定档名 → 写章派工放行，信封与简报必须带
     所选档的文风规格：档名、契约声线、基线说明。"""

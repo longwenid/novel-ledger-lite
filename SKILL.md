@@ -43,7 +43,9 @@ description: 千万字级精简写作引擎：按《千万字级规模化架构�
        ├─ 抛 Error → 章纲文本不合格（链断裂/越界/协议旧），修文本重交，账本不变
        └─ 章纲行 absorbs: [漂移id] → 安装门核对回写 absorbed_by
 3  每组一次：group_row = pipeline.group(book, store, volume_id, size=5)
-       └─ 组级共享包（L0/L1＋投影基线＋文风锚＋活跃 hooks）每组一份；同卷再次调用自动接续下一段
+       ├─ 组级共享包（L0/L1＋投影基线＋文风卷首锚＋外部档案全文＋活跃 hooks）每组一份
+       ├─ 同卷再次调用接续下一段；全卷已覆盖再调 → 抛 Error(writing_batch)，不追加重复组
+       └─ 复用已冻结组：pipeline.group_for(book, chapter) → 该章所在组行或 None
 4  每章循环（组内逐章）：
    envelope = pipeline.envelope(book, store, chapter, group_row)   # 现编现冻的差量信封
        ├─ 简报带「文风规格」小节（生效档名或外部档案＋契约声线＋基线说明）；
@@ -97,7 +99,7 @@ source='作者原话', style_profile=档名 或 style_source=档案路径)`（�
 
 ```bash
 cd C:\Users\longwen\.zcode\skills\novel-ledger     # 完整版目录里也能跑（conftest 自带引导）
-python -m pytest ../novel-ledger-lite/tests -q      # 本轮 45 passed（含文风 9 项）
+python -m pytest ../novel-ledger-lite/tests -q      # 本轮 49 passed（含文风 12 项）
 ```
 
 ## 详细参考

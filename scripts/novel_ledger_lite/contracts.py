@@ -42,7 +42,7 @@ DEFAULTS = {
     'chapter_outline': {'scope': 'volume', 'words': 150, 'tolerance': 60},
     'style_window': {'sentence': 0.35, 'paragraph': 0.35, 'dialogue': 0.40, 'repetition': 0.12, 'person': 1},
     'style_guard': 'observe',
-    'style_profile_default': '市井修仙',
+    # 注意：lite 没有 style_profile_default——文风须作者显式选定，引擎无默认档（2026-11-02）。
     'style_floor_han': 40,
     'style_min_sentences': 3,
     'style_min_ngrams': 20,
@@ -284,6 +284,9 @@ CONTRACT_FIELDS = (
     {'key': 'pinned', 'kind': 'rows', 'default': [], 'optional': True,
      'shape': ('kind', 'key'), 'exact': False},
     {'key': 'checkpoint_chapters', 'kind': 'int', 'default': DEFAULTS['checkpoint_chapters'],
+     'optional': True},
+    # 文风卷首锚回比周期（pipeline._style_anchor_review 读取）：可按书覆盖的真旋钮。
+    {'key': 'anchor_review_chapters', 'kind': 'int', 'default': DEFAULTS['anchor_review_chapters'],
      'optional': True},
 )
 

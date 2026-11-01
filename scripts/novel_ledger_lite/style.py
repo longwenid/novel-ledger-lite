@@ -10,6 +10,10 @@ Pronoun counts are observations in both modes: a first-person narrator can menti
 and third-person prose can render a character's interior words. These proxies cannot determine
 narrative viewpoint or prove literary quality. The author, the declared style and the writer's
 comparison with that style remain the sources for those judgements.
+
+lite 改造登记：本文件逻辑与完整版 novel_ledger/style.py 相同，唯一改动是 `baseline` 的
+文档串——lite 的 contracts.profile_anchor 对未知/缺失档名返回 None（无默认档回落），
+原文「unknown or absent names mean the default profile」在 lite 不成立，已改写。
 """
 from __future__ import annotations
 
@@ -177,15 +181,12 @@ def switch_cutoff(book):
 def baseline(book):
     """The anchor sample's metrics, or the selected profile's declared anchor before any approval.
 
-    A project never runs voiceless: without an approved pilot (or with one too short to
-    measure) the shape comparison falls back to the anchor registered for the contract's
-    style_profile (unknown or absent names mean the default profile), labeled `origin=default`
-    so reports can tell a declared floor from an author-approved baseline. `approve` replaces
-    it with the real measured sample, labeled `origin=pilot`: the opening reference the rolling
-    baseline grows out of, not a whole-book quota. A mid-run profile switch predates the pilot's
-    standing: the pilot (chapter 1) was written in the previous profile, so from the switch
-    point on the declared anchor of the current profile is the opening reference again — the
-    approved sample returns as soon as a chapter written under the new profile is approved."""
+    lite 口径（与完整版的唯一分歧，2026-11-02）：`profile_anchor` 对未知或缺失档名返回
+    None——没有「unknown or absent names mean the default profile」的回落；文风须作者显式
+    选定，未选定状态在执笔链路入口即被拒绝，本函数返回 None 只发生在外部文风源且未登记
+    内置档名时（形状比较跳过，第二章起由滚动基线接管）。其余逻辑与完整版相同：
+    `approve` 的实测样本（origin=pilot）是开卷参照；换档后换档点前的章不再是参照，
+    当前档注册锚（origin=default）重新成为开卷参照，直到新档下有章被认可。"""
     if switch_cutoff(book) > 1:
         return profile_anchor(((book or {}).get('contract') or {}).get('style_profile'))
     anchor = (book or {}).get('style_anchor') or {}

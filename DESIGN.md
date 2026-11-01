@@ -4,7 +4,7 @@
 （`novel-ledger/out/scaling-architecture-proposal.md`）的评审推荐要点；本文回答四件事：
 推荐架构哪些机制进了 lite、哪些没进（为什么）、裁剪清单、千万字支撑与已知限制。
 所有行为以 `scripts/novel_ledger_lite/` 实际代码为准；本文宣称的可验证行为均有对应测试
-（`python -m pytest ../novel-ledger-lite/tests -q` → 45 passed，本轮亲跑（含文风 9 项））。
+（`python -m pytest ../novel-ledger-lite/tests -q` → 49 passed，本轮亲跑（含文风 12 项））。
 
 ## 一、推荐架构落地情况
 
@@ -17,14 +17,14 @@
 | design_drift 活跃化（方案二规则＋吸收归档） | `compose.drift_slice`：当前卷未吸收无条件必达；更早卷按登记 id 交集/点名必达；已吸收归档；安装门核对 `absorbs` 回写；漂移行 participants 登记校验（`book_state.check_book`） | test_envelope::test_drift_slice_rules；test_outline_gate 两例 |
 | 投影索引化＋三道保险（方案一＋方案三立场） | `compose.scoped_state`：近窗全文/远窗标题行、章纲点名整条恢复、pinned 常驻、conservative 全量＋`projection_warnings` 显式告警（不静默裁剪） | test_envelope 前三例 |
 | 状态 delta+checkpoint（每卷全量＋章间增量） | `delta.produce/bump_index/checkpoint`；卷末自动全量 checkpoint＋每 50 章兜底；`rebuild` 从 checkpoint＋events 重放恢复（数据零丢失）；delta 不新增哈希（章行 state_hash＋链哈希为真源） | test_ledger::test_checkpoint…、test_rebuild…、test_verify_full… |
-| 组级快照（方案二「每组一份」） | `compose.group_pack`＋`pipeline.group`：L0/L1＋投影基线＋文风锚＋活跃 hooks 每组一份；组首章内嵌必读、续章引用＋组内前章 delta；同卷重复调用自动接续下一段 | test_envelope::test_group_pack…；test_pipeline::test_group_freezing… |
+| 组级快照（方案二「每组一份」） | `compose.group_pack`＋`pipeline.group`：L0/L1＋投影基线（按组首章章纲视角：声明完整走索引化，缺失 conservative）＋文风卷首锚＋外部文风档案全文（外部源时）＋活跃 hooks 每组一份；组首章内嵌必读、续章引用＋组内前章 delta；同卷再次调用接续下一段，**全卷覆盖后拒绝（writing_batch）不追加重复组**，`group_for(book, chapter)` 复用已冻结组 | test_envelope::test_group_pack…；test_pipeline::test_group_freezing…（含卷满三调拒绝） |
 | 前文窗口降维＋场景锚句（先锚句后降维） | `adjacent_window_chapters` 默认已降为 1 章全文；`anchors.scene_anchors` 取前 2 章首/末事件 quote＋summary 补语感 | test_envelope::test_envelope_carries_anchors… |
 | required/sealed 通道（方案三补丁 a） | 取「卷界差异单显式列出」路径：卷末 `required_unpaid` 点名封线承诺结余（执笔侧 closed 产出通道未做，见「没进」） | test_pipeline::test_volume_diff_lists_required_sealed_channel |
 | 文风卷首锚（方案三补丁 b） | 首个 checkpoint 冻结 `style_volume_anchor`，每 50 章回比（observation 级，进 `anchor_reviews`，不拦截）；堵滚动基线跟漂＋换档重置盲区 | test_ledger::test_checkpoint…（冻结断言） |
 | recall 倒排（方案三补丁 c） | settle 顺路维护 asset→chapters 倒排（hook/reader_knowledge/historical/entity/development）；`pipeline.recall` 先定位后取页，miss 空返回 | test_ledger::test_recall_uses_inverted_index |
 | 规模档位收尾 | SCALE_TIERS 增 t7（[3000,5000] 章、卷数 30~100 可配）＋`tier_window_band` 窗口无洞口径＋PIPELINE_SHAPES 守卫；百卷 rolling+volume 合法（planning 只拒 rolling+all）；status 分页；headers 窗口参数（store 结构性替代全表扫描） | test_contracts 四例；test_ledger::test_status_pagination |
 | 审计保守 | `verify_full` 全量重放为默认验收语义（逐章 events 重放＋链哈希重算＋未清承诺清单）；分段/抽样不进 lite | test_ledger::test_verify_full…（含篡改必翻） |
-| **文风体系（作者要求不裁，全量接入；选定须作者显式——2026-11-02 追加强制）** | ①内置档目录五档与完整版同表同源（contracts.STYLE_CATALOG，锚点逐字复制）；②style_profile 契约同口径收紧：选定档名逐字进契约、杜撰拒绝（choices 枚举）；**「无偏好落默认档」回落逻辑已从 lite 移除**（contracts.style_profile default=None；resolve_style_profile/profile_anchor 未知或缺失档名返回 None，不静默选档）——契约缺失该字段＝「未选定」状态；③**执笔前置机械强制**：文风未选定（无内置档名且无外部档案路径）时写章派工在 compose.build 入口被直接拒绝（Error code=style_profile，details 带 status=style_not_selected＋options 板面：内置五档各一句话定位＋外部《文风档案.md》接入方法），由主控拿去问作者（板面随时可取 pipeline.style_board()）；引擎不提问、不猜偏好、不用默认档放行，章纲安装门不受影响；④外部文风源 style_source（style-distill《文风档案.md》路径，开书校验存在，信封 style_archive 携带全文，与内置档二选一）；⑤运行中换档 pipeline.recontract_patch 参数级变更（档名校验＋来源留档必填＋style_switch={at,profile,previous} 换档点，旧章不进新档基线）；⑥写章派工简报必带所选档文风规格（briefs._style_block，与信封 style 记录同源）；⑦最近 5 章滚动基线检查保留为提交门子集（见 §二） | test_contracts 三例（五档枚举/进契约且缺失=未选定/外部源字段）；test_style_gate 六例（未选拒绝＋板面＋选定后放行闭环/显式选定简报规格/外部档案生效/基线门触发/换档/换档点基线切割） |
+| **文风体系（作者要求不裁，全量接入；选定须作者显式——2026-11-02 追加强制）** | ①内置档目录五档与完整版同表同源（contracts.STYLE_CATALOG，锚点逐字复制）；②style_profile 契约同口径收紧：选定档名逐字进契约、杜撰拒绝（choices 枚举）；**「无偏好落默认档」回落逻辑已从 lite 移除**（contracts.style_profile default=None；resolve_style_profile/profile_anchor 未知或缺失档名返回 None，不静默选档）——契约缺失该字段＝「未选定」状态；③**执笔前置机械强制**：文风未选定（无内置档名且无外部档案路径）时写章派工在 compose.build 入口被直接拒绝（Error code=style_profile，details 带 status=style_not_selected＋options 板面：内置五档各一句话定位＋外部《文风档案.md》接入方法），由主控拿去问作者（板面随时可取 pipeline.style_board()）；引擎不提问、不猜偏好、不用默认档放行，章纲安装门不受影响；④外部文风源 style_source（style-distill《文风档案.md》路径，开书校验存在，信封 style_archive 携带全文，与内置档二选一）；⑤运行中换档 pipeline.recontract_patch 参数级变更（档名校验＋来源留档必填＋style_switch={at,profile,previous} 换档点，旧章不进新档基线）；⑥写章派工简报必带所选档文风规格（briefs._style_block，与信封 style 记录同源）；⑦最近 5 章滚动基线检查保留为提交门子集（见 §二） | test_contracts 三例（五档枚举/进契约且缺失=未选定/外部源字段）；test_style_gate 九例（未选拒绝＋板面＋选定后放行闭环/直提路径拒绝/外部档案组级均摊/回比旋钮生效/显式选定简报规格/外部档案生效/基线门触发/换档/换档点基线切割） |
 
 提案 §5.7 显式落选机制（k 路并行、章纲分批确认、设计派工世界模型切片、整套 Registry
 Ledger、完本审计切片化）lite 一律未做，与提案立场一致。
@@ -78,18 +78,20 @@ Ledger、完本审计切片化）lite 一律未做，与提案立场一致。
 
 ### 逐字同源（复制未改，机械判定与完整版一致）
 
-`evidence`(40 行)、`entities`(68)、`narrative`(180)、`spatial`(126)、`continuity`(160)、
+11 模块与完整版**字节级一致**（`cmp -s` 逐一核对；行数 `awk 'END{print NR}'` 实测）：
+`evidence`(39 行)、`entities`(68)、`narrative`(180)、`spatial`(126)、`continuity`(160)、
 `craft`(106)、`drift`(747)、`drift_simulation`(499)、`drift_reconcile`(457)、`lint`(266)、
-`style`(351)、`facts`(268)。含义：同一章纲与 drift_check 在两个引擎得到相同机械判定。
+`facts`(268)。含义：同一章纲与 drift_check 在两个引擎得到相同机械判定。
 
 ### 裁剪/改造（复制后动刀，逐处登记）
 
 | 模块 | 改动 |
 |---|---|
-| `contracts.py` | 裁开书门（WORLD_ARCHITECTURE/蓝图目录/CONTRACT_FIELDS opening 对齐列/错误路由表）；增 t7＋`tier_window_band`＋PIPELINE_SHAPES；DEFAULTS 增五个差量化旋钮；CONTRACT_FIELDS 增 pinned/near_window_chapters/checkpoint_chapters＋style_source；STYLE_CATALOG 保留五档（锚点与完整版逐字同源，档位说明见 references/style.md）；Error 精简（去主机路由分支） |
+| `contracts.py` | 裁开书门（WORLD_ARCHITECTURE/蓝图目录/CONTRACT_FIELDS opening 对齐列/错误路由表）；增 t7＋`tier_window_band`＋PIPELINE_SHAPES；DEFAULTS 增五个差量化旋钮、**删 `style_profile_default`**（无默认档）；CONTRACT_FIELDS 增 pinned/near_window_chapters/checkpoint_chapters/anchor_review_chapters＋style_source，style_profile default=None；STYLE_CATALOG 保留五档（锚点与完整版逐字同源）；`resolve_style_profile`/`profile_anchor` 未知或缺失返回 None；Error 精简（去主机路由分支） |
+| `style.py`（352 行） | 逻辑与完整版相同；唯一改动＝`baseline` 文档串按 lite 无默认档口径改写（原文「unknown or absent names mean the default profile」在 lite 不成立），文件头登记 |
 | `world.py` | 裁开书门校验（validate/_bindings/declared_sections）；保留 SECTIONS/域地板（t7 同 t6 地板）/index；新增导入文档 `validate_shape`（放行 premise/story_capacity 顶层键） |
 | `story_memory.py` | `bind` 增 `checked_through` 协议校验水位（完整版每次提交全量重遍历旧纲的累计 O(N²)，提案 §5.1 第一刀登记的修复）；判定等价：水位之下跳过、归零全量复核、新行自身协议恒校验 |
-| `drift_validation.py` | 唯一改动＝章纲字段白名单登记 `'absorbs'`（文件头与检查点注释登记） |
+| `drift_validation.py`（688 行） | 唯一改动＝章纲字段白名单登记 `'absorbs'`（文件头与检查点注释登记） |
 | `envelope.py` | WORK_PAYLOAD_FIELDS 裁到执笔所需；增 `warnings`/`group` 键；「信封不得静默长字段」规则不变 |
 | `briefs.py` | 重写为 write 简报（材料读法/锚句小节/内联回带纪律/提交前自检）；DELTA_HINTS 逐字保留 |
 | `planning.py` | 裁字面约定协议（lexical/ENFORCEMENT）与 craft 依赖；保留契约校验/阶段策略/卷定位 |
@@ -123,6 +125,13 @@ status 分页＋verify_full＋save/load）、`book_state.py`（含漂移行 part
    组大小 5 四个旋钮无实测标定；conservative 触发率 f 无实测分布（提案 §6.2-2/§6.2-8
    原样继承）。落地承诺前需 ≥3000 章真实样章分段压测——lite 的测试只证明机制正确，
    不证明成本曲线在真实语料上成立。
+   **轻 token 的两处已知侵蚀与收口现状**：①声明缺失（章纲无 complete 场景声明）时
+   conservative 回退＝参与人相关全量（`compose.scoped_state` 分支），成本上界即完整版
+   partial 路径；组包基线现以组首章章纲为视角（首章声明完整即走索引化，不再因 plan=None
+   恒走 conservative），但只要作者章纲不写场景声明，每章 state 记录仍是全量——这是声明
+   质量换成本的既定设计，`projection_warnings` 让它可见而非更薄；②外部文风档案全文已改为
+   组首章内嵌、组内续章经组包引用（不再每章重复携带），但组首章仍付整份档案字节。两处
+   都是「机制在位、曲线待实测」，不以设计值冒充实测。
 2. **存储是内存＋JSON**：LiteStore 全量驻内存，`save` 写单文件 JSON。千万字项目 GB 级
    存储量级未在 lite 演示；生产持久化仍需完整版 sqlite_store 或按 delta/checkpoint
    模式另实现分片存储。

@@ -38,7 +38,8 @@ def test_full_loop_smoke():
 
 
 def test_group_freezing_refuses_overflow_and_reuses_active():
-    """组冻结：范围受卷末约束；同卷活跃组的下一段接续冻结，不重复覆盖。"""
+    """组冻结：同卷再次调用接续下一段；全卷覆盖后再调被拒（不追加重复组）；
+    已冻结组经 group_for 复用。"""
     book, _, _ = open_installed_book()
     store = LiteStore()
     first = pipeline.group(book, store, 'v1', size=3)
@@ -46,6 +47,18 @@ def test_group_freezing_refuses_overflow_and_reuses_active():
     second = pipeline.group(book, store, 'v1', size=3)
     assert second['members'] == [4, 4]
     assert first['hash'] != second['hash']
+    # 验收员场景：4 章卷 size=2 连调三次——第三次必须拒绝，组表不增长。
+    book2, _, _ = open_installed_book()
+    store2 = LiteStore()
+    assert pipeline.group(book2, store2, 'v1', size=2)['members'] == [1, 2]
+    assert pipeline.group(book2, store2, 'v1', size=2)['members'] == [3, 4]
+    with pytest.raises(Exception) as caught:
+        pipeline.group(book2, store2, 'v1', size=2)
+    assert getattr(caught.value, 'code', None) == 'writing_batch'
+    assert [g['members'] for g in book2['groups']] == [[1, 2], [3, 4]]
+    # 复用：取章所在的已冻结组。
+    assert pipeline.group_for(book2, 3)['members'] == [3, 4]
+    assert pipeline.group_for(book2, 99) is None
 
 
 def test_loop_rejects_writing_without_frozen_outline():

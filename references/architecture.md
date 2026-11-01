@@ -12,7 +12,8 @@
 
 | 记录 | 层 | 必读条件 | 内容 |
 |---|---|---|---|
-| `contract`、`style_anchor` | L0 | 组首章（无组时每章） | 契约全文；文风卷首锚（首个 checkpoint 后冻结） |
+| `contract` | L0 | 组首章（无组时每章） | 契约全文 |
+| `style_volume_anchor` | L0 | 组首章（无组时每章），且首个 checkpoint 已冻结时 | 文风卷首锚（checkpoint 章号＋投影哈希） |
 | `volume_outline` | L1 | 组首章 | 本卷卷纲行 |
 | `chapter_outline` | L2 | 每章 | 本章冻结章纲行（enter/exit 链＋增量声明＋drift_check 的核对对象） |
 | `state` | L2 | 每章 | 索引化投影（见下节） |
@@ -21,8 +22,9 @@
 | `world_records`、`disclosure_boundary` | L2 | 有世界模型时 | 本章 world_refs＋参与者关联的世界记录（mysteries 不下发）＋幕后真相边界 |
 | `word_budget` | L2 | narrative_tracking 时 | 本章字数带 |
 | `style` | L2 | 每章 | 文风规格（必读）：生效文风源（内置档名或外部档案标识 source_kind）＋契约声线字段＋当前基线锚（最近 5 章滚动中位，与提交门比对同源）＋合并容差＋卷走向＋本章执行点；简报「文风规格」小节与本记录同源 |
-| `style_archive` | L2 | 外部文风源时 | style-distill《文风档案.md》全文（契约 style_source 登记；与内置档二选一，此时 style_profile 保留作标识） |
-| `group_pack` | 组 | 组内续章（可选读） | 组级共享包引用：契约/卷纲/投影基线/文风锚/活跃 hooks，已随组首章交付 |
+| `style_anchor` | L2 | 每章，仅当内置档名已登记 | 内置档注册锚（`style.baseline`，origin=default）；外部源且无档名时不登记 |
+| `style_archive` | L0 | 外部文风源时的组首章（无组时每章） | style-distill《文风档案.md》全文（契约 style_source 登记；与内置档二选一）；组内续章经 `group_pack` 引用补读，不重复携带 |
+| `group_pack` | 组 | 组内续章（可选读） | 组级共享包引用：契约/卷纲/投影基线/文风卷首锚/外部档案全文/活跃 hooks，已随组首章交付 |
 | `previous_deltas` | L3 | 组内续章（可选读） | 组内前章 state_delta（重放段） |
 | `anchor_sentences` | L3 | 有锚可抽时 | 前情锚句（章纲引用驱动）＋场景锚句（前窗开篇/收束句＋summary） |
 | `scene_sources` | L3 | 跨章场景依赖时 | 被依赖场景的定义行＋所在章哈希 |

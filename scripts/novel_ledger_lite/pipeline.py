@@ -23,9 +23,10 @@ from . import (anchors, book_state, briefs, compose, contracts, craft, delta as 
 def open_book(contract_raw, source, world_model=None):
     """Validate the imported contract, seed the ledger, freeze the world if one is imported.
 
-    文风口径与完整版同源：style_profile 选定档名逐字进契约（杜撰档名被契约 choices 校验拒绝，
-    缺失由 validate_contract 落默认档）；style_source 登记外部档案路径，contracts 层无 I/O，
-    存在性在这里校验（开书即拒绝指向不存在文件的契约）。"""
+    文风口径（2026-11-02 作者要求收紧）：style_profile 选定档名逐字进契约（杜撰档名被
+    契约 choices 校验拒绝）；缺失不落默认档——validate_contract 对 default=None 的字段不
+    填充，契约保持「未选定」状态，开书放行、执笔派工与直提都被 require_style_selected 拒绝；
+    style_source 登记外部档案路径，contracts 层无 I/O，存在性在这里校验。"""
     contract = planning.validate_contract(contract_raw)
     if text(contract.get('style_source') or ''):
         require(os.path.isfile(contract['style_source']), 'style_source',
@@ -163,25 +164,37 @@ def _volume_first_chapter(contract, volume_id):
 
 # ------------------------------------------------------------------ groups & envelopes
 def group(book, store, volume_id, size=None):
-    """Freeze one writing group: scope, hash baseline, group-level shared pack.
+    """Freeze the next writing group of a volume: scope, hash baseline, group-level shared pack.
 
     组冻结时点＝组首章派工前；组内逐章由引擎重跑组装（每章信封现编现冻——内容寻址冻结
-    纪律与完整版同一性质）。同卷同范围已有活跃组则复用，不重复冻结。
+    纪律与完整版同一性质）。同卷再次调用接续上一组之后的下一段；全卷已被已冻结组覆盖时
+    拒绝（writing_batch），不追加重复组。要取某章所在的已冻结组用 group_for。
     """
     volume = next((v for v in book['contract']['volumes'] if v['id'] == volume_id), None)
     require(volume is not None, 'volume', '契约里没有这一卷。', {'volume': volume_id})
     size = size or policy_default('fast_batch_chapters')
-    first = volume['first']
-    for existing in book.get('groups') or []:
-        if existing.get('volume') == volume_id and existing['members'][1] < volume['end']:
-            first = existing['members'][1] + 1
+    covered_through = max((row['members'][1] for row in book.get('groups') or []
+                           if row.get('volume') == volume_id), default=volume['first'] - 1)
+    first = covered_through + 1
+    require(first <= volume['end'], 'writing_batch',
+            '该卷已无可冻结的组范围：全卷章节已被已冻结组覆盖，不追加重复组。',
+            {'volume': volume_id, 'covered_through': covered_through, 'end': volume['end'],
+             'recover': '用 group_for(book, chapter) 取该章所在的已冻结组继续派工。'})
     last = min(first + size - 1, volume['end'])
-    require(first <= last, 'writing_batch', '该卷已无可冻结的组范围。', {'volume': volume_id})
     pack = compose.group_pack(book, store, volume_id, first, last)
     group_row = {'volume': volume_id, 'members': [first, last], 'hash': pack['hash'], 'pack': pack}
     book.setdefault('groups', []).append(group_row)
     book_state.check_book(book)
     return group_row
+
+
+def group_for(book, chapter):
+    """The frozen group a chapter belongs to, or None——复用已冻结组的唯一入口。"""
+    for row in book.get('groups') or []:
+        first, last = row['members']
+        if first <= chapter <= last:
+            return row
+    return None
 
 
 def envelope(book, store, chapter, group_row=None):
@@ -203,6 +216,8 @@ def submit(book, store, chapter, draft):
     require(text(prose), 'draft', '正文须非空。')
     plan = book['plans'].get(str(chapter))
     require(plan is not None, 'chapter_outline', '本章尚无已登记的章纲，不能执笔。', {'chapter': chapter})
+    # 文风前置强制在直提路径同样成立：绕过 envelope 直接 submit 不能让未选定状态落账。
+    compose.require_style_selected(book['contract'])
     settlement = drift_reconcile.reconcile(draft.get('drift_check'), plan, book['state'],
                                            book.get('world'), prose=prose)
     findings = list(settlement['findings'])
