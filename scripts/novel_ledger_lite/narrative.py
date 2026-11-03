@@ -31,9 +31,6 @@ def registry(book):
     does not defaults to its own kind (main/side/hidden).
     """
     nodes, threads = {}, {}
-    for design in (book.get('designs') or {}).values():
-        nodes.update({n['id']: n for n in design.get('nodes', [])})
-        threads.update({t['id']: t for t in design.get('threads', [])})
     for outline in (book.get('volumes_outline') or {}).values():
         if not isinstance(outline, dict):
             continue

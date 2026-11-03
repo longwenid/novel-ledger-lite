@@ -1,9 +1,6 @@
-"""Pure author constraints, outline policies and planning validation entry points.
+"""Validate imported author constraints, outline policies and volume ranges.
 
-lite 版：从完整版裁剪——字面约定协议（lexical policy/ENFORCEMENT）与骨架模板不在 lite；
-保留契约校验、阶段策略解析与卷定位。rolling/volume 组合规则与完整版同源：
-rolling 卷纲＋volume 章纲合法（百卷级路径，t7 依赖它）；rolling＋all 拒绝。
-"""
+rolling 卷纲可配 volume 章纲；多卷 rolling 不可配 all 章纲。"""
 from __future__ import annotations
 
 import copy

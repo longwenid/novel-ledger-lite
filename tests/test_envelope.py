@@ -1,4 +1,4 @@
-"""差量信封：投影索引化（近窗/远窗/pinned/点名）、conservative 告警、两类锚句、
+"""差量信封：投影（当前值/近期历史/pinned/点名）、conservative 告警、两类锚句、
 design_drift 活跃切片、组级快照、信封尺寸与书龄无关。"""
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'scripts'))
@@ -15,8 +15,8 @@ from fixtures import chapter_rows, contract, draft_for, open_installed_book, pro
 
 
 def test_scoped_state_near_far_pinned_named():
-    """投影索引化三道保险（报告 §4.3 第三层）逐项验证：
-    近窗全文、远窗标题行、pinned 常驻、点名整条恢复。"""
+    """投影索引化三道保险逐项验证：
+    当前值不按年龄淘汰、pinned 常驻、点名整条恢复。"""
     state = facts.seed(contract())
     state['facts'].update({'shen:old%d' % i: '陈年旧事第%s件。' % i for i in range(50)})
     state['facts']['shen:hot'] = '近期仍在变化的事实。'
@@ -34,15 +34,16 @@ def test_scoped_state_near_far_pinned_named():
     assert view['material_scope']['mode'] == 'declared_dependencies'
     assert view['facts']['shen:hot'] == '近期仍在变化的事实。'           # 近窗全文
     assert view['facts']['shen:pinned_fact'].startswith('主角核心设定')  # pinned 全文常驻
-    assert view['facts']['shen:old0'].get('_ref') is True              # 远窗标题行
-    assert view['facts']['shen:old49']['last_chapter'] == 0
+    assert view['facts']['shen:old0'] == state['facts']['shen:old0']
+    assert view['facts']['shen:old49'] == state['facts']['shen:old49']
+    assert 'facts' not in view['material_scope']['far_omitted']
     assert view['knowledge']['shen:source']['claim'] == 'x'            # 章纲点名整条恢复
-    # 初始态（从未 settle 更新）按远窗处理——作者用 pinned 堵「30 章未提即失忆」。
+    # 初始当前态和点名知情均完整携带。
     assert view['facts'].get('shen:hot') is not None
 
 
 def test_conservative_fallback_warns_instead_of_silent_trim():
-    """声明缺失 → conservative 全量＋显式告警（方案三立场：不静默裁剪）。"""
+    """声明缺失 → conservative 全量＋显式告警（不静默裁剪）。"""
     state = facts.seed(contract())
     state['facts']['shen:a'] = '甲'
     plan = {'chapter': 5, 'dependency_coverage': 'partial', 'scenes': [], 'participants': ['shen']}
@@ -110,18 +111,17 @@ def test_envelope_conservative_warning_travels_with_task():
 
 
 def test_group_pack_shared_and_chapter_delta_thinner():
-    """组级快照（方案二每组一份＋方案一第四刀）：首章带 L0/L1 内嵌；组内续章带
-    组包引用＋前章 delta——均摊更薄。信封时序遵守报告 §3.0：每章信封在该章派工时点
-    现编（前章已提交），组尾信封的 previous_deltas 才可编译。"""
+    """组包可选补读，续章仍有独立核心约束；前章 delta 可补读，不重复强制携带。"""
     book, _, _ = open_installed_book(with_scenes=True)
     store = store_module.LiteStore()
     group_row = pipeline.group(book, store, 'v1', size=2)
     assert group_row['members'] == [1, 2]
     head = pipeline.envelope(book, store, 1, group_row)
-    assert 'contract' in head['required']                     # 组首章：L0 必读
+    assert 'core_context' in head['required']                     # 每章核心约束必读
     assert pipeline.submit(book, store, 1, draft_for(book, 1))['ok']
     tail = pipeline.envelope(book, store, 2, group_row)
-    assert 'contract' not in tail['records']                  # 组内续章：L0 不重复计费
+    assert 'contract' not in tail['required']
+    assert 'core_context' in tail['required']                  # 完整契约是可选背景
     tail_records = {name: store.read_document(key) for name, key in tail['records'].items()}
     assert tail_records['group_pack']['ref'] == group_row['hash']
     assert 'previous_deltas' in tail['records']
@@ -129,26 +129,25 @@ def test_group_pack_shared_and_chapter_delta_thinner():
 
 
 def test_envelope_size_stays_flat_as_book_ages():
-    """核心收益的曲线形状断言：远窗条目只携带标题行——投影尺寸与远窗条目的
-    内容长度无关（完整版 partial 路径下这些条目全文进包，随书龄线性变胖）。"""
+    """远期事件正文不进入常规状态包；历史内容变长不使当前状态变胖。"""
     plan = {'chapter': 100, 'dependency_coverage': 'complete',
             'scenes': [{'id': 's1', 'reads': [{'kind': 'clock', 'key': 'main'}], 'depends_on': []}],
             'participants': ['shen']}
     sizes = []
     for text_length in (20, 200):
         state = facts.seed(contract())
-        state['facts'].update({'shen:legacy%d' % i: '陈年旧事' * (text_length // 4) + '。'
-                               for i in range(500)})
-        index = {('facts\x00shen:legacy%d' % i): 1 for i in range(500)}   # 末次变更章＝1（远窗）
+        state['historical_assertions'].update({'history%d' % i: {'subjects': ['shen'],
+            'claim': '陈年旧事' * (text_length // 4) + '。'} for i in range(500)})
+        index = {('historical_assertions\x00history%d' % i): 1 for i in range(500)}   # 末次变更章＝1（远窗）
         view, warnings = compose.scoped_state(state, index, ['shen'], plan, 100, near=30, pinned=[])
         assert warnings == []
-        far_rows = [k for k, v in view['facts'].items() if isinstance(v, dict) and v.get('_ref')]
-        assert len(far_rows) == 500                          # 远窗全部标题行
-        sizes.append(len(str(view['facts'])))
-    # 标题行尺寸与远窗条目内容长度无关：条目文本放大 10 倍，投影字节不变。
+        far_rows = [k for k, v in view['historical_assertions'].items() if isinstance(v, dict) and v.get('_ref')]
+        assert len(far_rows) <= 20                          # 远窗标题行总量有界
+        sizes.append(len(str(view['historical_assertions'])))
+    # 远期事件通过目录补读，扩大历史正文不会改变当前状态包。
     assert sizes[0] == sizes[1]
-    # 全文进包的对照形态（完整版行为）会随内容线性变胖：
-    full_form = sum(len(v) for v in state['facts'].values())
+    # 全文进包的对照形态会随内容线性变胖：
+    full_form = sum(len(v['claim']) for v in state['historical_assertions'].values())
     assert sizes[1] < full_form // 2
 
 
@@ -160,20 +159,20 @@ def test_envelope_requires_frozen_outline():
 
 
 def test_volume_anchor_record_name_and_required_dedup():
-    """卷首锚与注册锚是两条记录：style_volume_anchor（L0，组首章/无组时，首个 checkpoint
-    后冻结）与 style_anchor（内置档注册锚，每章）；required 清单不重复登记。"""
+    """注册锚与卷首锚作为可选背景，生效基线由唯一 style 必读记录承载。"""
     book, _, _ = open_installed_book()
     store = store_module.LiteStore()
     book['style_volume_anchor'] = {'frozen_at': 1, 'state_hash': 'f' * 64}
     envelope = pipeline.envelope(book, store, 1)
-    assert 'style_volume_anchor' in envelope['required']
+    assert 'style_volume_anchor' in envelope['records']
     assert store.read_document(envelope['records']['style_volume_anchor'])['frozen_at'] == 1
     assert store.read_document(envelope['records']['style_anchor'])['origin'] == 'default'
-    assert envelope['required'].count('style_anchor') == 1
+    assert envelope['required'].count('style') == 1
+    assert 'style_anchor' not in envelope['required']
     assert len(envelope['required']) == len(set(envelope['required']))
-    # 组内续章：卷首锚不重复携带（走组包），注册锚照常。
+    # 续章仍然保留生效 style，避免重复发送两个锚记录。
     group_row = pipeline.group(book, store, 'v1', size=2)
     assert group_row['pack']['style_volume_anchor']['frozen_at'] == 1
     assert pipeline.submit(book, store, 1, draft_for(book, 1))['ok']
     tail = pipeline.envelope(book, store, 2, group_row)
-    assert 'style_volume_anchor' not in tail['records'] and 'style_anchor' in tail['records']
+    assert 'style_volume_anchor' not in tail['required'] and 'style' in tail['required']

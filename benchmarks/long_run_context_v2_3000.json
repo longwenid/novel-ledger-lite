@@ -1,0 +1,283 @@
+{
+  "workload": "synthetic mechanics only; random Han filler, not a novel or literary evaluation",
+  "engine_source_hash": "312b735b69cbe6d47f6a790b990449c94e753574f8a6bb1c1dadda2b05325ae7",
+  "measurement": "task/2 canonical materialize text; self-contained dispatch with no assumed cache",
+  "calls": {
+    "envelope": 3000,
+    "materialize": 3000,
+    "submit": 3000,
+    "resource": 3000,
+    "catalog": 0,
+    "recall": 0,
+    "rejected_drafts": 0
+  },
+  "chapters": 3000,
+  "volumes": 100,
+  "han_per_chapter": 3500,
+  "written_han": 10500000,
+  "history_knowledge_entries": 3001,
+  "tokenizer": "cl100k_base (measurement only, not actual model billing)",
+  "total_dispatch_bytes": 102274858,
+  "samples": [
+    {
+      "chapter": 1,
+      "group_head": true,
+      "payload_bytes": 12376,
+      "tokens_cl100k_base": 4139,
+      "state_bytes": 902,
+      "category_bytes": {
+        "core": 2644,
+        "chapter": 5162,
+        "continuity": 2,
+        "recall": 348
+      },
+      "far_omitted": {}
+    },
+    {
+      "chapter": 2,
+      "group_head": false,
+      "payload_bytes": 24860,
+      "tokens_cl100k_base": 13116,
+      "state_bytes": 1753,
+      "category_bytes": {
+        "core": 2631,
+        "chapter": 5866,
+        "continuity": 12091,
+        "recall": 348
+      },
+      "far_omitted": {}
+    },
+    {
+      "chapter": 30,
+      "group_head": false,
+      "payload_bytes": 31335,
+      "tokens_cl100k_base": 15650,
+      "state_bytes": 8063,
+      "category_bytes": {
+        "core": 2665,
+        "chapter": 11846,
+        "continuity": 12299,
+        "recall": 348
+      },
+      "far_omitted": {}
+    },
+    {
+      "chapter": 31,
+      "group_head": true,
+      "payload_bytes": 31099,
+      "tokens_cl100k_base": 15555,
+      "state_bytes": 7890,
+      "category_bytes": {
+        "core": 2666,
+        "chapter": 11589,
+        "continuity": 12319,
+        "recall": 348
+      },
+      "far_omitted": {}
+    },
+    {
+      "chapter": 100,
+      "group_head": false,
+      "payload_bytes": 33920,
+      "tokens_cl100k_base": 16487,
+      "state_bytes": 8324,
+      "category_bytes": {
+        "core": 2667,
+        "chapter": 11880,
+        "continuity": 12478,
+        "recall": 3107
+      },
+      "far_omitted": {
+        "knowledge": 69
+      }
+    },
+    {
+      "chapter": 101,
+      "group_head": true,
+      "payload_bytes": 33936,
+      "tokens_cl100k_base": 16489,
+      "state_bytes": 8329,
+      "category_bytes": {
+        "core": 2669,
+        "chapter": 11886,
+        "continuity": 12483,
+        "recall": 3107
+      },
+      "far_omitted": {
+        "knowledge": 70
+      }
+    },
+    {
+      "chapter": 500,
+      "group_head": false,
+      "payload_bytes": 34059,
+      "tokens_cl100k_base": 16553,
+      "state_bytes": 8389,
+      "category_bytes": {
+        "core": 2680,
+        "chapter": 11949,
+        "continuity": 12488,
+        "recall": 3148
+      },
+      "far_omitted": {
+        "knowledge": 469
+      }
+    },
+    {
+      "chapter": 501,
+      "group_head": true,
+      "payload_bytes": 34061,
+      "tokens_cl100k_base": 16506,
+      "state_bytes": 8391,
+      "category_bytes": {
+        "core": 2680,
+        "chapter": 11951,
+        "continuity": 12488,
+        "recall": 3148
+      },
+      "far_omitted": {
+        "knowledge": 470
+      }
+    },
+    {
+      "chapter": 1000,
+      "group_head": false,
+      "payload_bytes": 34077,
+      "tokens_cl100k_base": 16544,
+      "state_bytes": 8390,
+      "category_bytes": {
+        "core": 2681,
+        "chapter": 11963,
+        "continuity": 12488,
+        "recall": 3148
+      },
+      "far_omitted": {
+        "knowledge": 969
+      }
+    },
+    {
+      "chapter": 1001,
+      "group_head": true,
+      "payload_bytes": 34093,
+      "tokens_cl100k_base": 16560,
+      "state_bytes": 8395,
+      "category_bytes": {
+        "core": 2683,
+        "chapter": 11969,
+        "continuity": 12493,
+        "recall": 3148
+      },
+      "far_omitted": {
+        "knowledge": 970
+      }
+    },
+    {
+      "chapter": 1500,
+      "group_head": false,
+      "payload_bytes": 34667,
+      "tokens_cl100k_base": 16844,
+      "state_bytes": 8454,
+      "category_bytes": {
+        "core": 2692,
+        "chapter": 12280,
+        "continuity": 12315,
+        "recall": 3189
+      },
+      "far_omitted": {
+        "knowledge": 1469
+      }
+    },
+    {
+      "chapter": 1501,
+      "group_head": true,
+      "payload_bytes": 34190,
+      "tokens_cl100k_base": 16555,
+      "state_bytes": 8046,
+      "category_bytes": {
+        "core": 2692,
+        "chapter": 11783,
+        "continuity": 12335,
+        "recall": 3189
+      },
+      "far_omitted": {
+        "knowledge": 1470
+      }
+    },
+    {
+      "chapter": 2000,
+      "group_head": false,
+      "payload_bytes": 34208,
+      "tokens_cl100k_base": 16640,
+      "state_bytes": 8454,
+      "category_bytes": {
+        "core": 2692,
+        "chapter": 12028,
+        "continuity": 12497,
+        "recall": 3189
+      },
+      "far_omitted": {
+        "knowledge": 1969
+      }
+    },
+    {
+      "chapter": 2001,
+      "group_head": true,
+      "payload_bytes": 34210,
+      "tokens_cl100k_base": 16612,
+      "state_bytes": 8456,
+      "category_bytes": {
+        "core": 2692,
+        "chapter": 12030,
+        "continuity": 12497,
+        "recall": 3189
+      },
+      "far_omitted": {
+        "knowledge": 1970
+      }
+    },
+    {
+      "chapter": 3000,
+      "group_head": false,
+      "payload_bytes": 34675,
+      "tokens_cl100k_base": 16839,
+      "state_bytes": 8455,
+      "category_bytes": {
+        "core": 2694,
+        "chapter": 12286,
+        "continuity": 12315,
+        "recall": 3189
+      },
+      "far_omitted": {
+        "knowledge": 2969
+      }
+    }
+  ],
+  "write_seconds": 365.117,
+  "audit_seconds": 27.42,
+  "audit": {
+    "ok": true,
+    "chapters": 3000,
+    "problems": [],
+    "unpaid_hooks": [],
+    "final_state_hash": "95c734971bcd32762062167f85196814251f564956a6b29e79830003b187880b",
+    "matches_book": true
+  },
+  "resume": {
+    "chapter": 1500,
+    "json_bytes": 84813180,
+    "state_match": true
+  },
+  "recovery": [
+    {
+      "chapter": 1499,
+      "applied_to": 1499,
+      "match": true
+    },
+    {
+      "chapter": 1500,
+      "applied_to": 1500,
+      "match": true
+    }
+  ],
+  "max_rss_bytes_macos": 634699776
+}

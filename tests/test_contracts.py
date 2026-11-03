@@ -30,7 +30,7 @@ def test_contract_rejects_unknown_fields_and_bad_pinned():
 
 
 def test_t7_tier_unlocks_thousand_chapter_serials():
-    """规模档位收尾（三案共识）：t7 解除 t6 封顶，覆盖千万字短章写法（3000~5000 章）。"""
+    """规模档位收尾：t7 解除 t6 封顶，覆盖千万字短章写法（3000~5000 章）。"""
     t6 = tier_of({'tier': 't6'})
     t7 = tier_of({'tier': 't7'})
     assert t6 is not None and t7 is not None
@@ -63,12 +63,12 @@ def test_tier_window_band_assertion():
     aim_chapters_hi = t7['word_range'][1] // t7['chapter_aim']
     assert t7['chapter_window'][0] <= aim_chapters_hi
     assert aim_chapters_lo <= t7['chapter_window'][1]
-    # PIPELINE_SHAPES 形状守卫：新增档位必须声明形状（完整版 contracts.py:475 注释的要求）。
+    # PIPELINE_SHAPES 形状守卫：新增档位必须声明形状。
     assert contracts.PIPELINE_SHAPES.get('t7') is not None
 
 
 def test_style_catalog_five_profiles_and_enum_gate():
-    """内置文风档目录（五档，与完整版同表同源）：档名枚举是唯一通道——杜撰拒绝。"""
+    """内置文风档目录（五档）：档名枚举是唯一通道——杜撰拒绝。"""
     from fixtures import contract as fixtures_contract
     assert set(contracts.STYLE_CATALOG) == {'市井修仙', '账房掌门', '科幻错位幽默', '宗族史传', '神秘学双声部'}
     assert len(contracts.STYLE_CATALOG) == 5

@@ -158,7 +158,7 @@ def test_verify_full_replay_is_default_acceptance():
 
 
 def test_status_pagination():
-    """status 分页：页大小受控（完整版 status --tasks 无分页的 lite 落地）。"""
+    """status 分页：页大小受控。"""
     book, _, _ = open_installed_book()
     store = _store()
     fixtures.submit_chapters(book, store)

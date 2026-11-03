@@ -1,23 +1,26 @@
-"""lite pipeline: contract → outline gate (frozen resources) → delta envelope → submit gate →
-settle → delta/checkpoint advance → volume diff → full replay verification.
+"""Independent writing pipeline: import, freeze outlines, dispatch, settle and audit.
 
-最小完整闭环「章纲资源冻结→快速执笔」的编排层。机械防线的必要子集全部保留且判定对象
-不变（完整版报告 §3.0）：
-- 章纲安装门＝完整版同源的 validate_chapter_outline（链模拟 simulate）＋story_memory.bind；
-- 提交门＝drift_reconcile.reconcile（逐增量覆盖比对、前态引擎投影）＋引文逐字＋8 章重复
-  lint＋文风代理＋settle 前值硬核＋到期拦截；
-- 完本验收＝全量重放为默认（lite 不实现分段/抽样——报告 §5.7 落选机制的 lite 侧执行）。
-"""
+安装门校验字段、引用与状态链；提交门核对增量、证据、前态、重复、文风与期限；
+完本验收逐章全量重放，保存与重载使用本项目 JSON 格式。"""
 from __future__ import annotations
 
 import copy
+from functools import wraps
 import json
 import os
 from .contracts import (DEFAULTS, Error, digest, han_count, policy_default, require, text)
-from .store import LiteStore
+from .store import LiteStore, require_current_chapter
 from . import (anchors, book_state, briefs, compose, contracts, craft, delta as delta_ledger,
                drift_reconcile, drift_validation, facts, lint, narrative, planning, style,
-               story_memory, world)
+               story_memory, world, materials)
+
+
+def _current_book(function):
+    @wraps(function)
+    def checked(book, *args, **kwargs):
+        book_state.require_current(book)
+        return function(book, *args, **kwargs)
+    return checked
 
 
 def open_book(contract_raw, source, world_model=None):
@@ -30,13 +33,15 @@ def open_book(contract_raw, source, world_model=None):
     contract = planning.validate_contract(contract_raw)
     if text(contract.get('style_source') or ''):
         require(os.path.isfile(contract['style_source']), 'style_source',
-                '外部文风档案不存在：style_source 须指向 style-distill 产出的《文风档案.md》真实路径。',
+                '外部文风档案不存在：style_source 须指向 作者确认的 UTF-8 Markdown 文风档案真实路径。',
                 {'path': contract['style_source']})
     if world_model is not None:
         world.validate_shape(world_model)
     book = {
         'schema': contracts.SCHEMA, 'contract': contract, 'contract_source': source,
-        'world': world_model, 'branch': 'main', 'revision': 0, 'status': 'running',
+        'initial_contract': copy.deepcopy(contract), 'contract_changes': [], 'last_chapter': 0,
+        'world': copy.deepcopy(world_model), 'branch': 'main', 'revision': 0, 'status': 'running',
+        'style_archive': compose.freeze_style(contract),
         'state': facts.seed(contract), 'written_han': 0,
         'volumes_outline': {}, 'chapter_outlines': {}, 'plans': {},
         'design_drift': [], 'deltas': {},
@@ -48,30 +53,38 @@ def open_book(contract_raw, source, world_model=None):
     return book
 
 
+@_current_book
 def recontract_patch(book, source='', style_profile=None, style_source=None):
-    """参数级换档（完整版 recontract --patch 的 lite 引擎实现）。
+    """Change the selected style atomically from the next unwritten chapter.
 
-    - style_profile：须取内置目录档名，杜撰拒绝；换档点记入 book['style_switch'] =
-      {at, profile, previous}——新档自 at 章起生效，之前章节保留原档文风，既不按新档
-      判定也不进新档滚动基线（style.switch_cutoff/current_anchor 的既有语义自动生效）。
-    - style_source：外部文风档案路径，须真实存在；与内置档二选一，登记后生效源为外部档案
-      （style_profile 保留作标识）。传 None 表示不改动该参数。
-    - source 必填：换档是作者决定，决定必须留原话（逐版留档口径与完整版 lexical 同族）。
-    """
+    来源必填并保存前后契约。仅指定内置档会清除外部源；指定外部源时读取并冻结档案，
+    两条路径均切割旧章文风基线，历史章行继续使用提交时的契约验链。"""
     require(text(source), 'contract', '换档须说明来源（作者原话或决定出处），逐版留档。')
     next_chapter = _next_chapter_of(book)
+    candidate = dict(book)
+    contract = copy.deepcopy(book['contract'])
+    previous = contract.get('style_profile') or contract.get('style_source')
     if style_profile is not None:
         require(style_profile in contracts.STYLE_CATALOG, 'contract',
                 '文风档名须取内置目录，缺失或杜撰拒绝。',
                 {'valid': sorted(contracts.STYLE_CATALOG), 'got': style_profile})
-        previous = book['contract'].get('style_profile')
-        book['contract']['style_profile'] = style_profile
-        book['style_switch'] = {'at': next_chapter, 'profile': style_profile, 'previous': previous}
+        contract['style_profile'] = style_profile
+        contract.pop('style_source', None)
     if style_source is not None:
         require(isinstance(style_source, str) and os.path.isfile(style_source), 'style_source',
                 '外部文风档案不存在：style_source 须指向真实档案文件。', {'path': style_source})
-        book['contract']['style_source'] = style_source
-    book_state.check_book(book)
+        contract['style_source'] = style_source
+    if style_profile is not None or style_source is not None:
+        candidate['contract'] = contract
+        candidate['style_archive'] = compose.freeze_style(contract)
+        candidate['style_switch'] = {
+            'at': next_chapter, 'profile': style_profile or contract.get('style_profile') or style_source,
+            'previous': previous}
+        candidate['contract_changes'] = list(book['contract_changes']) + [{
+            'at': next_chapter, 'source': source,
+            'before': copy.deepcopy(book['contract']), 'after': copy.deepcopy(contract)}]
+    book_state.check_book(candidate)
+    book.update(candidate)
     return {'style_profile': book['contract'].get('style_profile'),
             'style_source': book['contract'].get('style_source') or '',
             'switch': dict(book.get('style_switch') or {})}
@@ -84,29 +97,18 @@ def style_board():
     return contracts.style_options_board()
 
 
-def _chapter_rows_of(book):
-    rows = []
-    for outlines in (book.get('chapter_outlines') or {}).values():
-        rows.extend(outlines or [])
-    return rows
-
-
 def _next_chapter_of(book):
-    """换档点的「下一章」：已冻结章纲的最大章号＋1；无章纲时从第 1 章起。"""
-    numbers = [row.get('chapter') for row in _chapter_rows_of(book)]
-    return max([n for n in numbers if type(n) is int] or [0]) + 1
+    """换档从当前账本记录的下一待写章生效。"""
+    return book['last_chapter'] + 1
 
 
 # ------------------------------------------------------------------ outline gate
+@_current_book
 def install_outlines(book, volume_id, volume_row_outline, chapters_data):
-    """The chapter-outline mechanical gate: freeze the volume's resources for writing.
+    """Validate and atomically freeze one volume and its chapter outlines.
 
-    卷纲行先登记（承诺窗口形状轻校验），章纲数据过完整版同源机械门
-    （drift_validation.validate_chapter_outline：章号连续覆盖、增量形状、enter/exit 链、
-    simulate 全卷状态链模拟、卷末终值）→ 逐行 craft.scenes＋story_memory.bind（协议水位
-    增量复核）→ plans/chapter_outlines 登记。设计漂移的吸收回写在此核对：
-    章纲行 `absorbs` 点名的漂移 id 必须存在且未吸收，吸收即登记 absorbed_by。
-    """
+    先核对字段、引用、状态链与场景协议，再核对 absorbs 声明。全部通过后回写账本，
+    失败时不修改已安装章纲或漂移吸收记录。"""
     contract = book['contract']
     volume = planning.volume_for(contract, _volume_first_chapter(contract, volume_id))
     require(volume is not None and volume.get('id') == volume_id, 'volume',
@@ -131,8 +133,11 @@ def install_outlines(book, volume_id, volume_row_outline, chapters_data):
     entities = copy.deepcopy(book['state'].get('entities') or {})
     checked_through = book.get('outline_protocol_checked', 0)
     previous = {key: value for key, value in book['plans'].items()}
-    drift_by_id = {row['id']: row for row in book.get('design_drift') or []}
+    drift_rows = copy.deepcopy(book.get('design_drift') or [])
+    drift_by_id = {row['id']: row for row in drift_rows}
     for row in rows:
+        for entry in row.get('new_entities') or []:
+            facts.entity({'entities': entities}, entry)
         craft.scenes(row, entities)
         story_memory.bind(row, previous, checked_through=checked_through)
         previous[str(row['chapter'])] = row
@@ -147,12 +152,16 @@ def install_outlines(book, volume_id, volume_row_outline, chapters_data):
                     {'id': ident, 'absorbed_by': target.get('absorbed_by')})
             target.setdefault('absorbed_by', []).append(row['chapter'])
             absorbed_ids.add(ident)
-    book['volumes_outline'][volume_id] = volume_row_outline
-    book['chapter_outlines'][volume_id] = rows
+    candidate = dict(book)
+    candidate['design_drift'] = drift_rows
+    candidate['volumes_outline'] = {**book['volumes_outline'], volume_id: copy.deepcopy(volume_row_outline)}
+    candidate['chapter_outlines'] = {**book['chapter_outlines'], volume_id: rows}
+    candidate['plans'] = dict(book['plans'])
     for row in rows:
-        book['plans'][str(row['chapter'])] = row
-    book['outline_protocol_checked'] = checked_through
-    book_state.check_book(book)
+        candidate['plans'][str(row['chapter'])] = row
+    candidate['outline_protocol_checked'] = checked_through
+    book_state.check_book(candidate)
+    book.update(candidate)
     return {'volume': volume_id, 'chapters': [row['chapter'] for row in rows],
             'absorbed': sorted(absorbed_ids)}
 
@@ -163,13 +172,11 @@ def _volume_first_chapter(contract, volume_id):
 
 
 # ------------------------------------------------------------------ groups & envelopes
+@_current_book
 def group(book, store, volume_id, size=None):
-    """Freeze the next writing group of a volume: scope, hash baseline, group-level shared pack.
+    """Freeze the next writing group and its content-addressed shared material.
 
-    组冻结时点＝组首章派工前；组内逐章由引擎重跑组装（每章信封现编现冻——内容寻址冻结
-    纪律与完整版同一性质）。同卷再次调用接续上一组之后的下一段；全卷已被已冻结组覆盖时
-    拒绝（writing_batch），不追加重复组。要取某章所在的已冻结组用 group_for。
-    """
+    每次调用接续下一段，卷范围已覆盖则拒绝；用 group_for 复用已有组。"""
     volume = next((v for v in book['contract']['volumes'] if v['id'] == volume_id), None)
     require(volume is not None, 'volume', '契约里没有这一卷。', {'volume': volume_id})
     size = size or policy_default('fast_batch_chapters')
@@ -188,6 +195,7 @@ def group(book, store, volume_id, size=None):
     return group_row
 
 
+@_current_book
 def group_for(book, chapter):
     """The frozen group a chapter belongs to, or None——复用已冻结组的唯一入口。"""
     for row in book.get('groups') or []:
@@ -197,12 +205,28 @@ def group_for(book, chapter):
     return None
 
 
-def envelope(book, store, chapter, group_row=None):
+@_current_book
+def envelope(book, store, chapter, group_row=None, *, cache=None):
     """The chapter's frozen delta envelope (compose.build), validated against the wire contract."""
-    return compose.build(book, store, chapter, group_row)
+    return compose.build(book, store, chapter, group_row, cache=cache)
+
+
+def materialize(work, store, *, token_counter=None, tokenizer_id=None, cache=None):
+    """得到实际派工文本与分项度量；只渲染一次必读内容，不重复内嵌章纲或可选背景。"""
+    return materials.render(work, store, token_counter, tokenizer_id, cache)
+
+
+@_current_book
+def catalog(book, *, chapter=None, kind=None, query='', page=0, per=20):
+    """搜索/翻页发现可补读资源，chapter 指定时限于本章相关资源。"""
+    plan = book['plans'].get(str(chapter)) if chapter is not None else None
+    require(chapter is None or plan is not None, 'context_catalog', '目录查询章节尚无已登记章纲。')
+    people = compose.participants(plan, book) if plan else ()
+    return materials.catalog(book, plan, people, kind=kind, query=query, page=page, per=per)
 
 
 # ------------------------------------------------------------------ submit gate
+@_current_book
 def submit(book, store, chapter, draft):
     """Reconcile, settle, and advance the ledger by one chapter.
 
@@ -210,6 +234,8 @@ def submit(book, store, chapter, draft):
     （书不变）；通过则原子推进：状态、delta、投影索引、倒排、章行链哈希、组内锚句原料、
     卷界 checkpoint＋差异单＋文风卷首锚回比。
     """
+    require(type(chapter) is int and chapter == store.last_chapter() + 1,
+            'chapter_order', '章节必须连续顺序提交。', {'chapter': chapter})
     require(all(text(draft.get(k)) for k in ('title', 'summary', 'self_check')), 'draft',
             '执笔需要 title/summary/self_check。')
     prose = draft.get('prose')
@@ -236,7 +262,7 @@ def submit(book, store, chapter, draft):
     volume = planning.volume_for(contract, chapter)
     volume_style = ((book.get('volumes_outline') or {}).get(volume['id']) or {}).get('style') \
         if volume else None
-    recent = [(n, style.metrics(sample)) for n, sample in prior_prose]
+    recent = [(n, style.metrics(sample)) for n, sample in reversed(prior_prose)]
     style_report = style.examine(prose, plan.get('style'),
                                  style.current_anchor(book, recent),
                                  style.merged_window(contract, volume_style), chapter,
@@ -267,7 +293,7 @@ def submit(book, store, chapter, draft):
                       'design_drift': copy.deepcopy(settlement['deviations']),
                       'self_check': draft['self_check'], 'style_report': copy.deepcopy(style_report)},
            'state_hash': digest(state), 'summary': draft['summary'], 'han': count}
-    contract_hash = digest(contract)
+    contract_hash = store.document(contract)
     delta = delta_ledger.produce(book['state'], state, events, chapter)
     # L3 delta 随章行入链（派生数据；真源 events 已入链，delta 只服务近窗分级与组内重放段）。
     row['delta'] = store.document(delta)
@@ -280,6 +306,7 @@ def submit(book, store, chapter, draft):
             if page not in book['inverted'][asset]:
                 book['inverted'][asset].append(page)
     book['state'] = state
+    book['last_chapter'] = chapter
     book['written_han'] += count
     volume_boundary = None
     if volume is not None and chapter == volume['end']:
@@ -343,6 +370,21 @@ def _style_anchor_review(book, chapter):
 
 
 # ------------------------------------------------------------------ recall / status / audit
+@_current_book
+def resource(book, kind, key):
+    """按显式坐标补读当前账本真值；历史提示被省略不代表资源不存在。"""
+    field, key = ('places', key) if kind == 'place_records' else story_memory.coordinate({'kind': kind, 'key': key})
+    field = 'story_nodes' if field == 'node' else field
+    if field == 'clock':
+        found, value = True, book['state']['clock']
+    else:
+        rows = book['state'].get(field) or {}
+        found, value = key in rows, rows.get(key)
+    return {'kind': field, 'key': key, 'found': found, 'value': copy.deepcopy(value),
+            'last_chapter': delta_ledger.last_chapter(book.get('delta_index') or {}, field, key)}
+
+
+@_current_book
 def recall(book, store, asset):
     """倒排定位→取页（方案三补丁 c）。无匹配 O(1)——索引 miss 直接空返回，不再线性翻页。"""
     pages = (book.get('inverted') or {}).get(asset) or []
@@ -357,8 +399,9 @@ def recall(book, store, asset):
     return {'chapters': list(pages), 'hits': hits}
 
 
+@_current_book
 def status(book, store, page=0, per=20):
-    """项目状态摘要＋已提交章行分页（完整版报告附带项：status --tasks 分页在 lite 落地）。"""
+    """Return ledger totals and one page of submitted chapter summaries."""
     require(page >= 0 and per > 0, 'chapter', '分页参数须为非负/正。')
     rows = store.headers('main')
     window = rows[page * per:(page + 1) * per]
@@ -372,20 +415,43 @@ def status(book, store, page=0, per=20):
             'groups': [{'members': g['members'], 'hash': g['hash']} for g in book.get('groups') or []]}
 
 
+@_current_book
 def verify_full(book, store):
     """完本验收＝全量重放（默认，语义不变）：逐章 events 重放核对投影哈希，逐章重算链哈希。
 
-    delta 是派生数据，验收不依赖它——重放直接吃链上 events（报告 §5.4-B：数据零丢失）。
+    核对契约章节覆盖、真源文档内容哈希、正文证据与期限、逐章投影和链哈希、最终账本
+    一致性及未清承诺。每章只按明确记录的提交时契约验链；delta 不参与验收。
     """
-    state = facts.seed(book['contract'])
+    initial_contract = book['initial_contract']
+    state = facts.seed(initial_contract)
     problems = []
     previous_chain = None
-    contract_hash = digest(book['contract'])
     rows = store.headers('main')
-    for row in rows:
+    expected_end = book['contract']['volumes'][-1]['end']
+    if len(rows) != expected_end:
+        problems.append({'kind': 'incomplete', 'detail': '已提交章数未覆盖契约的全部章节。',
+                         'expected': expected_end, 'actual': len(rows)})
+    for expected_number, row in enumerate(rows, 1):
         try:
-            for event in store.read_document(row['events']):
-                facts.apply_event(state, event, row['n'])
+            require_current_chapter(row)
+        except Error as error:
+            problems.append({'chapter': expected_number, 'kind': 'format', 'code': error.code,
+                             'detail': error.message})
+            break
+        if row['n'] != expected_number:
+            problems.append({'chapter': row['n'], 'kind': 'chapter_order', 'detail': '章节不连续。'})
+        contract_hash = row['contract_hash']
+        try:
+            prose = store.read_document(row['prose'])
+            events = store.read_document(row['events'])
+            store.read_document(row['plan'])
+            store.read_document(contract_hash)
+        except Error as error:
+            problems.append({'chapter': row['n'], 'kind': 'record', 'detail': error.message,
+                             'code': error.code})
+            break
+        try:
+            state, _ = facts.settle(state, events, prose, row['n'])
         except Error as error:
             problems.append({'chapter': row['n'], 'kind': 'replay', 'detail': error.message})
             break
@@ -397,23 +463,42 @@ def verify_full(book, store):
         if row.get('chain') != expected_chain:
             problems.append({'chapter': row['n'], 'kind': 'chain', 'detail': '链哈希重算不符。'})
         previous_chain = row.get('chain')
+    if previous_chain != store.chain_head():
+        problems.append({'kind': 'chain_head', 'detail': '链头与已提交章节不符。'})
+    matches_book = digest(state) == digest(book['state'])
+    if not matches_book:
+        problems.append({'kind': 'book_state', 'detail': '全量重放结果与当前账本状态不符。'})
     unpaid_required = [ident for ident, hook in (state.get('hooks') or {}).items()
                        if hook.get('status') != 'paid']
     return {'ok': not problems and not unpaid_required,
             'chapters': len(rows), 'problems': problems,
             'unpaid_hooks': unpaid_required,
             'final_state_hash': digest(state),
-            'matches_book': digest(state) == digest(book['state'])}
+            'matches_book': matches_book}
 
 
 # ------------------------------------------------------------------ persistence
+@_current_book
 def save(book, store, path):
     os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
     with open(path, 'w', encoding='utf-8') as handle:
-        handle.write(json.dumps({'book': book, 'store': store.to_dict()}, ensure_ascii=False, sort_keys=True))
+        handle.write(json.dumps({'schema': contracts.BUNDLE_SCHEMA, 'book': book, 'store': store.to_dict()}, ensure_ascii=False, sort_keys=True))
 
 
 def load(path):
     with open(path, 'r', encoding='utf-8') as handle:
         raw = json.loads(handle.read())
-    return raw['book'], LiteStore.from_dict(raw['store'])
+    require(isinstance(raw, dict) and raw.get('schema') == contracts.BUNDLE_SCHEMA,
+            'bundle_schema', '仅支持当前持久化文件格式。', {'expected': contracts.BUNDLE_SCHEMA})
+    require(set(raw) == {'schema', 'book', 'store'}, 'bundle_schema', '持久化文件字段不符合当前格式。')
+    book = raw['book']
+    book_state.check_book(book)
+    store = LiteStore.from_dict(raw['store'])
+    require(book['last_chapter'] == store.last_chapter(), 'book_state',
+            '账本进度与已提交章节不符，不自动修正。')
+    for group_row in book['groups']:
+        pack = store.read_document(group_row['hash'])
+        embedded = {key: value for key, value in group_row['pack'].items() if key != 'hash'}
+        require(pack == embedded and group_row['pack']['hash'] == group_row['hash'],
+                'writing_batch', '冻结组包与已存文档不符，不自动补建。')
+    return book, store

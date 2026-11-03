@@ -1,0 +1,68 @@
+# 输入格式与独立示例
+
+本项目消费作者已确认的内容，不限定内容的创作工具。可复制随包的
+[example_project.json](example_project.json) 作为格式样例；它包含完整契约、世界记录、
+一卷四章章纲与四份短正文提交。示例章长仅用于验证机械流程。
+
+## 导入契约
+
+契约是 JSON 对象。`title/genre/reader_promise/ending/world_premise/story_engine/opposition/voice`
+是非空文本；`style_traits/world_rules` 是文本数组；`protagonist_setup` 包含
+`id/name/identity/desire/limit`。`entities` 每条带唯一 `id/name/kind`，引用一律使用稳定 ID。
+
+`chapter_min/chapter_aim/chapter_max` 是正整数字数范围，aim 位于上下限之间，maximum
+不超过 10000。`volumes` 至少一条 `{id, purpose, end}`，卷末章号严格递增，从第一章连续划分。
+`first`、总字数区间由校验推导。未知契约字段会被拒绝，完整可接受字段见
+`scripts/novel_ledger_lite/contracts.py` 的 `CONTRACT_FIELDS`。
+
+- 必须在执笔前选 `style_profile` 或 `style_source`，详见 [style.md](style.md)。
+- 初始资源：`initial_resources=[{holder, asset, unit, quantity}]`；quantity 是非负十进制字符串。
+- 初始事实：`initial_facts=[{entity, key, value}]`；`placements` 是人物 ID → 地点 ID。
+- 常驻资源：`pinned=[{kind, key}]`，例如 `{kind: "facts", key: "shen:identity"}`。
+- 章纲策略：`volume_outline={scope:"rolling",words:2500,tolerance:500}`，
+  `chapter_outline={scope:"volume",words:150,tolerance:60}` 是默认形状；多卷 rolling 不能配 all 章纲。
+- `narrative_tracking=false` 可用于无情节节点账的简洁项目。开启时须相应声明情节节点、
+  线路与读者披露，不能将故事内变化与读者知情混为一谈。
+
+世界模型可省略；提供时按 `world.SECTIONS` 使用记录数组，每条带唯一 ID 及该域所需字段。
+例如 `world_refs=["rules:r1"]` 引用 `rules` 域的 r1。完整可运行记录见样例。
+
+## 卷纲和章纲
+
+`pipeline.install_outlines(book, volume_id, volume_outline, chapters_data)`：
+
+- `volume_outline` 带本卷 `id`，`nodes/threads` 数组；以 `clock={advance_days,to}` 声明
+  卷内推进天数与绝对卷末时钟。伏笔按 `{id,text,plant:[起,止],payoff:[起,止],required,continues}` 声明。
+- `chapters_data={volume:卷ID, chapters:[...]}` 按章号连续覆盖到该卷末章。
+- 章纲带 `chapter/synopsis`、`plot={beat,nodes,threads}`，并声明
+  `resources/places/knowledge/characters/relations/clock` 等变化，`enter/exit` 使用 `{kind,key,expected}`。
+  clock 的 key 为 main；资源 key 是 `[holder,asset,unit]` 的紧凑 JSON 字符串。
+- `hooks` 使用 `{hook,action,note}`；正文引文引用按 `hook_refs/history_refs/reader_refs` 点名。
+- `scenes` 每场带 `label/intent/conflict/turn/present/speakers/dialogue_intents`。
+  完整依赖声明还需 `dependency_coverage="complete"` 与逐场 `reads:[{kind,key}]`、`depends_on:[]`。
+  场景 ID 与阅读协议由安装门绑定，不自己拼接旧协议。
+- 章纲 `style` 可写 `pov/rhythm`，也可明确 `dialogue_ratio`。字段、引用、长度、资源变化和
+  逐章状态链都由门校验；错误的 `details.findings` 给出修正位置。
+
+## 正文提交
+
+提交对象包含非空 `title/prose/summary/self_check` 以及 `drift_check={items,unplanned,verdict}`。
+每项章纲增量对应一条自比：`{kind,key,planned,status,actual,evidence}`。planned 与冻结章纲
+一致；正常提交 status 为 kept，actual 使用 clock.advance_days、hook.action 或资源等的 to。
+`evidence={chapter,quote}` 必须逐字存在于本章正文且可唯一定位；前态由引擎投影核对。
+
+`items` 须精确覆盖本章所有变化，`unplanned` 正常为空，`verdict` 为 clean。
+声明偏差只用于诊断，不授权变更既定章纲；被拒时按 findings 修复正文重提。
+完整写法和引用格式见样例 JSON，而不是从其他项目获取模板。
+
+## 运行与验证
+
+`python3 scripts/run_example.py` 不依赖 pytest、分词器或模型服务，运行内置四章稿的
+完整导入、分组、提交、保存重载和验收；指定 `--output 路径` 可保留示例账本。
+引擎通过 Python API 调用，示例脚本只是接入演示，不生成创作正文。
+
+## 上下文接入
+
+使用 task/2 时，先 envelope 编译，再 materialize 得到实际写作文本。
+默认每章材料自足；新会话不要沿用上一会话的缓存确认。
+具体缓存格式、补读目录与分项度量见 [architecture.md](architecture.md)。

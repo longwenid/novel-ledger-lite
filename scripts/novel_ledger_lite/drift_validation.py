@@ -1,9 +1,6 @@
-"""Mechanical validation of volume and chapter outlines: field shape, ladder stages, length
-policy, declared deltas/enter rows and the normalized chapter shape simulated before prose.
+"""Validate outline fields, references, promise windows and simulated state chains.
 
-lite 版：与完整版逐字同源，唯一改动是章纲字段白名单登记 'absorbs'（设计漂移吸收回写的
-章纲侧声明，见 validate_chapter_outline 内注释与 pipeline.install_outlines）。
-"""
+章纲 absorbs 声明由安装门核对并回写漂移吸收记录。"""
 from __future__ import annotations
 
 from .continuity import timeline_findings
@@ -678,10 +675,6 @@ def _normalize_chapter(chapter, state, world, registry=None, hooks=None):
         item['hook']: copy.deepcopy((hooks or {}).get(item['hook']) or {})
         for item in normalized['hooks']
         if isinstance(item, dict) and text(item.get('hook'))}
-    # The optional workbench protocols and the structural-expression fields land only when the
-    # author (or the workbench) actually submitted them: a key that lands unconditionally here
-    # would change every stored row's digest and break the retained-suffix repair's byte-for-byte
-    # comparison in `workflow.py`.
     for field in PROTOCOL_FIELDS + EXPRESSION_FIELDS:
         if chapter.get(field) is not None:
             normalized[field] = copy.deepcopy(chapter[field])

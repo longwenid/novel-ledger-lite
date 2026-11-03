@@ -1,20 +1,7 @@
-"""Measure style without treating every change in chapter rhythm as a literary defect.
+"""Measure prose shape against an explicitly selected style and recent approved chapters.
 
-The default guard observes sentence, paragraph and unplanned dialogue-share differences from the
-current baseline — the rolling median of the nearest approved chapters, or the approved sample as
-the opening reference before any accumulate. An author may explicitly select strict checking of
-those numeric shape limits. Chapter dialogue targets and high in-chapter repetition remain
-checkable in either mode.
-
-Pronoun counts are observations in both modes: a first-person narrator can mention other people,
-and third-person prose can render a character's interior words. These proxies cannot determine
-narrative viewpoint or prove literary quality. The author, the declared style and the writer's
-comparison with that style remain the sources for those judgements.
-
-lite 改造登记：本文件逻辑与完整版 novel_ledger/style.py 相同，唯一改动是 `baseline` 的
-文档串——lite 的 contracts.profile_anchor 对未知/缺失档名返回 None（无默认档回落），
-原文「unknown or absent names mean the default profile」在 lite 不成立，已改写。
-"""
+默认 observe 只记录形状变化；strict 才拒绝超容差变化。对白目标与高重复率仍会检查。
+代词分布仅作观察，数值形状不能判断实际叙述视角或文学质量。"""
 from __future__ import annotations
 
 import re
@@ -119,7 +106,7 @@ def metrics(prose):
         'paragraph_max': max(paragraphs) if paragraphs else 0,
         'dialogue_share': round(han_count(dialogue) / total, 3) if total else 0.0,
         # Always a finite number: whether a value is *judged* depends on the sample being long
-        # enough, and that gate lives in `compare` (it needs `repetition_grams`).
+        # enough, and that gate lives in `examine` (it needs `repetition_grams`).
         'repetition_share': round(repeated, 4),
         'repetition_grams': len(grams),
         'person': _person(narration),
@@ -168,7 +155,7 @@ def merged_window(contract, volume_style=None):
 def switch_cutoff(book):
     """The first chapter the contract's current style_profile applies to: 1 without a switch.
 
-    A mid-run profile switch (a `recontract --patch` on style_profile) records `style_switch`
+    A mid-run profile switch (a `pipeline.recontract_patch` on style_profile) records `style_switch`
     = {at, profile, previous}: the new profile governs chapters from `at` on, chapters before
     `at` keep the style they were written in and are neither judged against the new profile
     nor fed into its rolling baseline. Only the latest switch matters — the guard always
@@ -179,22 +166,8 @@ def switch_cutoff(book):
 
 
 def baseline(book):
-    """The anchor sample's metrics, or the selected profile's declared anchor before any approval.
-
-    lite 口径（与完整版的唯一分歧，2026-11-02）：`profile_anchor` 对未知或缺失档名返回
-    None——没有「unknown or absent names mean the default profile」的回落；文风须作者显式
-    选定，未选定状态在执笔链路入口即被拒绝，本函数返回 None 只发生在外部文风源且未登记
-    内置档名时（形状比较跳过，第二章起由滚动基线接管）。其余逻辑与完整版相同：
-    `approve` 的实测样本（origin=pilot）是开卷参照；换档后换档点前的章不再是参照，
-    当前档注册锚（origin=default）重新成为开卷参照，直到新档下有章被认可。"""
-    if switch_cutoff(book) > 1:
-        return profile_anchor(((book or {}).get('contract') or {}).get('style_profile'))
-    anchor = (book or {}).get('style_anchor') or {}
-    sample = anchor.get('sample')
-    measured = metrics(sample) if text(sample) else None
-    if measured and measured['han'] >= MIN_HAN:
-        return {**measured, 'origin': 'pilot'}
-    return profile_anchor(((book or {}).get('contract') or {}).get('style_profile'))
+    """Return the explicitly selected built-in opening anchor, or None for an external-only style."""
+    return profile_anchor(book['contract'].get('style_profile'))
 
 
 def _median(values):
@@ -345,8 +318,3 @@ def examine(prose, declared, anchor, window, chapter=0, contract=None):
             chapter, 'person', expected_person, measured['person'],
             '引号外出现的人称代词种类与视角声明标签不同；代词分布不能判定实际叙述视角。'))
     return report
-
-
-def compare(prose, declared, anchor, window, chapter=0, contract=None):
-    """Compatibility entry point returning only actionable findings from :func:`examine`."""
-    return examine(prose, declared, anchor, window, chapter, contract)['findings']

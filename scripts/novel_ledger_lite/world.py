@@ -1,11 +1,6 @@
-"""Rich world definitions; never mutate canonical facts or character knowledge.
+"""World-record schemas, validation and indexing for imported author material.
 
-lite 版：从完整版裁剪——去掉开书门校验（validate/_bindings/_required_from/declared_sections，
-那是完整版 creation 流程的一部分）；保留登记表（SECTIONS/LABELS）、按档域地板
-（TIER_SECTIONS/required_sections）与内容寻址索引（index）——章纲 world_refs 的机械解析
-（drift._world_index）与差量信封的本章世界记录切片只依赖这三件。世界模型文档本身由
-完整版开书流程或作者导入，lite 不再生成或校验其完整形状。
-"""
+世界定义不自动建立人物知情或当前事实；只核对记录结构与登记引用。"""
 from __future__ import annotations
 
 from .contracts import CHARACTERS, require, text
@@ -68,14 +63,13 @@ def index(model):
     return {section + ':' + row['id']: row for section in SECTIONS for row in model.get(section, [])}
 
 
-# 顶层叙述键：完整版世界文档的标准结构（context 读 premise/story_capacity 组装 world_core）。
 TOP_KEYS = ('premise', 'story_capacity')
 
 
 def validate_shape(model):
-    """Mechanical shape floor for an imported world document: sections are record arrays, each
-    record carries its id and the declared fields of its section. lite 不校验域内容是否齐备
-    （那是完整版开书门的事），只保证后续机械解析（index/字段读取）不会遇到畸形行。"""
+    """Validate imported world sections, record IDs and declared fields.
+
+    只保证结构可解析，不判断内容是否足以承载整部作品。"""
     require(isinstance(model, dict), 'world_record', '世界模型须为对象。')
     unknown = sorted(set(model) - set(ALL_SECTIONS) - set(TOP_KEYS))
     require(not unknown, 'world_section', '世界模型包含未登记的域。', {'unknown': unknown})
