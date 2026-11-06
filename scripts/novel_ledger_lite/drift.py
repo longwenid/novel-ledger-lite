@@ -72,13 +72,6 @@ PROTOCOL_FIELDS = ('scene_schema', 'reading_schema', 'reading_coverage', 'depend
                    'reading_refs', 'understanding_refs')
 
 
-# Optional structural-expression fields a chapter outline may carry: the beat skeleton (`beats`)
-# and the in-volume structural role (`role`). They are not part of the drift contract, and they
-# must never join `CHAPTER_FIELDS`: that table's keys land unconditionally in `_normalize_chapter`,
-# which would hand every revalidated row — including books installed before these fields existed —
-# the two new keys and change the row digest the retained-suffix repair compares byte for byte
-# (`workflow.py`: `digest(item) == digest(retained[...])`). Landing a key only when the author
-# submitted one keeps stored rows stable either way, the same discipline `PROTOCOL_FIELDS` follows.
 EXPRESSION_FIELDS = ('beats', 'role')
 
 

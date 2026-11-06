@@ -1,10 +1,6 @@
-"""Scene identities and explicit narrative dependencies; no persistence or inferred facts.
+"""Scene identities, reading dependencies and explicit state coordinates.
 
-lite 版：从完整版裁剪改造一处——`bind` 的协议复核按章号水位增量进行（完整版每次章纲
-提交都 `for accepted in previous.values(): require_current(accepted)` 全量重遍历，累计
-O(N²)——完整版架构报告 §5.1 第一刀「bind 索引化」登记的修复）。判定语义不变：所有
-已登记章纲都必须使用当前协议；变化只是不再重复遍历已校验过的章号区间。
-"""
+协议按 checked_through 水位增量复核；新行自身始终通过当前协议检查。"""
 from __future__ import annotations
 
 import copy
@@ -157,6 +153,11 @@ def reads(plan):
     plot = plan.get('plot') if isinstance(plan.get('plot'), dict) else {}
     result.update(('node', row['node']) for row in plot.get('nodes') or []
                   if isinstance(row, dict) and text(row.get('node')))
+    for row in plot.get('nodes') or []:
+        if isinstance(row, dict):
+            result.update(('node', ident) for ident in row.get('depends_on') or [])
+            if text(row.get('line')):
+                result.add(('thread_progress', row['line']))
     result.update(('thread_progress', row['thread']) for row in plot.get('threads') or []
                   if isinstance(row, dict) and text(row.get('thread')))
     result.update(('reader_knowledge', row['topic']) for row in plan.get('disclosures') or []

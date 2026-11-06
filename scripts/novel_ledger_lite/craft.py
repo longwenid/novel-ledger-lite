@@ -27,6 +27,11 @@ def participants_of(plan, entities=None):
             ident = row.get('who') or row.get('entity')
             if text(ident) and ident not in found:
                 found.append(ident)
+    known = set(entities or {}) | {row['id'] for row in plan.get('new_entities') or []}
+    for scene in plan.get('scenes') or []:
+        for ident in scene.get('present') or []:
+            if ident in known and ident not in found:
+                found.append(ident)
     if found:
         return found
     return list(entities or {})

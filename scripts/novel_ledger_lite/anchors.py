@@ -1,17 +1,7 @@
-"""Two anchor-sentence kinds, both quoted verbatim from committed events (零模型抽取).
+"""Verbatim historical and adjacent-scene quotes from committed events.
 
-内联回带（完整版架构报告 §3.2.1，一词两义在此分家）：
-- a 类·前情锚句（引用驱动）：章纲 hook_refs/history_refs/reader_refs 点名的资产，经
-  L4 倒排定位到章，再从该章冻结 events 抽 evidence.quote 原句。章纲点名多少抽多少，
-  逐字可核（evidence.evidence 的唯一子串定位先例）。落进简报「前情锚句」小节后，
-  Worker 零工具调用拿到被引前文——recall 从常规路径压成兜底通道（省一次调用
-  > 省一段字节）。
-- b 类·场景锚句（窗口驱动）：前窗相邻已提交章，每章固定取首事件与末事件的
-  evidence.quote（开篇钩子/收束句）＋该章 summary 行。先落锚句、后降前文窗口
-  （adjacent_window_chapters 默认已降为 1，锚句补语感连续）。
-
-两类都从已提交章的冻结 events 抽取，逐字核验先例同源；前者保事实精确，后者保语感连续。
-"""
+章纲点名的资产按倒排取证据；相邻场景固定抽取首末事件原句与摘要。
+抽取结果核对冻结正文，异常留痕，减少重复读取整章历史。"""
 from __future__ import annotations
 
 from .contracts import DEFAULTS, policy_default, require
@@ -73,7 +63,7 @@ def scene_anchors(book, store, chapter):
     """窗口驱动的开篇/收束句：[{chapter, position, quote, summary}]。
 
     每章固定首/末事件各一句（选取规则可调，引擎确定性抽取零模型）；2~3 章约
-    4~6 句＋2~3 行 summary，量级 1~2KB（完整版报告 §3.2.1-b 的估算口径）。
+    具体条数由 scene_anchor_chapters 决定，不携带窗口之外的整章正文。
     """
     window = policy_default('scene_anchor_chapters')
     rows = []

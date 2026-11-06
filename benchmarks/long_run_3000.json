@@ -1,0 +1,194 @@
+{
+  "workload": "synthetic mechanics only; random Han filler, not a novel or literary evaluation",
+  "engine_source_hash": "a962164c14286e7572f55207dd64b70848ca42a830487d6bc231a0545f7c1a4d",
+  "chapters": 3000,
+  "volumes": 100,
+  "han_per_chapter": 3500,
+  "written_han": 10500000,
+  "history_knowledge_entries": 3001,
+  "tokenizer": "cl100k_base (measurement only, not actual model billing)",
+  "total_dispatch_bytes": 121887441,
+  "samples": [
+    {
+      "chapter": 1,
+      "group_head": true,
+      "payload_bytes": 28540,
+      "tokens_cl100k_base": 11014,
+      "state_bytes": 1111,
+      "far_omitted": {}
+    },
+    {
+      "chapter": 2,
+      "group_head": false,
+      "payload_bytes": 30046,
+      "tokens_cl100k_base": 15578,
+      "state_bytes": 2011,
+      "far_omitted": {}
+    },
+    {
+      "chapter": 30,
+      "group_head": false,
+      "payload_bytes": 36997,
+      "tokens_cl100k_base": 18584,
+      "state_bytes": 8290,
+      "far_omitted": {}
+    },
+    {
+      "chapter": 31,
+      "group_head": true,
+      "payload_bytes": 48398,
+      "tokens_cl100k_base": 23257,
+      "state_bytes": 8532,
+      "far_omitted": {}
+    },
+    {
+      "chapter": 100,
+      "group_head": false,
+      "payload_bytes": 38576,
+      "tokens_cl100k_base": 19268,
+      "state_bytes": 10029,
+      "far_omitted": {
+        "knowledge": 49,
+        "resources": 1
+      }
+    },
+    {
+      "chapter": 101,
+      "group_head": true,
+      "payload_bytes": 49692,
+      "tokens_cl100k_base": 23787,
+      "state_bytes": 10034,
+      "far_omitted": {
+        "knowledge": 50,
+        "resources": 1
+      }
+    },
+    {
+      "chapter": 500,
+      "group_head": false,
+      "payload_bytes": 38736,
+      "tokens_cl100k_base": 19359,
+      "state_bytes": 10134,
+      "far_omitted": {
+        "knowledge": 449,
+        "resources": 1
+      }
+    },
+    {
+      "chapter": 501,
+      "group_head": true,
+      "payload_bytes": 49821,
+      "tokens_cl100k_base": 23803,
+      "state_bytes": 10136,
+      "far_omitted": {
+        "knowledge": 450,
+        "resources": 1
+      }
+    },
+    {
+      "chapter": 1000,
+      "group_head": false,
+      "payload_bytes": 38764,
+      "tokens_cl100k_base": 19355,
+      "state_bytes": 10135,
+      "far_omitted": {
+        "knowledge": 949,
+        "resources": 1
+      }
+    },
+    {
+      "chapter": 1001,
+      "group_head": true,
+      "payload_bytes": 49871,
+      "tokens_cl100k_base": 23873,
+      "state_bytes": 10140,
+      "far_omitted": {
+        "knowledge": 950,
+        "resources": 1
+      }
+    },
+    {
+      "chapter": 1500,
+      "group_head": false,
+      "payload_bytes": 38688,
+      "tokens_cl100k_base": 19371,
+      "state_bytes": 9807,
+      "far_omitted": {
+        "knowledge": 1449,
+        "resources": 1
+      }
+    },
+    {
+      "chapter": 1501,
+      "group_head": true,
+      "payload_bytes": 49825,
+      "tokens_cl100k_base": 23787,
+      "state_bytes": 9809,
+      "far_omitted": {
+        "knowledge": 1450,
+        "resources": 1
+      }
+    },
+    {
+      "chapter": 2000,
+      "group_head": false,
+      "payload_bytes": 38918,
+      "tokens_cl100k_base": 19450,
+      "state_bytes": 10239,
+      "far_omitted": {
+        "knowledge": 1949,
+        "resources": 1
+      }
+    },
+    {
+      "chapter": 2001,
+      "group_head": true,
+      "payload_bytes": 49992,
+      "tokens_cl100k_base": 23929,
+      "state_bytes": 10241,
+      "far_omitted": {
+        "knowledge": 1950,
+        "resources": 1
+      }
+    },
+    {
+      "chapter": 3000,
+      "group_head": false,
+      "payload_bytes": 38694,
+      "tokens_cl100k_base": 19387,
+      "state_bytes": 9807,
+      "far_omitted": {
+        "knowledge": 2949,
+        "resources": 1
+      }
+    }
+  ],
+  "write_seconds": 349.595,
+  "audit_seconds": 25.349,
+  "audit": {
+    "ok": true,
+    "chapters": 3000,
+    "problems": [],
+    "unpaid_hooks": [],
+    "final_state_hash": "95c734971bcd32762062167f85196814251f564956a6b29e79830003b187880b",
+    "matches_book": true
+  },
+  "resume": {
+    "chapter": 1500,
+    "json_bytes": 81265152,
+    "state_match": true
+  },
+  "recovery": [
+    {
+      "chapter": 1499,
+      "applied_to": 1499,
+      "match": true
+    },
+    {
+      "chapter": 1500,
+      "applied_to": 1500,
+      "match": true
+    }
+  ],
+  "max_rss_bytes_macos": 722501632
+}

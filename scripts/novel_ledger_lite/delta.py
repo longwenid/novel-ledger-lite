@@ -1,23 +1,12 @@
-"""The L3 delta layer: per-chapter state deltas, the projection index, the recall inverted
-index, and volume/checkpoint snapshots.
+"""State deltas, projection indexes, asset inverted indexes and checkpoint replay.
 
-五层账本（完整版架构报告 §3.1）的 lite 落地：
-- L3 state_delta  每章 settle 顺路产出（引擎确定性计算，零模型）；delta 是派生数据，
-  真源始终是 events/prose/headers（已入链）；delta 不新增哈希机制——每章投影哈希已
-  逐章入章行 state_hash。
-- delta_index     坐标→末次变更章：投影索引化的分级依据（近窗全文/远窗标题行）。
-- inverted        资产→章号倒排：recall 从线性翻页降为「先查倒排定位，再取页」
-  （方案三补丁 c；无匹配 O(1)——索引 miss 直接返回空）。
-- checkpoint      每卷界或每 N 章冻结全量投影（报告第四刀采方案三同款
-  「每卷 checkpoint 全量＋章间增量」）；中间 delta 在其后 checkpoint 被超越时可清理。
-- rebuild         从最近 checkpoint 重放 events 重建缺失/损坏的 delta 段
-  （报告 §5.4-B：数据零丢失——真源在链上，delta 是派生物）。
-"""
+正文与 events 是真源，delta 和索引是派生数据。checkpoint 保存当前全量状态，
+恢复时选目标章之前的最近快照，再按章重放事件；无合适快照则从种子状态开始。"""
 from __future__ import annotations
 
 import copy
 from .contracts import digest, require
-from . import facts
+from . import facts, book_state
 
 # 状态条目类字段：条目级 diff 分级；标量字段（clock 等）整字段记 touched。
 ENTRY_FIELDS = ('entities', 'facts', 'knowledge', 'resources', 'relations', 'hooks', 'places',
@@ -98,21 +87,24 @@ def checkpoint(state, through, volume=None):
 
 
 def rebuild(book, store, through=None):
-    """Rebuild the live projection from the nearest checkpoint plus committed events.
+    """Rebuild the live projection through a requested chapter from a checkpoint and committed events.
 
-    delta 损坏/中断恢复路径（报告 §5.4-B）：从最近 checkpoint 起重放各章 events；
-    无 checkpoint 时从种子状态全量重放。数据零丢失——真源在链上。返回 (state, applied_to)。
-    """
-    checkpoints = book.get('checkpoints') or []
+    无可用快照时从种子状态开始；返回状态与实际恢复到的章号。"""
+    book_state.require_current(book)
+    require(through is None or type(through) is int and through >= 0,
+            'chapter', '恢复章号须为非负整数。')
+    target = store.last_chapter() if through is None else min(through, store.last_chapter())
+    checkpoints = [row for row in book.get('checkpoints') or [] if row['through'] <= target]
     if checkpoints:
         latest = max(checkpoints, key=lambda row: row['through'])
-        if through is not None and latest['through'] > through:
-            latest = min((row for row in checkpoints if row['through'] <= through),
-                         key=lambda row: row['through'], default=latest)
+        require(digest(latest['state']) == latest['state_hash'], 'checkpoint_hash',
+                'checkpoint 状态与哈希不符。')
         state, start = copy.deepcopy(latest['state']), latest['through']
     else:
-        state, start = facts.seed(book['contract']), 0
-    for row in store.headers('main', first=start + 1, last=through):
+        state, start = facts.seed(book['initial_contract']), 0
+    applied_to = start
+    for row in store.headers('main', first=start + 1, last=target):
         for event in store.read_document(row['events']):
             facts.apply_event(state, event, row['n'])
-    return state, max((row['n'] for row in store.headers('main')), default=0)
+        applied_to = row['n']
+    return state, applied_to

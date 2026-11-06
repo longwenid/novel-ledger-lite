@@ -1,20 +1,44 @@
-"""Invariants every lite state transition must leave behind.
+"""Shape invariants for each ledger transition.
 
-完整版 book_state.check_state 的 lite 子集，另加差量化自己的两条形状校验：
-- design_drift 行的 participants 必须是登记 id（完整版报告 §4.3-2/§6.1-6：漂移行
-  声明缺失或错 id 时活跃切片的 id 交集会失效、可能漏收旧漂移——安装门在这里拦住）；
-- delta/checkpoint/倒排三类派生结构的形状（损坏在 rebuild/verify_full 暴露，这里拦畸形）。
-"""
+漂移行参与者必须使用已登记实体 ID；校验增量索引、checkpoint、组记录与换档结构。"""
 from __future__ import annotations
 
-from .contracts import require, text
+from .contracts import SCHEMA, require, text
 
 STATUSES = ('preparing', 'running', 'paused', 'completed')
 DRIFT_BASE_FIELDS = ('id', 'chapter', 'kind', 'key', 'reason')
+BOOK_FIELDS = frozenset(('schema', 'contract', 'contract_source', 'initial_contract', 'contract_changes',
+    'last_chapter', 'world', 'branch', 'revision', 'status', 'style_archive', 'state', 'written_han',
+    'volumes_outline', 'chapter_outlines', 'plans', 'design_drift', 'deltas', 'delta_index', 'inverted',
+    'checkpoints', 'groups', 'outline_protocol_checked', 'style_volume_anchor', 'anchor_reviews',
+    'volume_diffs', 'style_switch'))
+
+
+def require_current(book):
+    """Accept only the current book shape; never infer missing fields or upgrade old data."""
+    require(isinstance(book, dict) and book.get('schema') == SCHEMA, 'book_schema',
+            '仅支持当前账本格式。', {'expected': SCHEMA})
+    require(set(book) == BOOK_FIELDS, 'book_schema', '账本字段须符合当前格式。',
+            {'missing': sorted(BOOK_FIELDS - set(book)), 'unknown': sorted(set(book) - BOOK_FIELDS)})
+    require(isinstance(book['contract'], dict) and isinstance(book['initial_contract'], dict)
+            and isinstance(book['state'], dict) and isinstance(book['contract_changes'], list)
+            and type(book['last_chapter']) is int and book['last_chapter'] >= 0,
+            'book_schema', '初始契约、变更记录与提交进度字段不符合当前格式。')
+    archive = book['style_archive']
+    require(archive is None or isinstance(archive, dict) and isinstance(archive.get('path'), str)
+            and isinstance(archive.get('content'), str), 'book_schema', '冻结文风档案字段不符合当前格式。')
+    require(not book['contract'].get('style_source') or archive is not None,
+            'book_schema', '外部文风源必须已有冻结档案，不从文件补建。')
+    if book['contract'].get('style_profile') and not book['contract'].get('style_source'):
+        require(isinstance(archive, dict) and archive.get('profile') == book['contract']['style_profile']
+                and archive.get('source_kind') == 'builtin_catalog' and text(archive.get('guide')),
+                'book_schema', '所选内置文风须已有冻结档案与执行摘要，不从缺失字段补建。')
+    return book
 
 
 def check_book(book):
     """Shape invariants; the command that breaks them is the command that reports them."""
+    require_current(book)
     status = book.get('status')
     require(status in STATUSES, 'book_state', '未知的项目状态。', {'status': status, 'known': list(STATUSES)})
     require(isinstance(book.get('state'), dict), 'book_state', '状态投影缺失。')
@@ -52,9 +76,11 @@ def check_book(book):
                 and isinstance(row.get('state'), dict) and isinstance(row.get('state_hash'), str),
                 'book_state', 'checkpoint 须为 {through, state, state_hash}。')
     for group in book.get('groups') or []:
-        require(isinstance(group, dict) and isinstance(group.get('members'), list)
-                and isinstance(group.get('hash'), str),
-                'book_state', '组冻结须带 members 与 hash。')
+        require(isinstance(group, dict) and set(group) == {'volume', 'members', 'hash', 'pack'}
+                and isinstance(group['members'], list) and len(group['members']) == 2
+                and isinstance(group['hash'], str) and isinstance(group['pack'], dict)
+                and group['pack'].get('hash') == group['hash'],
+                'book_state', '组冻结须使用当前 volume/members/hash/pack 完整结构。')
     switch = book.get('style_switch') or {}
     require(isinstance(switch, dict) and (not switch
                                           or (type(switch.get('at')) is int and switch['at'] >= 1

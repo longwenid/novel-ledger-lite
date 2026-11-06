@@ -37,7 +37,7 @@ def test_envelope_refused_without_author_style_and_lists_options():
     assert [row['profile'] for row in board['builtin']] == \
         ['市井修仙', '账房掌门', '神秘学双声部', '宗族史传', '科幻错位幽默']
     assert all(row['line'] for row in board['builtin'])
-    assert 'style-distill' in board['external'] and 'style_source' in board['external']
+    assert 'style_source' in board['external']
     assert '不使用默认档放行' in board['note']
     # 引擎自身提供同一块板面（主控随时可取，不替作者猜偏好）：
     assert pipeline.style_board() == board
@@ -65,8 +65,7 @@ def test_submit_refused_without_author_style_direct_path():
 
 
 def test_external_archive_group_amortized_and_registered_anchor_absent():
-    """外部档案走组级均摊：组首章内嵌必读 style_archive，组内续章不再携带（组包引用补读，
-    组包自带档案全文）；外部源且无内置档名时注册锚 style_anchor 不登记。"""
+    """外部档案默认每章自足；组包仍可按哈希补读，无内置档名时不登记注册锚。"""
     raw = contract()
     raw.pop('style_profile', None)
     raw['style_source'] = ARCHIVE
@@ -82,7 +81,7 @@ def test_external_archive_group_amortized_and_registered_anchor_absent():
     assert 'style_anchor' not in head['records']               # 无内置档名 → 无注册锚
     assert pipeline.submit(book, store, 1, draft_for(book, 1))['ok']
     tail = pipeline.envelope(book, store, 2, group_row)
-    assert 'style_archive' not in tail['records']              # 续章不重复携带整份档案
+    assert 'style_archive' in tail['required']              # 未确认当前会话缓存，必须带完整档案
     assert 'group_pack' in tail['records']
     assert len(tail['required']) == len(set(tail['required']))
 
@@ -126,7 +125,7 @@ def test_envelope_and_brief_carry_selected_profile_spec():
 
 
 def test_external_style_archive_is_effective_source():
-    """外部文风档案（style-distill《文风档案.md》）：契约 style_source 登记→信封
+    """外部文风档案（UTF-8 Markdown 文风档案）：契约 style_source 登记→信封
     style_archive 携带全文、source_kind 标外部、简报注明；与内置档二选一。"""
     raw = contract()
     raw['style_source'] = ARCHIVE
@@ -215,8 +214,8 @@ def test_recontract_patch_switches_profile_param_level():
         pipeline.recontract_patch(book, source='作者原话', style_profile='不存在的档')
     report = pipeline.recontract_patch(book, source='作者原话：换账房掌门', style_profile='账房掌门')
     assert book['contract']['style_profile'] == '账房掌门'                 # 逐字进契约
-    assert report['switch'] == {'at': 5, 'profile': '账房掌门', 'previous': '市井修仙'}
-    assert book['style_switch']['at'] == 5
+    assert report['switch'] == {'at': 1, 'profile': '账房掌门', 'previous': '市井修仙'}
+    assert book['style_switch']['at'] == 1
 
 
 def test_recontract_patch_external_source_and_baseline_cutoff():

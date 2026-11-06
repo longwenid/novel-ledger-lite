@@ -1,18 +1,12 @@
-"""lite one-page briefs: the writing stage's rules, self-check list, and the inline-callback note.
+"""Writing briefs with inline verified quotes and explicit submission checks.
 
-完整版报告第二刀（内联回带）的简报侧落地：材料里 anchor_sentences 已携带被引前文的
-逐字原句，简报明写「引用已内联、无需 recall；确需更长前文才用 recall」——把 recall
-从常规路径压成兜底通道，省一次调用 > 省一段字节。
-"""
+引用与文风规格使用信封中的相同记录；常规写作不逐条重读未变更历史。"""
 from __future__ import annotations
 
 from .contracts import policy_default
-from .drift import DELTA_KINDS, ITEM_KINDS
+from .drift_reconcile import _planned
 
 
-# The delta groups a chapter outline declares, as the writer must answer them one by one.
-# 与完整版 briefs.DELTA_HINTS 同表同源（完整版在渲染时读 drift.DELTA_KINDS，同一张提示表），
-# lite 逐字保留——自检行描述的比对与引擎执行的比对必须同表，不能各说各话。
 DELTA_HINTS = {
     'resources': '每笔资源从多少到多少与章纲一致，消耗有来源、得到有去处，数量守恒（不足会被拒）。'
                  'actual.from 由引擎投影，不要照抄章纲当既成事实。',
@@ -37,7 +31,7 @@ DELTA_HINTS = {
 
 
 NATURAL_PROSE_GUIDE = (
-    '读材料里 style_anchor（或生效文风档案）与本卷 style.trend，按那个声线写，不要另外发明规则。'
+    '读材料 style 与生效文风档案，按冻结声线写，不要另外发明规则。'
     '写你知道的事：人物眼前的利益、他在意什么、他不愿明说的事，让细节从使用和忽略中自然出现。'
     '对白让人说话——直说、绕开、言不由衷或沉默都可以，动机不必说透。'
     '用动作和具体物件承载情绪，少用形容词解释感受。'
@@ -45,9 +39,8 @@ NATURAL_PROSE_GUIDE = (
 )
 
 
-def _check_block():
-    kinds = list(DELTA_KINDS) + [kind for kind in ('node', 'thread', 'hook', 'disclosure')
-                                 if kind in ITEM_KINDS]
+def _check_block(plan):
+    kinds = list(dict.fromkeys(entry['kind'] for entry in _planned(plan)))
     rows = [(kind, DELTA_HINTS[kind]) for kind in kinds if kind in DELTA_HINTS]
     if not rows:
         return []
@@ -62,51 +55,34 @@ def _style_block(spec):
     spec 为空（直调简报的旧路径）时降级为一句档名提示，不空转。"""
     if not spec:
         return []
-    lines = ['## 文风规格（本章生效，与材料 style 记录同源）']
+    lines = ['## 文风规格（本章生效，与材料 style 记录一致）']
     if spec.get('source_kind') == 'external_archive':
-        lines.append('- 生效文风源：外部档案（style-distill《文风档案.md》，材料 style_archive 全文；'
+        lines.append('- 生效文风源：外部档案（UTF-8 Markdown，材料 style_archive 全文；'
                      '档名 %s 仅作标识）。' % spec.get('profile', ''))
     else:
         lines.append('- 生效文风档：%s（内置目录档；其注册锚是首章认可前的形状地板）。'
                      % spec.get('profile', ''))
-    voice = [spec.get('voice', ''), spec.get('tone', ''), spec.get('pov', '')]
-    named = [part for part in voice if part]
-    if named:
-        lines.append('- 契约声线：' + '；'.join(named) + '。')
-    traits = spec.get('style_traits') or []
-    if traits:
-        lines.append('- 声线特质：' + '；'.join(traits) + '。')
-    lines.append('- ' + spec.get('baseline_note', ''))
-    volume = spec.get('volume') or {}
-    if volume.get('trend'):
-        lines.append('- 本卷走向：' + volume['trend'])
-    chapter_style = spec.get('chapter') or {}
-    if chapter_style.get('rhythm'):
-        lines.append('- 本章执行点：' + chapter_style['rhythm'])
+        lines.append('- 内置写法读 style_guide 的冻结执行摘要；完整分析可经 style_reference 按需补读。')
+    lines.append('- 声线、节奏、滚动基线与容差读 style；冻结核心约束读 core_context，不另复制规格。')
     return lines
 
 
 def write_brief(book, chapter, plan, anchor_pack, style_spec=None):
     """The one page a writing dispatch needs. 锚句清单与简报同源（同一 plan 引用），因此
     「点名多少抽多少」两侧一致；文风规格小节带生效档名（或外部档案）与基线说明——
-    与信封 style 记录同源，写进简报的就是提交门将比对的同一组数字。"""
+    与信封 style 记录一致，写进简报的就是提交门将比对的同一组数字。"""
     prior = (anchor_pack or {}).get('prior') or {}
     scene = (anchor_pack or {}).get('scene') or {}
     spec = style_spec if isinstance(style_spec, dict) else {}
     anchor_lines = []
     for quote in prior.get('anchors') or []:
-        anchor_lines.append('- [%s#%d] %s（%s：%s）' % (quote['ref_kind'], quote['chapter'],
-                                                        quote['quote'], quote['op'], quote['asset']))
+        anchor_lines.append('- [%s#%d] %s：原句见 anchor_sentences。' % (
+            quote['ref_kind'], quote['chapter'], quote['asset']))
     if not anchor_lines:
         anchor_lines.append('- 本章纲未点名可内联的历史原句；需要更早前文时用 recall 按倒排定位。')
     scene_lines = []
     for row in scene.get('anchors') or []:
-        quotes = row.get('quotes') or []
-        if quotes:
-            joined = ' / '.join(q['quote'] for q in quotes)
-        else:
-            joined = '（无可抽引文）'
-        scene_lines.append('- [%d] %s　%s' % (row['chapter'], joined, row.get('summary', '')))
+        scene_lines.append('- [%d] 开篇、收束与摘要见 anchor_sentences。' % row['chapter'])
     near = policy_default('adjacent_window_chapters')
     lines = [
         '## 本阶段任务（write·第 %d 章）' % chapter,
@@ -114,9 +90,11 @@ def write_brief(book, chapter, plan, anchor_pack, style_spec=None):
         '静章可停留于关系或余波。提交 {title, summary, self_check, prose, drift_check}。',
         '',
         '## 写作材料怎么读（差量信封）',
-        '- 必读记录见任务卡 required 清单：章纲行、状态投影（近窗全文/远窗标题行——标题行条目'
-        '的完整值由宿主经组基线 group_pack 或页链 history_source/recall 补读下发，未选不代表不存在）、'
-        '到期承诺切片、本章世界记录。',
+        '- 必读见 required：core_context 为核心约束，chapter_outline 是唯一章纲正文，'
+        'state 为当前真值与近期历史，dependencies 说明已核验依赖。当前状态不按年龄淘汰。',
+        '- recall_manifest 提供未携带资源的名称、ID 和定位片段；需要时向宿主请求 '
+        'pipeline.catalog 搜索/翻页，再调 pipeline.resource 取完整值；历史证据用 recall。'
+        '目录片段不能代替真值，未携带不代表不存在，人物知情与读者知情不能混用。',
         '- 前文只带前 %d 章全文；更早的前情靠下面的锚句与 scene_sources，不再整章携带。' % near,
         '- design_drift 只带活跃切片（当前卷未吸收＋登记 id 交集命中的更早卷漂移）；'
         '已吸收条目已归档，不再出现。',
@@ -133,7 +111,7 @@ def write_brief(book, chapter, plan, anchor_pack, style_spec=None):
         '## 写作方法',
         NATURAL_PROSE_GUIDE,
         '',
-        *_check_block(),
+        *_check_block(plan),
         '## 内联回带纪律',
         '引用已内联、无需 recall；确需更长前文时向宿主请求 recall（宿主先查倒排定位、'
         '再取页下发，Worker 不做历史翻页），禁止为「再确认」逐条重读未变更记录。',

@@ -1,102 +1,126 @@
-# 差量信封与账本语义（lite 流程参考）
+# 上下文组装与交付
 
-> 与完整版的差异：本文描述的组装规则只存在于 lite——完整版 novel-ledger 每次派工携带
-> 整份投影与整表 design_drift（context.py 的 complete_state/complete_hooks 逐章冻结副本），
-> lite 改为五层账本 L0-L4 的差量信封；机械门的判定对象与完整版逐字同源，变的只是材料
-> 怎么进上下文。完整版无本文所述的 delta/checkpoint/倒排/组级共享包/锚句内联。
+五层账本保存契约、卷级材料、章级状态、章间增量与历史事件。每次派工从同一真源编译
+四类上下文：核心约束、本章执行包、衔接材料、补读目录。账本格式与派工协议分开演进。
 
-## 一、信封里有什么（compose.build，现编现冻）
+## 单章 Markdown 写作包
 
-编时点＝该章派工时（前章正文与事件已提交、哈希已在链上）。每份信封是内容寻址冻结物，
-`records` 是记录名→文档键，`required` 是必读清单：
+准备者在上一章通过 `submit` 后生成下一待写章，正文写作者只读生成的文件：
 
-| 记录 | 层 | 必读条件 | 内容 |
-|---|---|---|---|
-| `contract` | L0 | 组首章（无组时每章） | 契约全文 |
-| `style_volume_anchor` | L0 | 组首章（无组时每章），且首个 checkpoint 已冻结时 | 文风卷首锚（checkpoint 章号＋投影哈希） |
-| `volume_outline` | L1 | 组首章 | 本卷卷纲行 |
-| `chapter_outline` | L2 | 每章 | 本章冻结章纲行（enter/exit 链＋增量声明＋drift_check 的核对对象） |
-| `state` | L2 | 每章 | 索引化投影（见下节） |
-| `design_drift` | L2 | 有活跃漂移时 | 活跃切片＋归档计数＋判定规则说明 |
-| `hooks` | L2 | 每章 | 到期承诺切片（open 且本章 hook_refs/参与者关联） |
-| `world_records`、`disclosure_boundary` | L2 | 有世界模型时 | 本章 world_refs＋参与者关联的世界记录（mysteries 不下发）＋幕后真相边界 |
-| `word_budget` | L2 | narrative_tracking 时 | 本章字数带 |
-| `style` | L2 | 每章 | 文风规格（必读）：生效文风源（内置档名或外部档案标识 source_kind）＋契约声线字段＋当前基线锚（最近 5 章滚动中位，与提交门比对同源）＋合并容差＋卷走向＋本章执行点；简报「文风规格」小节与本记录同源 |
-| `style_anchor` | L2 | 每章，仅当内置档名已登记 | 内置档注册锚（`style.baseline`，origin=default）；外部源且无档名时不登记 |
-| `style_archive` | L0 | 外部文风源时的组首章（无组时每章） | style-distill《文风档案.md》全文（契约 style_source 登记；与内置档二选一）；组内续章经 `group_pack` 引用补读，不重复携带 |
-| `group_pack` | 组 | 组内续章（可选读） | 组级共享包引用：契约/卷纲/投影基线/文风卷首锚/外部档案全文/活跃 hooks，已随组首章交付 |
-| `previous_deltas` | L3 | 组内续章（可选读） | 组内前章 state_delta（重放段） |
-| `anchor_sentences` | L3 | 有锚可抽时 | 前情锚句（章纲引用驱动）＋场景锚句（前窗开篇/收束句＋summary） |
-| `scene_sources` | L3 | 跨章场景依赖时 | 被依赖场景的定义行＋所在章哈希 |
-| `previous_chapter:N` | — | 每章 | 前文窗口（默认 1 章）全文 |
-| `previous_chapters` | — | 每章 | 窗口索引＋prose 哈希＋summary |
-| `history_source` | L4 | 可选读 | 页链快照＋链头哈希（recall 兜底取页用） |
-| `projection_warnings` | — | 有告警时 | conservative 回退等显式告警 |
+```python
+from pathlib import Path
 
-组内均摊：组首章内嵌 L0/L1 必读；续章只带引用＋差量，字节随组内章数递减，
-且与书龄无关（tests/test_envelope.py::test_envelope_size_stays_flat_as_book_ages 验证：
-远窗条目内容放大 10 倍，投影字节不变）。
+package = pipeline.chapter_package(book, store, chapter, group_row)
+path = Path(f"第{chapter:04d}章写作包.md")
+path.write_text(package["text"], encoding="utf-8")
+pipeline.validate_chapter_package(book, store, path.read_text(encoding="utf-8"))
+# 将 path 交给写作者；写作后由准备者使用 pipeline.submit 核账。
+```
 
-## 二、索引化投影（scoped_state）
+`group_row` 可省略。生成时检查账本与存储进度，仅允许下一待写章，且不使用会话缓存。
+除常规必读材料外，它逐页展开本章相关目录中未携带条目的完整当前值；目录片段不作为事实。
+若准备者知道还需要其他资源或更长前文，可在重生成时指定
+`extra_resources=[{"kind": "facts", "key": "人物ID:事实ID"}]` 和 `extra_chapters=[已提交章号]`。
+指定资源或历史章节不存在时拒绝生成。写作者发现信息缺失或冲突时停止，说明需求，由准备者
+检索、核实并重新生成；禁止依据缺失信息猜测。自动检查不能证明章纲的语义依赖已完全声明。
 
-完整场景声明（`dependency_coverage=complete`＋逐场 `reads`/`depends_on`）时：
+文件内含版本、账本与章节链指纹及正文内容摘要；`validate_chapter_package` 接受文件文本或返回的
+package，在正文写作和提交前校验。账本、已提交章节或文件内容变更后应重新生成，不能沿用旧包。
+提交仍使用既有 `submit` 与核账，不由写作包替代。补充全部相关条目会增加输入量；人物知情、
+读者知情与作者掌握的信息仍须分别遵守包内边界，不能因为资料出现在包中就直接披露。
 
-- 近窗（`near_window_chapters`，默认 30）内变更过的条目带全文；
-- 远窗条目只带标题行 `{'_ref': True, 'last_chapter': n}`；
-- 契约 `pinned` 点名的条目永远全文常驻——堵「30 章未提即失忆」；
-- 章纲 `reads`/`hook_refs`/`history_refs`/`reader_refs` 点名的条目整条恢复；
-- 身份登记表（entities）、站位、空间链、活跃线路与承诺是当前态，恒全文；
-- 初始态（从未 settle 更新）按远窗处理，需要常驻请显式 pinned。
+## 每章材料
 
-声明缺失时回退 **conservative 全量**（参与人相关，与完整版 partial 路径同形）并在
-`projection_warnings` 显式告警——不静默裁剪。补齐声明重新冻结章纲后恢复薄投影。
+| 记录 | 交付规则 | 内容 |
+|---|---|---|
+| core_context | 每章必读，不缓存省略 | 作者契约的关键原文、主角限制、结局方向、声线、章长与当前卷职责 |
+| chapter_outline | 每章必读 | 唯一一份冻结章纲；payload 只引用这个记录名 |
+| dependencies | 每章必读 | 汇总的依赖坐标、已存在或尚未建立的状态、校验范围说明 |
+| state | 每章必读 | 相关当前状态、必需知情话题、近期历史与材料范围说明 |
+| volume_context | 默认必读，仅准确缓存确认后省略 | 本卷执行方向及本章节点、线路定义 |
+| style | 每章必读 | 生效声线、文风档、当前滚动基线、容差与章内节奏 |
+| style_guide | 内置文风时默认每章必读，仅准确缓存确认后省略 | 从所选真实档案冻结的执行摘要，附完整档案引用 |
+| style_reference | 可选补读 | 内置文风完整档案及参考分析，存储一次，常规派工不重复携带全文 |
+| style_archive | 外部文风时默认每章必读，仅准确缓存确认后省略 | 已冻结的完整文风档案 |
+| world_records / disclosure_boundary | 有世界模型时必读 | 本章引用与人物相关记录；相关谜团的披露边界，不携带全部幕后真相 |
+| hooks / design_drift / word_budget | 相关时必读 | 当前义务、活跃偏差及章节字数范围 |
+| previous_chapter:N / previous_chapters | 相邻章存在时必读 | 前一章全文与章节定位 |
+| anchor_sentences / scene_sources | 有引用时必读 | 已核验的历史原句、前两章首末事件与摘要、所依赖场景 |
+| recall_manifest | 每章必读 | 未携带资源的名称、ID、80 字以内定位片段、总数与翻页入口 |
+| contract / volume_outline / group_pack | 可选背景 | 完整契约、完整卷纲与冻结组首时点快照；当前章真值以 core_context 和 state 为准 |
+| previous_deltas / style_anchor / style_volume_anchor / history_source | 可选背景 | 增量、注册锚、锚身份与历史寻址指针，不在常规派工中重复携带 |
 
-## 三、design_drift 活跃切片（登记制 id 交集）
+简报列执行规则、原句与场景的记录位置、当前适用的自检种类；它不再重抄章纲、引文、
+声线和整套数值规格。`style` 已带当前生效锚，注册锚只作可选背景。
 
-- 当前卷内未吸收 → 无条件必达；
-- 更早卷未吸收 → 仅当参与者 id 交集、hook_refs 交集、或被该章 reader_refs/history_refs 点名；
-- 已吸收（`absorbed_by` 有值）或已归档 → 不再出现（只剩 `archived_count`）。
+## 当前状态与历史的边界
 
-吸收回写在章纲安装门核对：章纲行 `absorbs: [漂移id]` 必须存在且未吸收，通过即登记
-`absorbed_by=[章号]`。误漏边界：漂移行 participants 须为登记 id（`book_state.check_book`
-拦截），声明错 id 时交集失效的残余风险由作者审阅与（完整版的）continuity 兜底。
+`facts/resources/relations/character_current` 是当前有效值。本章相关人物的这些条目
+不因最后变更时间久远而变成标题或消失。身份、站位、持有链、相关地点拓扑也完整保留。
+作者应将持续有效的限制放在当前事实中，经过与旧案材料放在 historical_assertions，
+避免把每件历史事件永久堆进当前状态。
 
-## 四、两类锚句（anchors.py，零模型抽取，逐字核验）
+`knowledge` 是所列人物的知情切片，`reader_knowledge` 是读者知情切片。明确需要的
+话题始终完整携带；其他话题按近窗选择并提供补读入口，省略不能解释为人物不知道。
+`developments` 的未点名事件列表仅带近期部分；人物当前变化由 character_current 承载。
 
-- **前情锚句**（引用驱动）：章纲 `hook_refs`/`history_refs`/`reader_refs` 点名的资产经
-  L4 倒排定位到章，从该章冻结 events 抽 `evidence.quote` 原句——章纲点名多少抽多少；
-- **场景锚句**（窗口驱动）：前窗（`scene_anchor_chapters`，默认 2）已提交章各取首/末事件
-  quote＋summary 行。
+pinned 与场景显式读取项完整保留。缺少完整依赖声明时保守携带相关背景并告警；即使
+回退，当前值、pinned 与明确读取项也不丢失。当前值本身过多时材料会变大，不能为满足
+Token 目标裁掉必需事实。
 
-两类都经 `evidence.evidence` 对冻结正文逐字核验；抽不出的（引文缺失/不一致）记入
-`unmatched` 留痕，宁缺毋滥。
+## 依赖检查
 
-## 五、卷界与完本
+从场景 present/speakers、人物和资源变化、关系端点、知情话题、enter/exit、preconditions、
+节点前置、伏笔引用及 pinned 汇总依赖。派工前验证坐标存在、世界引用存在、章纲前态
+一致；缺失或冲突返回 Error(context_dependencies)，不得写完后才发现缺少前提。
 
-- 卷末自动：全量 checkpoint（state＋哈希入账）＋差异单——`required_unpaid`（封线承诺
-  显式点名）、`open_continues`（带入下卷的承诺）、`drift`（登记总数/已吸收/吸收率）、
-  `written_han`、checkpoint 哈希；
-- 非卷界每 `checkpoint_chapters`（默认 50）章同样落全量 checkpoint 兜底；
-- 文风卷首锚：首个 checkpoint 冻结 `style_volume_anchor`（checkpoint 章号＋投影哈希），此后每
-  `anchor_review_chapters`（默认 50）章向 `book['anchor_reviews']` 追加一条 observation
-  （只登记回比时点与锚身份，不含数值偏离、不拦截、不进差异单 dict）；
-- 完本验收 `pipeline.verify_full`：逐章 events 全量重放核对投影哈希＋逐章重算链哈希
-  ＋未清承诺清单——不依赖 delta（delta 是派生数据，真源在链上）；分段/抽样不进 lite。
-- delta 损坏恢复 `delta.rebuild(book, store)`（`from novel_ledger_lite import delta`）：从最近
-  checkpoint 重放 events 重建，数据零丢失。
+本章计划初次建立的资源或明确声明为空的前态记录为 not_established，不将它们伪造为
+已存在值。新实体由章纲说明身份，实际成立仍须正文提交与结算。
 
-## 六、提交门与 draft 形状
+complete 是声明，不是语义完整性的证明。自动检查也只能覆盖可枚举引用，无法证明作者
+没有遗漏未表达的约束；这种边界必须保留给实际正文评估。
 
-`pipeline.submit(book, store, chapter, draft)`，draft 必须带
-`{title, prose, summary, self_check, drift_check}`，`drift_check={items, unplanned, verdict}`：
+## 补读和定位
 
-- items 一行不多一行不少地覆盖章纲计划增量（含 hook 的 plant/payoff 各一行）；
-- 每行带 `status: kept|deviated|skipped`、实际结果与 `evidence:{chapter, quote}`
-  （quote 逐字取自本章正文）；
-- deviated/skipped 必须写 reason；verdict 与实际偏差互相反证。
+`pipeline.catalog(book, chapter=章号, kind=种类, query=关键词, page=0, per=20)` 搜索或翻页；
+省略 chapter 时查询全书账本。可按稳定 ID、人物名或定位片段搜索，单页上限 100。
+目录片段不替代真值，选中后调 `pipeline.resource(book, kind, key)` 取完整当前值。
+地点定义使用 kind=place_records，人物站位使用 placements。需要历史证据再调 recall。
+目录查询、补读和生成正文的次数由调用方记录，不能把补读视为零成本。
 
-拒绝时返回 `{'ok': False, 'findings': [...]}`，账本不变；通过时返回
-`{'ok': True, 'chapter', 'row', 'delta', 'volume_boundary'}`。findings 的
-`criterion` 与完整版同一词汇表（drift_coverage/drift_before/evidence/hook_due/repetition/
-style_*/substance…），同样出现在信封简报的「提交前自检」清单里——简报要求什么，
-引擎就核什么。
+## 会话与缓存
+
+没有缓存确认时，每章都能独立使用。宿主可以确认当前写作者确实已加载某些文档：
+
+```python
+cache = {"context_id": "current-writer-session", "loaded": [archive_hash, volume_context_hash]}
+work = pipeline.envelope(book, store, chapter, group_row, cache=cache)
+delivery = pipeline.materialize(work, store, cache=cache)
+```
+
+仅内容哈希完全一致的 style_guide、style_archive、volume_context 可以省略正文。core_context、章纲、
+当前状态、依赖报告和补读目录每章仍必读。缓存确认不进入书账本，不跨会话自动继承。
+新会话、重载后的新写作者或上下文压缩后应清除确认。即使复用了带缓存标记的旧任务，
+materialize 没收到当前确认也会补齐相应文档。宿主对确认真实性负责，哈希本身不是模型记忆。
+
+## 实际交付与度量
+
+派工协议为 novel-ledger-lite.task/2；payload.chapter_outline 引用记录名，正文只在该记录
+出现一次。通过 `pipeline.materialize` 得到实际交付文本，不再把整份任务卡、章纲和简报
+重复拼接。可选背景只保留在存储中；相同文档内容仅渲染一次，其他记录以名称指向它。
+
+返回 metrics 包含总 UTF-8 字节、by_record、四类材料的 category_bytes、元数据和简报字节、
+缓存记录数。可传 `token_counter(text)` 与 tokenizer_id 得到真实渲染文本的 Token 数。
+Token 分项的和不保证等于完整文本计数；不同分词器、缓存策略与模型的成本需另行核算。
+
+## 账本推进与恢复
+
+候选提交须精确覆盖章纲增量，证据逐字存在，前态、时间、资源、义务和重复门全部通过
+后才推进账本。卷末保存 checkpoint 和差异单。完本验收校验章节完整性、真源内容哈希、
+正文证据、逐章投影及链哈希、最终状态和未清承诺。拒绝候选不会改写书账本。
+
+`delta.rebuild(book, store, through=n)` 选不晚于 n 的最近快照，无合适快照则从种子重放，
+返回状态和实际恢复到的章号。仅接受账本 `novel-ledger-lite/2`、存储 `novel-ledger-lite.store/2`
+与文件 `novel-ledger-lite.bundle/2`；派工任务必须准确匹配 task/2，不能仅凭版本后缀通过。
+缺少提交时契约哈希、初始契约、进度或冻结档案的数据直接报错；进度不自动修正，
+组包必须已存在于内容库，不从内嵌快照补建。没有旧版兼容或升级路径。
