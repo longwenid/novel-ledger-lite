@@ -14,9 +14,11 @@ description: 在作者已确认总纲、卷纲与章纲后，使用冻结资源�
 - 引擎需要 Python 3.10+，仅使用标准库；从本技能目录的 `scripts/` 导入 `novel_ledger_lite`。
 - 首次准备项目时读 [references/inputs.md](references/inputs.md)，核对契约、世界模型、
   卷纲、章纲与提交格式。可运行 `python3 scripts/run_example.py` 验证完整四章示例。
+- 既有 Markdown 章纲可用 [导入与待核实流程](references/markdown-import.md) 建立带原文来源的
+  候选清单；候选不能代替引擎账本，缺少的时序、资源和状态不得伪造为零或无变化。
 - 文风必须由作者显式选择：内置档见 [references/style.md](references/style.md)，也可提供
   作者确认的 UTF-8 Markdown 文风档案。五份内置完整档案在 `references/styles/`；
-  选中后冻结实际文件，每章必读 `style_guide` 执行摘要，完整分析通过 `style_reference` 按需补读。
+  选中后冻结实际文件；单文件写作包携带本章所需文风材料，必要时由准备者补齐。
   未选定时 `envelope` 与 `submit` 会拒绝并返回选项，
   将选项交给作者选择，不代选默认档。外部档案不限定作者、文件名或生成工具。
 - 实际派工与恢复时按需读 [references/architecture.md](references/architecture.md)。
@@ -33,9 +35,12 @@ description: 在作者已确认总纲、卷纲与章纲后，使用冻结资源�
    不改写历史账本。此步骤核验既定章纲，不重新设计剧情。
 3. `group_row = pipeline.group(book, store, volume_id, size=5)` 冻结一组共享材料。
    同卷再次调用接续下一组；已覆盖全卷会拒绝。恢复已有组用 `pipeline.group_for(book, chapter)`。
-4. 组内依次调用 `work = pipeline.envelope(book, store, chapter, group_row)`，再调用
-   `delivery = pipeline.materialize(work, store)`，以 `delivery["text"]` 作为实际写作输入。
-   每章默认材料自足，不依赖写作者记得组首材料。写作后用 `pipeline.submit(book, store, chapter, draft)` 提交。
+4. 上一章提交通过后，准备者调用 `package = pipeline.chapter_package(book, store, chapter, group_row)`，
+   将 `package["text"]` 以 UTF-8 写为本章 Markdown 文件。写作前用
+   `pipeline.validate_chapter_package(book, store, 文件内容)` 校验文件完整性和账本时效。
+   正文写作者只读取这一个文件；发现缺失、冲突或不确定时停止，由准备者补齐后重新生成并校验。
+   生成细节和补充资料接口见 [references/architecture.md](references/architecture.md#单章-markdown-写作包)。
+   写作后用 `pipeline.submit(book, store, chapter, draft)` 提交。
    `draft` 必须含 `title/prose/summary/self_check/drift_check`。只在 `ok=True` 后推进下一章；
    拒绝时根据 `findings` 修正当前稿，不能用偏差说明代替修复，不能跳章或覆盖历史。
 5. 卷末查看提交结果的 `volume_boundary`，核对未兑承诺、带入下卷项目与漂移吸收情况。
@@ -45,23 +50,39 @@ description: 在作者已确认总纲、卷纲与章纲后，使用冻结资源�
 引擎不提供故事设计、自动返修调度或无人值守主机。候选被拒后的修正由当前写作会话执行；
 本项目 JSON 账本用于保存恢复，其他格式的旧项目需显式转换，不直接混读。
 
+## 写作模式界面
+
+DSH Web GUI 可开「写作模式」右栏：左边照常是会话，右边按「设定 / 章节 / 正文」三页
+阅读总纲约束、人物与世界、卷章表和已写正文。界面只读，真源仍是 JSON 账本。
+
+- 每完成一组 `submit`（或交付正文前）导出一份视图：
+
+  ```bash
+  python3 scripts/export_view.py 项目.json --out .novel-ledger
+  ```
+
+  它写 `.novel-ledger/view.json` 与每章一个 `.novel-ledger/chapters/chNNNN.md`，
+  不改动账本；账本变了就重跑一次。
+- 打开方式：会话标题栏右侧「写作模式」按钮，或右栏 guide 里的卡片；
+  面板右上角「刷新」重新读取。
+- 面板先找工作区根 `.novel-ledger/view.json`，再找一级子目录中的同名文件，
+  多项目工作区把视图放在各自项目目录即可。
+- 界面插件源码在 `ui/novel-writing-mode/`，随技能分发；在 DSH 桌面端用
+  `plugin_manager install_bundle <该目录绝对路径>` 安装（需批准），装好后刷新页面即可用。
+
 ## 控制上下文并保住资源
 
 - 前文默认只读前一章全文，结合前两章场景锚句和章纲引用的逐字历史锚句。
 - `core_context` 每章必读，包含总纲核心约束、主角限制、结局方向、声线和当前卷职责。
 - 本章相关人物的当前事实、余额、关系和当前人物状态不按年龄裁剪。近窗默认 30 章，
   用于近期事件和未点名知情话题；明确点名与 `contract.pinned` 值完整携带。
-- `recall_manifest` 每章提供最多 20 条未携带资源的名称、ID、定位片段和分页信息；
-  用 `pipeline.catalog(book, chapter=章号, query=关键词, page=页号)` 搜索或翻页发现资源。
-- 所需资源未携带时，按目录的 kind/key 向宿主请求 `pipeline.resource(book, kind, key)` 取当前真值；
-  需要历史证据再用 `pipeline.recall(book, store, asset)`。未携带不等于不存在，不杜撰或重置。
+- 准备者可用 `pipeline.catalog`、`pipeline.resource` 与 `pipeline.recall` 检索并核实缺失资料，
+  再把本章需要的材料加入写作包；写作者不直接补读。未携带不等于不存在，不杜撰或重置。
 - 章纲缺少完整场景依赖声明时，引擎保守回退并发出 `projection_warnings`。材料会变大，
   可在作者已确认的内容内补齐依赖声明后重新核验；不能为了省 Token 静默删掉未知依赖。
 - 派工前自动汇总场景人物、资源、知情话题、节点前置与显式引用，并检查依赖存在性和前态；
   缺失或冲突会拒绝派工。`complete` 只表示作者声明，不证明语义依赖完整。
-- 默认新会话携带卷级执行材料、内置文风执行摘要或外部文风档案。只有宿主确认当前会话已加载准确文档版本时，
-  才给 `envelope` 和 `materialize` 显式传入 `cache={context_id:会话ID, loaded:[文档哈希]}`。
-  切换会话或压缩上下文后清除确认；渲染时未确认的缓存正文会自动补齐。组包只作可选背景。
+- 单章 Markdown 写作包不依赖会话缓存。底层 `envelope` / `materialize` 的可选缓存机制仅供其他交付方式使用。
 - 换文风必须记录作者决定，调用
   `pipeline.recontract_patch(book, source=决定来源, style_profile=档名)` 或 `style_source=路径`。
   换档从下一待写章生效；仅指定内置档时清除旧外部源，历史契约保留供验链。
@@ -81,6 +102,6 @@ python3 tests/benchmark_long_run.py --chapters 3000 --output /tmp/novel-ledger-l
 仅支持当前格式：账本 `novel-ledger-lite/2`、存储 `novel-ledger-lite.store/2`、
 持久化文件 `novel-ledger-lite.bundle/2`、派工 `novel-ledger-lite.task/2`。旧版本、缺少版本标识
 或必要字段的数据直接拒绝，不补字段、不重建旧组包、不从外部文件补建档案、不自动迁移。
-调用方应通过 `materialize` 交付，避免自行重复拼接任务卡和文档。
+单文件写作应使用 `chapter_package`；其他交付方式通过 `materialize` 渲染，避免自行重复拼接任务卡和文档。
 它返回总字节、分项字节和缓存命中数；可传 `token_counter` 与 `tokenizer_id` 测量实际输入 Token。
 当前实现、测量口径和限制见 [DESIGN.md](DESIGN.md)。

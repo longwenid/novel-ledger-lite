@@ -3,6 +3,32 @@
 五层账本保存契约、卷级材料、章级状态、章间增量与历史事件。每次派工从同一真源编译
 四类上下文：核心约束、本章执行包、衔接材料、补读目录。账本格式与派工协议分开演进。
 
+## 单章 Markdown 写作包
+
+准备者在上一章通过 `submit` 后生成下一待写章，正文写作者只读生成的文件：
+
+```python
+from pathlib import Path
+
+package = pipeline.chapter_package(book, store, chapter, group_row)
+path = Path(f"第{chapter:04d}章写作包.md")
+path.write_text(package["text"], encoding="utf-8")
+pipeline.validate_chapter_package(book, store, path.read_text(encoding="utf-8"))
+# 将 path 交给写作者；写作后由准备者使用 pipeline.submit 核账。
+```
+
+`group_row` 可省略。生成时检查账本与存储进度，仅允许下一待写章，且不使用会话缓存。
+除常规必读材料外，它逐页展开本章相关目录中未携带条目的完整当前值；目录片段不作为事实。
+若准备者知道还需要其他资源或更长前文，可在重生成时指定
+`extra_resources=[{"kind": "facts", "key": "人物ID:事实ID"}]` 和 `extra_chapters=[已提交章号]`。
+指定资源或历史章节不存在时拒绝生成。写作者发现信息缺失或冲突时停止，说明需求，由准备者
+检索、核实并重新生成；禁止依据缺失信息猜测。自动检查不能证明章纲的语义依赖已完全声明。
+
+文件内含版本、账本与章节链指纹及正文内容摘要；`validate_chapter_package` 接受文件文本或返回的
+package，在正文写作和提交前校验。账本、已提交章节或文件内容变更后应重新生成，不能沿用旧包。
+提交仍使用既有 `submit` 与核账，不由写作包替代。补充全部相关条目会增加输入量；人物知情、
+读者知情与作者掌握的信息仍须分别遵守包内边界，不能因为资料出现在包中就直接披露。
+
 ## 每章材料
 
 | 记录 | 交付规则 | 内容 |

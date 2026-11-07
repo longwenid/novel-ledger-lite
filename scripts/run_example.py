@@ -27,9 +27,9 @@ def run(output):
             chapter = plan['chapter']
             if group is None or chapter > group['members'][1]:
                 group = pipeline.group(book, store, volume['id'])
-            work = pipeline.envelope(book, store, chapter, group)
-            delivery = pipeline.materialize(work, store)
-            dispatch_bytes += delivery['metrics']['bytes']
+            package = pipeline.chapter_package(book, store, chapter, group)
+            pipeline.validate_chapter_package(book, store, package['text'])
+            dispatch_bytes += len(package['text'].encode('utf-8'))
             result = pipeline.submit(book, store, chapter, project['drafts'][str(chapter)])
             if not result['ok']:
                 raise RuntimeError(json.dumps(result, ensure_ascii=False))

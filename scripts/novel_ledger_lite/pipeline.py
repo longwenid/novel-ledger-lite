@@ -217,6 +217,21 @@ def materialize(work, store, *, token_counter=None, tokenizer_id=None, cache=Non
 
 
 @_current_book
+def chapter_package(book, store, chapter, group_row=None, *, extra_resources=None, extra_chapters=None):
+    """为下一章生成独立 Markdown 写作包；缺失资料可补充后重新生成。"""
+    from . import chapter_package as packages
+    return packages.build(book, store, chapter, group_row, extra_resources=extra_resources,
+                          extra_chapters=extra_chapters)
+
+
+@_current_book
+def validate_chapter_package(book, store, package):
+    """验证写作包文本的完整性及其是否对应当前账本。"""
+    from . import chapter_package as packages
+    return packages.validate(book, store, package)
+
+
+@_current_book
 def catalog(book, *, chapter=None, kind=None, query='', page=0, per=20):
     """搜索/翻页发现可补读资源，chapter 指定时限于本章相关资源。"""
     plan = book['plans'].get(str(chapter)) if chapter is not None else None
