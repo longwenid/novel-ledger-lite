@@ -9,7 +9,7 @@ import json
 from dataclasses import dataclass
 from typing import Any, Dict, Optional
 
-VERSION = 'lite-2.0.1'
+VERSION = 'lite-2.1.0'
 
 SCHEMA = 'novel-ledger-lite/2'
 STORE_SCHEMA = 'novel-ledger-lite.store/2'

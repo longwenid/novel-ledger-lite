@@ -1,0 +1,5 @@
+# 写作模式：右栏的设定 / 章节 / 正文面板。Host 半不做事，界面全在 lib/client.js。
+- insert:
+    - id: novel-writing-mode
+      name: '@local/novel-writing-mode'
+      config: {}

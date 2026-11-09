@@ -15,7 +15,7 @@ def test_import_keeps_source_and_marks_unknowns(tmp_path):
     (source / 'v.md').write_text(text, encoding='utf-8')
     target = tmp_path / 'candidate'
     report = import_outlines(source, target)
-    rows = json.loads((target / 'volumes/v01_candidate.json').read_text())['chapters']
+    rows = json.loads((target / 'volumes/v01_candidate.json').read_text(encoding='utf-8'))['chapters']
     assert report['status'] == 'review_required' and report['chapters'] == 2
     assert rows[0]['outline_text'] == '林恩醒来。\n钩子：有人敲门。'
     assert rows[0]['source_lines'] == [3, 6]

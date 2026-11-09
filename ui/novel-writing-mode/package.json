@@ -1,0 +1,33 @@
+{
+  "name": "@local/novel-writing-mode",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "写作模式：在右侧栏阅读小说设定、章节信息与正文（novel-ledger-lite 配套界面）",
+  "exports": {
+    ".": "./index.js",
+    "./client": "./lib/client.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-sidebar-right",
+        "@deepseek-ai/dsh-api-workspace-files"
+      ]
+    }
+  },
+  "files": [
+    "index.js",
+    "lib/client.js",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "icon.svg"
+  ]
+}

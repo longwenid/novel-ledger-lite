@@ -6,7 +6,6 @@ import copy
 import json
 from pathlib import Path
 import random
-import resource
 import sys
 import tempfile
 import time
@@ -161,7 +160,16 @@ def run(chapters=3000, chapter_han=3500, volume_size=30):
             'total_dispatch_bytes': total_payload_bytes, 'samples': observations,
             'write_seconds': round(write_seconds, 3), 'audit_seconds': round(audit_seconds, 3),
             'audit': audit, 'resume': resume, 'recovery': recovery,
-            'max_rss_bytes_macos': resource.getrusage(resource.RUSAGE_SELF).ru_maxrss}
+            'max_rss_bytes_macos': _max_rss_bytes()}
+
+
+def _max_rss_bytes():
+    """ru_maxrss 仅 macOS/Linux 可用；Windows 上返回 None。"""
+    try:
+        import resource
+    except ModuleNotFoundError:
+        return None
+    return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
 
 
 if __name__ == '__main__':
