@@ -1,0 +1,1132 @@
+{
+  "description": "Real independent full-text reading of frozen release fixtures, not synthetic approval.",
+  "source": "发布验证冻结演示设计",
+  "design_hash": "cc8e6564590dc14395c03ee2c47d9f50441f203b03cd39849a872c05eef511e5",
+  "cases": {
+    "Q": {
+      "draft": {
+        "title": "第一章 两个日期",
+        "summary": "封条页四日、外联五日形成日期差异线索；沈桐付一元查单费到后院核验，提出要查清来历与责任，尚未拆箱或认定原因。",
+        "self_check": "核对本章只到日期差异线索；四元扣一元、值班室到后院、推进一日，未拆箱，未预知误抄责任。",
+        "prose": "次日清晨，沈桐从值班室走到仓库后院。十七号箱还在查验台边，封口完整。\n\n他登记调阅封条查验页，查单费扣去一元，四元余额变成三元。页上记着箱号十七、四日；旁边的外联影像却把同一箱号写在五日。\n\n“四日和五日，对不上。”他沿着两行日期看了一遍。日期有差异，只能算来源出错的线索，还不能说是哪个环节出了错。箱内原单尚未看过，他把手从封口处收回。\n\n“这个箱子为什么有两个日期？来历和经手责任，总得查清楚。”沈桐记住要查的页码，没有拆箱。\n他收好余下的五元查单费，确认钱数无误。",
+        "drift_check": {
+          "items": [
+            {
+              "kind": "node",
+              "key": "date-clue",
+              "planned": {
+                "after": "resolved"
+              },
+              "status": "kept",
+              "actual": {
+                "after": "resolved"
+              },
+              "evidence": {
+                "chapter": 1,
+                "quote": "他登记调阅封条查验页，查单费扣去一元，四元余额变成三元。页上记着箱号十七、四日；旁边的外联影像却把同一箱号写在五日。\n\n“四日和五日，对不上。”他沿着两行日期看了一遍。日期有差异，只能算来源出错的线索，还不能说是哪个环节出了错。箱内原单尚未看过，他把手从封口处收回。"
+              }
+            },
+            {
+              "kind": "hook",
+              "key": "hook-v1-required",
+              "planned": {
+                "action": "plant"
+              },
+              "status": "kept",
+              "actual": {
+                "action": "plant"
+              },
+              "evidence": {
+                "chapter": 1,
+                "quote": "“这个箱子为什么有两个日期？来历和经手责任，总得查清楚。”沈桐记住要查的页码，没有拆箱。"
+              }
+            },
+            {
+              "kind": "resources",
+              "key": "[\"shen\",\"查单费\",\"元\"]",
+              "planned": {
+                "from": "4",
+                "to": "3"
+              },
+              "status": "kept",
+              "actual": {
+                "to": "3"
+              },
+              "evidence": {
+                "chapter": 1,
+                "quote": "他登记调阅封条查验页，查单费扣去一元，四元余额变成三元。"
+              }
+            },
+            {
+              "kind": "places",
+              "key": "shen",
+              "planned": {
+                "from": "office",
+                "to": "yard"
+              },
+              "status": "kept",
+              "actual": {
+                "to": "yard"
+              },
+              "evidence": {
+                "chapter": 1,
+                "quote": "次日清晨，沈桐从值班室走到仓库后院。十七号箱还在查验台边，封口完整。"
+              }
+            },
+            {
+              "kind": "knowledge",
+              "key": "shen:source",
+              "planned": {
+                "from": null,
+                "to": "hinted"
+              },
+              "status": "kept",
+              "actual": {
+                "to": "hinted"
+              },
+              "evidence": {
+                "chapter": 1,
+                "quote": "他登记调阅封条查验页，查单费扣去一元，四元余额变成三元。页上记着箱号十七、四日；旁边的外联影像却把同一箱号写在五日。\n\n“四日和五日，对不上。”他沿着两行日期看了一遍。日期有差异，只能算来源出错的线索，还不能说是哪个环节出了错。箱内原单尚未看过，他把手从封口处收回。"
+              }
+            },
+            {
+              "kind": "clock",
+              "key": "clock",
+              "planned": {
+                "advance_days": 1
+              },
+              "status": "kept",
+              "actual": {
+                "advance_days": 1
+              },
+              "evidence": {
+                "chapter": 1,
+                "quote": "次日清晨，沈桐从值班室走到仓库后院。十七号箱还在查验台边，封口完整。"
+              }
+            },
+            {
+              "kind": "disclosure",
+              "key": "source",
+              "planned": {
+                "after": "hinted"
+              },
+              "status": "kept",
+              "actual": {
+                "after": "hinted"
+              },
+              "evidence": {
+                "chapter": 1,
+                "quote": "他登记调阅封条查验页，查单费扣去一元，四元余额变成三元。页上记着箱号十七、四日；旁边的外联影像却把同一箱号写在五日。\n\n“四日和五日，对不上。”他沿着两行日期看了一遍。日期有差异，只能算来源出错的线索，还不能说是哪个环节出了错。箱内原单尚未看过，他把手从封口处收回。"
+              }
+            }
+          ],
+          "unplanned": [],
+          "verdict": "clean"
+        },
+        "package_ref": "dfff2e3589c53d0469cd37a1528b9d0f58f24ff4cb0ffd79e28b930afcba80c5"
+      },
+      "manifest": {
+        "schema": "novel-ledger-lite.review-request/1",
+        "attempt": "29527340e52e49678939d1995f7ddbd6",
+        "chapter": 1,
+        "writer": "release-candidate-writer",
+        "source_hash": "8e51f2751796fda8e85a1d1a99ea82ae11d355bf44f2882c6aa3c3b2dec898be",
+        "draft": "1d13e3657cd1da52a192e94d73b81d3cdceee512562ab37ca35bad90af974be2",
+        "materials": "0e8c113dfbc78c1f8ba2db7b715d24b467c3770de09ef05c82c1ba997198c628",
+        "package_ref": "dfff2e3589c53d0469cd37a1528b9d0f58f24ff4cb0ffd79e28b930afcba80c5",
+        "plan": "207f4cd0be160fded3208ab9e853a9f10d502f5f046c9e73f3490b5fbc64b91b",
+        "contract": "c159eb90b6f7c29c67107ecf49bff069c2933206f62b5521cf8ce927259cd2a9",
+        "before_state_hash": "3423f851546cc6709565bd8750b6d1467c960a4b7e288db25498e231169ce1c6",
+        "previous_chain": null,
+        "checks": [
+          "outline",
+          "continuity",
+          "assets",
+          "knowledge",
+          "causality",
+          "unplanned"
+        ],
+        "event_checks": [
+          {
+            "id": "95fe42a5518ba501d319b4099b9502e645e14a54683b0766e3bc98607ee4b2bf",
+            "kind": "node",
+            "key": "date-clue",
+            "planned": {
+              "after": "resolved"
+            },
+            "detail": {
+              "outcome": "十七号箱封条四日、外联五日只构成日期差异线索，尚不知原因。"
+            },
+            "definition": {
+              "node": "date-clue",
+              "after": "resolved",
+              "outcome": "十七号箱封条四日、外联五日只构成日期差异线索，尚不知原因。",
+              "line": "main",
+              "depends_on": []
+            }
+          },
+          {
+            "id": "c2e06abd67fa3c0ef696a4f04d4608da478d9495b0bb22b7775632cfd03a3c5f",
+            "kind": "hook",
+            "key": "hook-v1-required",
+            "planned": {
+              "action": "plant"
+            },
+            "detail": {
+              "note": "提出需要查清的来源和责任问题。"
+            },
+            "definition": {
+              "id": "hook-v1-required",
+              "text": "十七号箱为什么出现两个日期，重复登记与越规查验最终由谁担责？",
+              "plant": [
+                1,
+                1
+              ],
+              "payoff": [
+                4,
+                4
+              ],
+              "required": true,
+              "continues": false
+            }
+          },
+          {
+            "id": "b6e5fb6ed73f02485ca08f32d3acb76bf9ffbd4519264ad0dd96e66ad39cecdf",
+            "kind": "resources",
+            "key": "[\"shen\",\"查单费\",\"元\"]",
+            "planned": {
+              "from": "4",
+              "to": "3"
+            },
+            "detail": {
+              "holder": null,
+              "asset": null,
+              "unit": null,
+              "reason": "调阅封条查验页扣查单费一元。"
+            }
+          },
+          {
+            "id": "39c2515e782558e84d876abf6f836537ba14aae436b777a91808dc0e15fcf5ba",
+            "kind": "places",
+            "key": "shen",
+            "planned": {
+              "from": "office",
+              "to": "yard"
+            },
+            "detail": {
+              "route": "从值班室步行到仓库后院。",
+              "links": null,
+              "depart": null,
+              "arrive": null,
+              "reason": "到该处完成本章规定的单据查阅与核验。"
+            }
+          },
+          {
+            "id": "ab2eb544fd10401d9c70be4ad96e8e94a5dd46eb761a7e9383c4b4a2e0c5c35a",
+            "kind": "knowledge",
+            "key": "shen:source",
+            "planned": {
+              "from": null,
+              "to": "hinted"
+            },
+            "detail": {
+              "who": "shen",
+              "topic": "source",
+              "reason": "十七号箱封条四日、外联五日只构成日期差异线索，尚不知原因。"
+            }
+          },
+          {
+            "id": "1f8cfd24927b30aed0f8ba23e8b7e49e65265c7a7327118bc774693260fb2e98",
+            "kind": "clock",
+            "key": "clock",
+            "planned": {
+              "advance_days": 1
+            },
+            "detail": {}
+          },
+          {
+            "id": "adc4a16f5588a5b5345bf9e98e9b15fff23b83a0f4373214955260545b449c04",
+            "kind": "disclosure",
+            "key": "source",
+            "planned": {
+              "after": "hinted"
+            },
+            "detail": {
+              "claim": "十七号箱封条四日、外联五日只构成日期差异线索，尚不知原因。"
+            }
+          }
+        ]
+      },
+      "request_ref": "a5793ccf076ffe54ae532619a4976694771c1f4e6b526920765cf6cb24c7700a",
+      "report": {
+        "request_ref": "a5793ccf076ffe54ae532619a4976694771c1f4e6b526920765cf6cb24c7700a",
+        "reviewer": "release-independent-reader",
+        "verdict": "reject",
+        "read_complete": true,
+        "checks": [
+          {
+            "id": "outline",
+            "status": "fail",
+            "notes": "查页、次日到后院、日期差异线索和提出追查问题均写出，但章纲要求账户四元扣一元后终态为三元，结尾却明确为五元。"
+          },
+          {
+            "id": "continuity",
+            "status": "fail",
+            "notes": "空间与一日推进可承接开篇；同章先写四元变三元，后写余下五元，期间没有任何获准收入或退款，末态无法接续。"
+          },
+          {
+            "id": "assets",
+            "status": "fail",
+            "notes": "唯一现有资产为四元查单费，计划仅扣一元；“余下的五元”与正文前段三元余额、账本和无其他收支规则直接冲突。未见箱子或单据取得所有权、拆箱或伤势变化。"
+          },
+          {
+            "id": "knowledge",
+            "status": "pass",
+            "notes": "沈桐和读者只看见封条四日、外联五日的差异；正文明确尚不知哪个环节出错、箱内原单尚未看过，没有提前断定误抄人或主管责任。"
+          },
+          {
+            "id": "causality",
+            "status": "fail",
+            "notes": "调阅扣一元及因日期不符提出调查的问题有对应动作；但从三元到结尾五元没有来源且规则禁止其他收支，“确认钱数无误”不能补足这一因果缺口。"
+          },
+          {
+            "id": "unplanned",
+            "status": "fail",
+            "notes": "通读发现结尾未申报的五元终态；drift_check仍申报to=3、unplanned=[]、clean，自检和摘要也只写扣一元，未反映整稿的余额矛盾。"
+          }
+        ],
+        "event_checks": [
+          {
+            "id": "95fe42a5518ba501d319b4099b9502e645e14a54683b0766e3bc98607ee4b2bf",
+            "status": "pass",
+            "notes": "正文实际对照同一十七号箱封条四日与外联五日，并明确仅是来源出错线索、尚不知环节；完成日期差异节点而未提前解答原因。",
+            "evidence": {
+              "chapter": 1,
+              "quote": "他登记调阅封条查验页，查单费扣去一元，四元余额变成三元。页上记着箱号十七、四日；旁边的外联影像却把同一箱号写在五日。\n\n“四日和五日，对不上。”他沿着两行日期看了一遍。日期有差异，只能算来源出错的线索，还不能说是哪个环节出了错。箱内原单尚未看过，他把手从封口处收回。",
+              "start": 36
+            }
+          },
+          {
+            "id": "c2e06abd67fa3c0ef696a4f04d4608da478d9495b0bb22b7775632cfd03a3c5f",
+            "status": "pass",
+            "notes": "沈桐直接提出“为什么有两个日期”及来历、经手责任须查清的问题，形成读者可见的追查承诺；本章没有写成已兑现。",
+            "evidence": {
+              "chapter": 1,
+              "quote": "“这个箱子为什么有两个日期？来历和经手责任，总得查清楚。”沈桐记住要查的页码，没有拆箱。",
+              "start": 171
+            }
+          },
+          {
+            "id": "b6e5fb6ed73f02485ca08f32d3acb76bf9ffbd4519264ad0dd96e66ad39cecdf",
+            "status": "fail",
+            "notes": "申报引文中四元扣一元到三元确实出现，但整章最后又把同一查单费写成余下五元。正文最终数量不是章纲规定的三元，不能靠前段正确引文放行。",
+            "evidence": {
+              "chapter": 1,
+              "quote": "他收好余下的五元查单费，确认钱数无误。",
+              "start": 216
+            }
+          },
+          {
+            "id": "39c2515e782558e84d876abf6f836537ba14aae436b777a91808dc0e15fcf5ba",
+            "status": "pass",
+            "notes": "开篇完整写明沈桐从值班室走到仓库后院，符合office到yard的步行路线；章内没有再离开后院。",
+            "evidence": {
+              "chapter": 1,
+              "quote": "次日清晨，沈桐从值班室走到仓库后院。十七号箱还在查验台边，封口完整。",
+              "start": 0
+            }
+          },
+          {
+            "id": "ab2eb544fd10401d9c70be4ad96e8e94a5dd46eb761a7e9383c4b4a2e0c5c35a",
+            "status": "pass",
+            "notes": "日期四日与五日的对照提供来源有异线索；正文明确还不能确定出错环节、原单尚未看过，沈桐知情停留hinted。",
+            "evidence": {
+              "chapter": 1,
+              "quote": "他登记调阅封条查验页，查单费扣去一元，四元余额变成三元。页上记着箱号十七、四日；旁边的外联影像却把同一箱号写在五日。\n\n“四日和五日，对不上。”他沿着两行日期看了一遍。日期有差异，只能算来源出错的线索，还不能说是哪个环节出了错。箱内原单尚未看过，他把手从封口处收回。",
+              "start": 36
+            }
+          },
+          {
+            "id": "1f8cfd24927b30aed0f8ba23e8b7e49e65265c7a7327118bc774693260fb2e98",
+            "status": "pass",
+            "notes": "正文首句“次日清晨”将起点推进一天，后文为同次查阅的连续动作，没有另一次过夜或倒退；符合advance_days=1。",
+            "evidence": {
+              "chapter": 1,
+              "quote": "次日清晨，沈桐从值班室走到仓库后院。十七号箱还在查验台边，封口完整。",
+              "start": 0
+            }
+          },
+          {
+            "id": "adc4a16f5588a5b5345bf9e98e9b15fff23b83a0f4373214955260545b449c04",
+            "status": "pass",
+            "notes": "读者看到日期差异以及尚不能断因的明确限制，没有得到后续原单或误抄责任的确认；披露为hinted。",
+            "evidence": {
+              "chapter": 1,
+              "quote": "他登记调阅封条查验页，查单费扣去一元，四元余额变成三元。页上记着箱号十七、四日；旁边的外联影像却把同一箱号写在五日。\n\n“四日和五日，对不上。”他沿着两行日期看了一遍。日期有差异，只能算来源出错的线索，还不能说是哪个环节出了错。箱内原单尚未看过，他把手从封口处收回。",
+              "start": 36
+            }
+          }
+        ],
+        "findings": [
+          {
+            "criterion": "assets",
+            "severity": "blocker",
+            "chapter": 1,
+            "reason": "正文末句把扣费后的同一查单费写为五元，与冻结起点四元、计划扣一元到三元以及无其他收支规则冲突；核账、自检和摘要均漏报该矛盾。应修正文后重新审读，不能改账为五元。",
+            "evidence": {
+              "chapter": 1,
+              "quote": "他收好余下的五元查单费，确认钱数无误。",
+              "start": 216
+            }
+          }
+        ]
+      }
+    },
+    "R": {
+      "draft": {
+        "title": "第一章 两个日期",
+        "summary": "封条页四日、外联五日形成日期差异线索；沈桐付一元查单费到后院核验，提出要查清来历与责任，尚未拆箱或认定原因。",
+        "self_check": "核对本章只到日期差异线索；四元扣一元、值班室到后院、推进一日，未拆箱，未预知误抄责任。",
+        "prose": "次日清晨，沈桐从值班室走到仓库后院。十七号箱还在查验台边，封口完整。\n\n他登记调阅封条查验页，查单费扣去一元，四元余额变成三元。页上记着箱号十七、四日；旁边的外联影像却把同一箱号写在五日。\n\n“四日和五日，对不上。”他沿着两行日期看了一遍。日期有差异，只能算来源出错的线索，还不能说是哪个环节出了错。箱内原单尚未看过，他把手从封口处收回。\n\n“这个箱子为什么有两个日期？来历和经手责任，总得查清楚。”沈桐记住要查的页码，没有拆箱。\n沈桐已经确认，这个日期是主管故意改动的。",
+        "drift_check": {
+          "items": [
+            {
+              "kind": "node",
+              "key": "date-clue",
+              "planned": {
+                "after": "resolved"
+              },
+              "status": "kept",
+              "actual": {
+                "after": "resolved"
+              },
+              "evidence": {
+                "chapter": 1,
+                "quote": "他登记调阅封条查验页，查单费扣去一元，四元余额变成三元。页上记着箱号十七、四日；旁边的外联影像却把同一箱号写在五日。\n\n“四日和五日，对不上。”他沿着两行日期看了一遍。日期有差异，只能算来源出错的线索，还不能说是哪个环节出了错。箱内原单尚未看过，他把手从封口处收回。"
+              }
+            },
+            {
+              "kind": "hook",
+              "key": "hook-v1-required",
+              "planned": {
+                "action": "plant"
+              },
+              "status": "kept",
+              "actual": {
+                "action": "plant"
+              },
+              "evidence": {
+                "chapter": 1,
+                "quote": "“这个箱子为什么有两个日期？来历和经手责任，总得查清楚。”沈桐记住要查的页码，没有拆箱。"
+              }
+            },
+            {
+              "kind": "resources",
+              "key": "[\"shen\",\"查单费\",\"元\"]",
+              "planned": {
+                "from": "4",
+                "to": "3"
+              },
+              "status": "kept",
+              "actual": {
+                "to": "3"
+              },
+              "evidence": {
+                "chapter": 1,
+                "quote": "他登记调阅封条查验页，查单费扣去一元，四元余额变成三元。"
+              }
+            },
+            {
+              "kind": "places",
+              "key": "shen",
+              "planned": {
+                "from": "office",
+                "to": "yard"
+              },
+              "status": "kept",
+              "actual": {
+                "to": "yard"
+              },
+              "evidence": {
+                "chapter": 1,
+                "quote": "次日清晨，沈桐从值班室走到仓库后院。十七号箱还在查验台边，封口完整。"
+              }
+            },
+            {
+              "kind": "knowledge",
+              "key": "shen:source",
+              "planned": {
+                "from": null,
+                "to": "hinted"
+              },
+              "status": "kept",
+              "actual": {
+                "to": "hinted"
+              },
+              "evidence": {
+                "chapter": 1,
+                "quote": "他登记调阅封条查验页，查单费扣去一元，四元余额变成三元。页上记着箱号十七、四日；旁边的外联影像却把同一箱号写在五日。\n\n“四日和五日，对不上。”他沿着两行日期看了一遍。日期有差异，只能算来源出错的线索，还不能说是哪个环节出了错。箱内原单尚未看过，他把手从封口处收回。"
+              }
+            },
+            {
+              "kind": "clock",
+              "key": "clock",
+              "planned": {
+                "advance_days": 1
+              },
+              "status": "kept",
+              "actual": {
+                "advance_days": 1
+              },
+              "evidence": {
+                "chapter": 1,
+                "quote": "次日清晨，沈桐从值班室走到仓库后院。十七号箱还在查验台边，封口完整。"
+              }
+            },
+            {
+              "kind": "disclosure",
+              "key": "source",
+              "planned": {
+                "after": "hinted"
+              },
+              "status": "kept",
+              "actual": {
+                "after": "hinted"
+              },
+              "evidence": {
+                "chapter": 1,
+                "quote": "他登记调阅封条查验页，查单费扣去一元，四元余额变成三元。页上记着箱号十七、四日；旁边的外联影像却把同一箱号写在五日。\n\n“四日和五日，对不上。”他沿着两行日期看了一遍。日期有差异，只能算来源出错的线索，还不能说是哪个环节出了错。箱内原单尚未看过，他把手从封口处收回。"
+              }
+            }
+          ],
+          "unplanned": [],
+          "verdict": "clean"
+        },
+        "package_ref": "dfff2e3589c53d0469cd37a1528b9d0f58f24ff4cb0ffd79e28b930afcba80c5"
+      },
+      "manifest": {
+        "schema": "novel-ledger-lite.review-request/1",
+        "attempt": "c79b604dc8c44c07a02d887a70fdd37c",
+        "chapter": 1,
+        "writer": "release-candidate-writer",
+        "source_hash": "8e51f2751796fda8e85a1d1a99ea82ae11d355bf44f2882c6aa3c3b2dec898be",
+        "draft": "c01321f7bb5ee812d2f8ca8698dfa9eb98daec44cab2d702da2f1bf98ff1cbf7",
+        "materials": "0e8c113dfbc78c1f8ba2db7b715d24b467c3770de09ef05c82c1ba997198c628",
+        "package_ref": "dfff2e3589c53d0469cd37a1528b9d0f58f24ff4cb0ffd79e28b930afcba80c5",
+        "plan": "207f4cd0be160fded3208ab9e853a9f10d502f5f046c9e73f3490b5fbc64b91b",
+        "contract": "c159eb90b6f7c29c67107ecf49bff069c2933206f62b5521cf8ce927259cd2a9",
+        "before_state_hash": "3423f851546cc6709565bd8750b6d1467c960a4b7e288db25498e231169ce1c6",
+        "previous_chain": null,
+        "checks": [
+          "outline",
+          "continuity",
+          "assets",
+          "knowledge",
+          "causality",
+          "unplanned"
+        ],
+        "event_checks": [
+          {
+            "id": "95fe42a5518ba501d319b4099b9502e645e14a54683b0766e3bc98607ee4b2bf",
+            "kind": "node",
+            "key": "date-clue",
+            "planned": {
+              "after": "resolved"
+            },
+            "detail": {
+              "outcome": "十七号箱封条四日、外联五日只构成日期差异线索，尚不知原因。"
+            },
+            "definition": {
+              "node": "date-clue",
+              "after": "resolved",
+              "outcome": "十七号箱封条四日、外联五日只构成日期差异线索，尚不知原因。",
+              "line": "main",
+              "depends_on": []
+            }
+          },
+          {
+            "id": "c2e06abd67fa3c0ef696a4f04d4608da478d9495b0bb22b7775632cfd03a3c5f",
+            "kind": "hook",
+            "key": "hook-v1-required",
+            "planned": {
+              "action": "plant"
+            },
+            "detail": {
+              "note": "提出需要查清的来源和责任问题。"
+            },
+            "definition": {
+              "id": "hook-v1-required",
+              "text": "十七号箱为什么出现两个日期，重复登记与越规查验最终由谁担责？",
+              "plant": [
+                1,
+                1
+              ],
+              "payoff": [
+                4,
+                4
+              ],
+              "required": true,
+              "continues": false
+            }
+          },
+          {
+            "id": "b6e5fb6ed73f02485ca08f32d3acb76bf9ffbd4519264ad0dd96e66ad39cecdf",
+            "kind": "resources",
+            "key": "[\"shen\",\"查单费\",\"元\"]",
+            "planned": {
+              "from": "4",
+              "to": "3"
+            },
+            "detail": {
+              "holder": null,
+              "asset": null,
+              "unit": null,
+              "reason": "调阅封条查验页扣查单费一元。"
+            }
+          },
+          {
+            "id": "39c2515e782558e84d876abf6f836537ba14aae436b777a91808dc0e15fcf5ba",
+            "kind": "places",
+            "key": "shen",
+            "planned": {
+              "from": "office",
+              "to": "yard"
+            },
+            "detail": {
+              "route": "从值班室步行到仓库后院。",
+              "links": null,
+              "depart": null,
+              "arrive": null,
+              "reason": "到该处完成本章规定的单据查阅与核验。"
+            }
+          },
+          {
+            "id": "ab2eb544fd10401d9c70be4ad96e8e94a5dd46eb761a7e9383c4b4a2e0c5c35a",
+            "kind": "knowledge",
+            "key": "shen:source",
+            "planned": {
+              "from": null,
+              "to": "hinted"
+            },
+            "detail": {
+              "who": "shen",
+              "topic": "source",
+              "reason": "十七号箱封条四日、外联五日只构成日期差异线索，尚不知原因。"
+            }
+          },
+          {
+            "id": "1f8cfd24927b30aed0f8ba23e8b7e49e65265c7a7327118bc774693260fb2e98",
+            "kind": "clock",
+            "key": "clock",
+            "planned": {
+              "advance_days": 1
+            },
+            "detail": {}
+          },
+          {
+            "id": "adc4a16f5588a5b5345bf9e98e9b15fff23b83a0f4373214955260545b449c04",
+            "kind": "disclosure",
+            "key": "source",
+            "planned": {
+              "after": "hinted"
+            },
+            "detail": {
+              "claim": "十七号箱封条四日、外联五日只构成日期差异线索，尚不知原因。"
+            }
+          }
+        ]
+      },
+      "request_ref": "3e25ab0a721e765e134b42b4b0b8c540dcee0e0e05eb71a57c86f54c653ebfc2",
+      "report": {
+        "request_ref": "3e25ab0a721e765e134b42b4b0b8c540dcee0e0e05eb71a57c86f54c653ebfc2",
+        "reviewer": "release-independent-reader",
+        "verdict": "reject",
+        "read_complete": true,
+        "checks": [
+          {
+            "id": "outline",
+            "status": "fail",
+            "notes": "章纲只允许日期差异线索、尚不知原因；结尾却让沈桐确认主管故意改动，越过本章结果并把责任推给他人。"
+          },
+          {
+            "id": "continuity",
+            "status": "fail",
+            "notes": "次日从值班室到后院、一元扣费和原封未拆均承接正确；但前文“还不能说是哪个环节出了错”与末句“已经确认”之间没有新增查证，认知无依据跳变。"
+          },
+          {
+            "id": "assets",
+            "status": "pass",
+            "notes": "查单费由四元扣一元到三元，未写额外收入、退款或支出；没有取得或带走箱子、单据，没有拆封或增加个人资产。"
+          },
+          {
+            "id": "knowledge",
+            "status": "fail",
+            "notes": "人物和读者本章应只获hinted线索；“已经确认……主管故意改动”新增确定的责任人及主观故意。既无本章可读证据，也违背包中沈桐误抄的作者真相及不牵连旁人的限制。"
+          },
+          {
+            "id": "causality",
+            "status": "fail",
+            "notes": "四日与五日两处日期只能支持差异线索，不能推出由主管改动，更不能证明故意；正文没有给出从线索升级到确认的任何新来源或行动。"
+          },
+          {
+            "id": "unplanned",
+            "status": "fail",
+            "notes": "末句新增主管故意改动的确认和对读者的确定披露；申报仍为人物hinted、读者hinted且unplanned=[]、clean，自检和摘要还声称未认定原因，均与整稿冲突。"
+          }
+        ],
+        "event_checks": [
+          {
+            "id": "95fe42a5518ba501d319b4099b9502e645e14a54683b0766e3bc98607ee4b2bf",
+            "status": "fail",
+            "notes": "日期差异已在前文形成，但本节点冻结的结果同时限定“只构成线索、尚不知原因”；末句确认主管故意改动，把本章最终节点结果改成无依据定责。",
+            "evidence": {
+              "chapter": 1,
+              "quote": "沈桐已经确认，这个日期是主管故意改动的。",
+              "start": 216
+            }
+          },
+          {
+            "id": "c2e06abd67fa3c0ef696a4f04d4608da478d9495b0bb22b7775632cfd03a3c5f",
+            "status": "pass",
+            "notes": "前段已明确提出追查来历及经手责任，作为plant的可见载体成立；末句无证据指认主管责任不能作为合法兑现，已在知情、披露及未申报检查中判失败。",
+            "evidence": {
+              "chapter": 1,
+              "quote": "“这个箱子为什么有两个日期？来历和经手责任，总得查清楚。”沈桐记住要查的页码，没有拆箱。",
+              "start": 171
+            }
+          },
+          {
+            "id": "b6e5fb6ed73f02485ca08f32d3acb76bf9ffbd4519264ad0dd96e66ad39cecdf",
+            "status": "pass",
+            "notes": "登记调阅封条查验页后明确扣一元，账户由四元变三元；与本项调阅原因和资源from=4/to=3相符，通读未发现后续余额反转或其他收支。",
+            "evidence": {
+              "chapter": 1,
+              "quote": "他登记调阅封条查验页，查单费扣去一元，四元余额变成三元。",
+              "start": 36
+            }
+          },
+          {
+            "id": "39c2515e782558e84d876abf6f836537ba14aae436b777a91808dc0e15fcf5ba",
+            "status": "pass",
+            "notes": "开篇完整写明沈桐从值班室走到仓库后院，符合office到yard的步行路线；章内没有再离开后院。",
+            "evidence": {
+              "chapter": 1,
+              "quote": "次日清晨，沈桐从值班室走到仓库后院。十七号箱还在查验台边，封口完整。",
+              "start": 0
+            }
+          },
+          {
+            "id": "ab2eb544fd10401d9c70be4ad96e8e94a5dd46eb761a7e9383c4b4a2e0c5c35a",
+            "status": "fail",
+            "notes": "前段引文支持hinted，末句却把沈桐知情升级为已确认主管故意改动。该确认没有新证据，实际正文不符合申报的hinted终态。",
+            "evidence": {
+              "chapter": 1,
+              "quote": "沈桐已经确认，这个日期是主管故意改动的。",
+              "start": 216
+            }
+          },
+          {
+            "id": "1f8cfd24927b30aed0f8ba23e8b7e49e65265c7a7327118bc774693260fb2e98",
+            "status": "pass",
+            "notes": "正文首句“次日清晨”将起点推进一天，后文为同次查阅的连续动作，没有另一次过夜或倒退；符合advance_days=1。",
+            "evidence": {
+              "chapter": 1,
+              "quote": "次日清晨，沈桐从值班室走到仓库后院。十七号箱还在查验台边，封口完整。",
+              "start": 0
+            }
+          },
+          {
+            "id": "adc4a16f5588a5b5345bf9e98e9b15fff23b83a0f4373214955260545b449c04",
+            "status": "fail",
+            "notes": "结尾以第三人称限知的确定叙述向读者给出“主管故意改动”，不是人物未证实的猜测；读者披露超出仅日期差异hinted，并引入错误责任。",
+            "evidence": {
+              "chapter": 1,
+              "quote": "沈桐已经确认，这个日期是主管故意改动的。",
+              "start": 216
+            }
+          }
+        ],
+        "findings": [
+          {
+            "criterion": "knowledge",
+            "severity": "blocker",
+            "chapter": 1,
+            "reason": "正文末句无新查证即确认主管故意改动，超出章纲限定的日期差异hinted，并与前文尚不知原因、自检、摘要和未申报列表冲突；还把作者规定的沈桐误抄责任转给主管。须删除或修正这段越界确认并重新审读，不能以原有正确引文放行。",
+            "evidence": {
+              "chapter": 1,
+              "quote": "沈桐已经确认，这个日期是主管故意改动的。",
+              "start": 216
+            }
+          }
+        ]
+      }
+    },
+    "S": {
+      "draft": {
+        "title": "第一章 两个日期",
+        "summary": "封条页四日、外联五日形成日期差异线索；沈桐付一元查单费到后院核验，提出要查清来历与责任，尚未拆箱或认定原因。",
+        "self_check": "核对本章只到日期差异线索；四元扣一元、值班室到后院、推进一日，未拆箱，未预知误抄责任。",
+        "prose": "次日清晨，沈桐从值班室走到仓库后院。十七号箱还在查验台边，封口完整。\n\n他登记调阅封条查验页，查单费扣去一元，四元余额变成三元。页上记着箱号十七、四日；旁边的外联影像却把同一箱号写在五日。\n\n“四日和五日，对不上。”他沿着两行日期看了一遍。日期有差异，只能算来源出错的线索，还不能说是哪个环节出了错。箱内原单尚未看过，他把手从封口处收回。\n\n“这个箱子为什么有两个日期？来历和经手责任，总得查清楚。”沈桐记住要查的页码，没有拆箱。",
+        "drift_check": {
+          "items": [
+            {
+              "kind": "node",
+              "key": "date-clue",
+              "planned": {
+                "after": "resolved"
+              },
+              "status": "kept",
+              "actual": {
+                "after": "resolved"
+              },
+              "evidence": {
+                "chapter": 1,
+                "quote": "他登记调阅封条查验页，查单费扣去一元，四元余额变成三元。页上记着箱号十七、四日；旁边的外联影像却把同一箱号写在五日。\n\n“四日和五日，对不上。”他沿着两行日期看了一遍。日期有差异，只能算来源出错的线索，还不能说是哪个环节出了错。箱内原单尚未看过，他把手从封口处收回。"
+              }
+            },
+            {
+              "kind": "hook",
+              "key": "hook-v1-required",
+              "planned": {
+                "action": "plant"
+              },
+              "status": "kept",
+              "actual": {
+                "action": "plant"
+              },
+              "evidence": {
+                "chapter": 1,
+                "quote": "“这个箱子为什么有两个日期？来历和经手责任，总得查清楚。”沈桐记住要查的页码，没有拆箱。"
+              }
+            },
+            {
+              "kind": "resources",
+              "key": "[\"shen\",\"查单费\",\"元\"]",
+              "planned": {
+                "from": "4",
+                "to": "3"
+              },
+              "status": "kept",
+              "actual": {
+                "to": "3"
+              },
+              "evidence": {
+                "chapter": 1,
+                "quote": "他登记调阅封条查验页，查单费扣去一元，四元余额变成三元。"
+              }
+            },
+            {
+              "kind": "places",
+              "key": "shen",
+              "planned": {
+                "from": "office",
+                "to": "yard"
+              },
+              "status": "kept",
+              "actual": {
+                "to": "yard"
+              },
+              "evidence": {
+                "chapter": 1,
+                "quote": "次日清晨，沈桐从值班室走到仓库后院。十七号箱还在查验台边，封口完整。"
+              }
+            },
+            {
+              "kind": "knowledge",
+              "key": "shen:source",
+              "planned": {
+                "from": null,
+                "to": "hinted"
+              },
+              "status": "kept",
+              "actual": {
+                "to": "hinted"
+              },
+              "evidence": {
+                "chapter": 1,
+                "quote": "他登记调阅封条查验页，查单费扣去一元，四元余额变成三元。页上记着箱号十七、四日；旁边的外联影像却把同一箱号写在五日。\n\n“四日和五日，对不上。”他沿着两行日期看了一遍。日期有差异，只能算来源出错的线索，还不能说是哪个环节出了错。箱内原单尚未看过，他把手从封口处收回。"
+              }
+            },
+            {
+              "kind": "clock",
+              "key": "clock",
+              "planned": {
+                "advance_days": 1
+              },
+              "status": "kept",
+              "actual": {
+                "advance_days": 1
+              },
+              "evidence": {
+                "chapter": 1,
+                "quote": "次日清晨，沈桐从值班室走到仓库后院。十七号箱还在查验台边，封口完整。"
+              }
+            },
+            {
+              "kind": "disclosure",
+              "key": "source",
+              "planned": {
+                "after": "hinted"
+              },
+              "status": "kept",
+              "actual": {
+                "after": "hinted"
+              },
+              "evidence": {
+                "chapter": 1,
+                "quote": "他登记调阅封条查验页，查单费扣去一元，四元余额变成三元。页上记着箱号十七、四日；旁边的外联影像却把同一箱号写在五日。\n\n“四日和五日，对不上。”他沿着两行日期看了一遍。日期有差异，只能算来源出错的线索，还不能说是哪个环节出了错。箱内原单尚未看过，他把手从封口处收回。"
+              }
+            }
+          ],
+          "unplanned": [],
+          "verdict": "clean"
+        },
+        "package_ref": "dfff2e3589c53d0469cd37a1528b9d0f58f24ff4cb0ffd79e28b930afcba80c5"
+      },
+      "manifest": {
+        "schema": "novel-ledger-lite.review-request/1",
+        "attempt": "2b390114aaf44012b76b964fc97c07de",
+        "chapter": 1,
+        "writer": "release-candidate-writer",
+        "source_hash": "8e51f2751796fda8e85a1d1a99ea82ae11d355bf44f2882c6aa3c3b2dec898be",
+        "draft": "4f3010f2e782bf46111ff712083d06c0690c7900ae9e5af01a96fa0a6340577b",
+        "materials": "0e8c113dfbc78c1f8ba2db7b715d24b467c3770de09ef05c82c1ba997198c628",
+        "package_ref": "dfff2e3589c53d0469cd37a1528b9d0f58f24ff4cb0ffd79e28b930afcba80c5",
+        "plan": "207f4cd0be160fded3208ab9e853a9f10d502f5f046c9e73f3490b5fbc64b91b",
+        "contract": "c159eb90b6f7c29c67107ecf49bff069c2933206f62b5521cf8ce927259cd2a9",
+        "before_state_hash": "3423f851546cc6709565bd8750b6d1467c960a4b7e288db25498e231169ce1c6",
+        "previous_chain": null,
+        "checks": [
+          "outline",
+          "continuity",
+          "assets",
+          "knowledge",
+          "causality",
+          "unplanned"
+        ],
+        "event_checks": [
+          {
+            "id": "95fe42a5518ba501d319b4099b9502e645e14a54683b0766e3bc98607ee4b2bf",
+            "kind": "node",
+            "key": "date-clue",
+            "planned": {
+              "after": "resolved"
+            },
+            "detail": {
+              "outcome": "十七号箱封条四日、外联五日只构成日期差异线索，尚不知原因。"
+            },
+            "definition": {
+              "node": "date-clue",
+              "after": "resolved",
+              "outcome": "十七号箱封条四日、外联五日只构成日期差异线索，尚不知原因。",
+              "line": "main",
+              "depends_on": []
+            }
+          },
+          {
+            "id": "c2e06abd67fa3c0ef696a4f04d4608da478d9495b0bb22b7775632cfd03a3c5f",
+            "kind": "hook",
+            "key": "hook-v1-required",
+            "planned": {
+              "action": "plant"
+            },
+            "detail": {
+              "note": "提出需要查清的来源和责任问题。"
+            },
+            "definition": {
+              "id": "hook-v1-required",
+              "text": "十七号箱为什么出现两个日期，重复登记与越规查验最终由谁担责？",
+              "plant": [
+                1,
+                1
+              ],
+              "payoff": [
+                4,
+                4
+              ],
+              "required": true,
+              "continues": false
+            }
+          },
+          {
+            "id": "b6e5fb6ed73f02485ca08f32d3acb76bf9ffbd4519264ad0dd96e66ad39cecdf",
+            "kind": "resources",
+            "key": "[\"shen\",\"查单费\",\"元\"]",
+            "planned": {
+              "from": "4",
+              "to": "3"
+            },
+            "detail": {
+              "holder": null,
+              "asset": null,
+              "unit": null,
+              "reason": "调阅封条查验页扣查单费一元。"
+            }
+          },
+          {
+            "id": "39c2515e782558e84d876abf6f836537ba14aae436b777a91808dc0e15fcf5ba",
+            "kind": "places",
+            "key": "shen",
+            "planned": {
+              "from": "office",
+              "to": "yard"
+            },
+            "detail": {
+              "route": "从值班室步行到仓库后院。",
+              "links": null,
+              "depart": null,
+              "arrive": null,
+              "reason": "到该处完成本章规定的单据查阅与核验。"
+            }
+          },
+          {
+            "id": "ab2eb544fd10401d9c70be4ad96e8e94a5dd46eb761a7e9383c4b4a2e0c5c35a",
+            "kind": "knowledge",
+            "key": "shen:source",
+            "planned": {
+              "from": null,
+              "to": "hinted"
+            },
+            "detail": {
+              "who": "shen",
+              "topic": "source",
+              "reason": "十七号箱封条四日、外联五日只构成日期差异线索，尚不知原因。"
+            }
+          },
+          {
+            "id": "1f8cfd24927b30aed0f8ba23e8b7e49e65265c7a7327118bc774693260fb2e98",
+            "kind": "clock",
+            "key": "clock",
+            "planned": {
+              "advance_days": 1
+            },
+            "detail": {}
+          },
+          {
+            "id": "adc4a16f5588a5b5345bf9e98e9b15fff23b83a0f4373214955260545b449c04",
+            "kind": "disclosure",
+            "key": "source",
+            "planned": {
+              "after": "hinted"
+            },
+            "detail": {
+              "claim": "十七号箱封条四日、外联五日只构成日期差异线索，尚不知原因。"
+            }
+          }
+        ]
+      },
+      "request_ref": "ad9857c11611497098ea3372c84ce2075ebaaa16420b5a4f9c29d32ab7b529d3",
+      "report": {
+        "request_ref": "ad9857c11611497098ea3372c84ce2075ebaaa16420b5a4f9c29d32ab7b529d3",
+        "reviewer": "release-independent-reader",
+        "verdict": "pass",
+        "read_complete": true,
+        "checks": [
+          {
+            "id": "outline",
+            "status": "pass",
+            "notes": "本章依次完成次日走到后院、登记查阅扣一元、看见封条四日与外联五日、只形成线索并提出来历和责任问题。没有拆箱、引入他人到场或改变既定章末结果。"
+          },
+          {
+            "id": "continuity",
+            "status": "pass",
+            "notes": "开篇人物在值班室、查单费四元、箱子在后院且未拆；正文写次日步行到后院，原封仍完整，查阅后余三元，章末没有其他移动或时间跳跃。"
+          },
+          {
+            "id": "assets",
+            "status": "pass",
+            "notes": "查单费明确四元扣一元到三元，只有本次查阅一笔费用；箱子原地、原单未取出，未取得或带走单据、未发生归属变化，无额外资金、物品或伤势。"
+          },
+          {
+            "id": "knowledge",
+            "status": "pass",
+            "notes": "沈桐和读者所得均为四日与五日不符这一线索；正文明确不能判断哪个环节出错，尚未看箱内原单，不确认重登、误抄者或主管责任。作者提供的后续真相没有被当作当前知情。"
+          },
+          {
+            "id": "causality",
+            "status": "pass",
+            "notes": "登记查阅对应扣一元；两处同箱号日期不符引出核查需要；未读原单对应暂不确认原因，收回封口旁的手并未拆箱，动作、证据与判断上限相符。"
+          },
+          {
+            "id": "unplanned",
+            "status": "pass",
+            "notes": "已通读完整正文与全部申报；未发现额外收支、归属、拆箱、伤势、新到场人物、额外时序或越界知情。摘要、自检和七项核账与正文结果一致。"
+          }
+        ],
+        "event_checks": [
+          {
+            "id": "95fe42a5518ba501d319b4099b9502e645e14a54683b0766e3bc98607ee4b2bf",
+            "status": "pass",
+            "notes": "正文实际对照同一十七号箱封条四日与外联五日，并明确仅是来源出错线索、尚不知环节；完成日期差异节点而未提前解答原因。",
+            "evidence": {
+              "chapter": 1,
+              "quote": "他登记调阅封条查验页，查单费扣去一元，四元余额变成三元。页上记着箱号十七、四日；旁边的外联影像却把同一箱号写在五日。\n\n“四日和五日，对不上。”他沿着两行日期看了一遍。日期有差异，只能算来源出错的线索，还不能说是哪个环节出了错。箱内原单尚未看过，他把手从封口处收回。",
+              "start": 36
+            }
+          },
+          {
+            "id": "c2e06abd67fa3c0ef696a4f04d4608da478d9495b0bb22b7775632cfd03a3c5f",
+            "status": "pass",
+            "notes": "沈桐直接提出“为什么有两个日期”及来历、经手责任须查清的问题，形成读者可见的追查承诺；本章没有写成已兑现。",
+            "evidence": {
+              "chapter": 1,
+              "quote": "“这个箱子为什么有两个日期？来历和经手责任，总得查清楚。”沈桐记住要查的页码，没有拆箱。",
+              "start": 171
+            }
+          },
+          {
+            "id": "b6e5fb6ed73f02485ca08f32d3acb76bf9ffbd4519264ad0dd96e66ad39cecdf",
+            "status": "pass",
+            "notes": "登记调阅封条查验页后明确扣一元，账户由四元变三元；与本项调阅原因和资源from=4/to=3相符，通读未发现后续余额反转或其他收支。",
+            "evidence": {
+              "chapter": 1,
+              "quote": "他登记调阅封条查验页，查单费扣去一元，四元余额变成三元。",
+              "start": 36
+            }
+          },
+          {
+            "id": "39c2515e782558e84d876abf6f836537ba14aae436b777a91808dc0e15fcf5ba",
+            "status": "pass",
+            "notes": "开篇完整写明沈桐从值班室走到仓库后院，符合office到yard的步行路线；章内没有再离开后院。",
+            "evidence": {
+              "chapter": 1,
+              "quote": "次日清晨，沈桐从值班室走到仓库后院。十七号箱还在查验台边，封口完整。",
+              "start": 0
+            }
+          },
+          {
+            "id": "ab2eb544fd10401d9c70be4ad96e8e94a5dd46eb761a7e9383c4b4a2e0c5c35a",
+            "status": "pass",
+            "notes": "日期四日与五日的对照提供来源有异线索；正文明确还不能确定出错环节、原单尚未看过，沈桐知情停留hinted。",
+            "evidence": {
+              "chapter": 1,
+              "quote": "他登记调阅封条查验页，查单费扣去一元，四元余额变成三元。页上记着箱号十七、四日；旁边的外联影像却把同一箱号写在五日。\n\n“四日和五日，对不上。”他沿着两行日期看了一遍。日期有差异，只能算来源出错的线索，还不能说是哪个环节出了错。箱内原单尚未看过，他把手从封口处收回。",
+              "start": 36
+            }
+          },
+          {
+            "id": "1f8cfd24927b30aed0f8ba23e8b7e49e65265c7a7327118bc774693260fb2e98",
+            "status": "pass",
+            "notes": "正文首句“次日清晨”将起点推进一天，后文为同次查阅的连续动作，没有另一次过夜或倒退；符合advance_days=1。",
+            "evidence": {
+              "chapter": 1,
+              "quote": "次日清晨，沈桐从值班室走到仓库后院。十七号箱还在查验台边，封口完整。",
+              "start": 0
+            }
+          },
+          {
+            "id": "adc4a16f5588a5b5345bf9e98e9b15fff23b83a0f4373214955260545b449c04",
+            "status": "pass",
+            "notes": "读者看到日期差异以及尚不能断因的明确限制，没有得到后续原单或误抄责任的确认；披露为hinted。",
+            "evidence": {
+              "chapter": 1,
+              "quote": "他登记调阅封条查验页，查单费扣去一元，四元余额变成三元。页上记着箱号十七、四日；旁边的外联影像却把同一箱号写在五日。\n\n“四日和五日，对不上。”他沿着两行日期看了一遍。日期有差异，只能算来源出错的线索，还不能说是哪个环节出了错。箱内原单尚未看过，他把手从封口处收回。",
+              "start": 36
+            }
+          }
+        ],
+        "findings": []
+      }
+    }
+  }
+}

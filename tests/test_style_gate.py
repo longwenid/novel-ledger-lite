@@ -58,7 +58,7 @@ def test_submit_refused_without_author_style_direct_path():
                               fixtures.chapter_rows(book))
     store = LiteStore()
     with pytest.raises(Error) as caught:
-        pipeline.submit(book, store, 1, draft_for(book, 1))
+        fixtures.submit_reviewed(book, store, 1, draft_for(book, 1))
     assert caught.value.code == 'style_profile'
     assert caught.value.details['status'] == 'style_not_selected'
     assert store.last_chapter() == 0 and book['written_han'] == 0
@@ -79,7 +79,7 @@ def test_external_archive_group_amortized_and_registered_anchor_absent():
     head = pipeline.envelope(book, store, 1, group_row)
     assert 'style_archive' in head['required']
     assert 'style_anchor' not in head['records']               # 无内置档名 → 无注册锚
-    assert pipeline.submit(book, store, 1, draft_for(book, 1))['ok']
+    assert fixtures.submit_reviewed(book, store, 1, draft_for(book, 1))['ok']
     tail = pipeline.envelope(book, store, 2, group_row)
     assert 'style_archive' in tail['required']              # 未确认当前会话缓存，必须带完整档案
     assert 'group_pack' in tail['records']
@@ -154,7 +154,7 @@ def test_style_baseline_gate_triggers_on_shape_drift():
     pipeline.install_outlines(book, volume['id'], fixtures.volume_row(volume),
                               fixtures.chapter_rows(book))
     store = LiteStore()
-    assert pipeline.submit(book, store, 1, draft_for(book, 1))['ok']
+    assert fixtures.submit_reviewed(book, store, 1, draft_for(book, 1))['ok']
     # 第 2 章：同量级字数、但全部长句（3 句、句均 ~34 字 vs 基线 ~15 字）。
     sentences = ['次日清晨沈桐从仓库后院走到值班室核对第二批封条并把登记册翻到新的一页',
                  '他花掉一元车费登记第二批核对记录，凭据来历的第二层判断在他心里落定成形',
@@ -186,7 +186,7 @@ def test_style_baseline_gate_triggers_on_shape_drift():
     draft = {'title': '第二章 长句', 'summary': plan['synopsis'][:20],
              'self_check': '本章按章纲完成核对。', 'prose': prose,
              'drift_check': {'items': items, 'unplanned': [], 'verdict': 'clean'}}
-    result = pipeline.submit(book, store, 2, draft)
+    result = fixtures.submit_reviewed(book, store, 2, draft)
     assert not result['ok']
     style_findings = [f for f in result['findings'] if f.get('criterion', '').startswith('style_')]
     assert style_findings, result['findings']
@@ -198,8 +198,8 @@ def test_style_baseline_gate_triggers_on_shape_drift():
     pipeline.install_outlines(book2, volume2['id'], fixtures.volume_row(volume2),
                               fixtures.chapter_rows(book2))
     store2 = LiteStore()
-    assert pipeline.submit(book2, store2, 1, draft_for(book2, 1))['ok']
-    result2 = pipeline.submit(book2, store2, 2, copy.deepcopy(draft))
+    assert fixtures.submit_reviewed(book2, store2, 1, draft_for(book2, 1))['ok']
+    result2 = fixtures.submit_reviewed(book2, store2, 2, copy.deepcopy(draft))
     assert result2['ok']
     report = result2['row']['review']['style_report']
     assert report['observations'], 'observe 档应记录形状观察'

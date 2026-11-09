@@ -51,7 +51,7 @@ def test_audit_requires_all_contracted_chapters(through):
     book, _, _ = fixtures.open_installed_book()
     store = LiteStore()
     for n in range(1, through + 1):
-        assert pipeline.submit(book, store, n, fixtures.draft_for(book, n))['ok']
+        assert fixtures.submit_reviewed(book, store, n, fixtures.draft_for(book, n))['ok']
     report = pipeline.verify_full(book, store)
     assert not report['ok']
     assert any(p['kind'] == 'incomplete' for p in report['problems'])
@@ -68,15 +68,15 @@ def test_audit_rejects_live_state_mismatch():
 def test_style_changes_preserve_historical_chains_across_save_load(tmp_path):
     book, _, _ = fixtures.open_installed_book()
     store = LiteStore()
-    assert pipeline.submit(book, store, 1, fixtures.draft_for(book, 1))['ok']
+    assert fixtures.submit_reviewed(book, store, 1, fixtures.draft_for(book, 1))['ok']
     first_chain = store.chain_head()
     pipeline.recontract_patch(book, source='作者：换账房掌门', style_profile='账房掌门')
     assert book['style_switch']['at'] == 2
-    assert pipeline.submit(book, store, 2, fixtures.draft_for(book, 2))['ok']
+    assert fixtures.submit_reviewed(book, store, 2, fixtures.draft_for(book, 2))['ok']
     pipeline.recontract_patch(book, source='作者：换外部档案', style_source=ARCHIVE)
     assert book['style_switch']['at'] == 3
     for n in (3, 4):
-        assert pipeline.submit(book, store, n, fixtures.draft_for(book, n))['ok']
+        assert fixtures.submit_reviewed(book, store, n, fixtures.draft_for(book, n))['ok']
     # 写完后再次换档也不能使已提交历史失效。
     pipeline.recontract_patch(book, source='作者：改回内置档', style_profile='市井修仙')
     path = tmp_path / 'book.json'
@@ -144,7 +144,7 @@ def test_submit_and_envelope_use_same_nearest_five_chapters(monkeypatch):
     book, _, _ = fixtures.open_installed_book(chapters=10)
     store = LiteStore()
     for n in range(1, 9):
-        assert pipeline.submit(book, store, n, fixtures.draft_for(book, n))['ok']
+        assert fixtures.submit_reviewed(book, store, n, fixtures.draft_for(book, n))['ok']
     envelope = pipeline.envelope(book, store, 9)
     expected = store.read_document(envelope['records']['style'])['anchor']
     observed = []
@@ -155,7 +155,7 @@ def test_submit_and_envelope_use_same_nearest_five_chapters(monkeypatch):
         return examine(prose, declared, anchor, *args, **kwargs)
 
     monkeypatch.setattr(style, 'examine', capture)
-    assert pipeline.submit(book, store, 9, fixtures.draft_for(book, 9))['ok']
+    assert fixtures.submit_reviewed(book, store, 9, fixtures.draft_for(book, 9))['ok']
     assert observed == [expected]
     assert observed[0]['basis'] == [4, 5, 6, 7, 8]
 
@@ -167,7 +167,7 @@ def test_rebuild_respects_requested_chapter(through, with_checkpoints):
     store = LiteStore()
     states = {0: copy.deepcopy(book['state'])}
     for n in range(1, 5):
-        assert pipeline.submit(book, store, n, fixtures.draft_for(book, n))['ok']
+        assert fixtures.submit_reviewed(book, store, n, fixtures.draft_for(book, n))['ok']
         states[n] = copy.deepcopy(book['state'])
         if with_checkpoints and n in (1, 2):
             pipeline._checkpoint(book, n, None)

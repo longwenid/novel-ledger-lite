@@ -53,7 +53,7 @@ def test_builtin_profile_is_frozen_and_changes_only_on_explicit_selection(tmp_pa
     store = LiteStore()
     first = pipeline.envelope(book, store, 1)
     receipt = {'context_id': 'writer-A', 'loaded': [first['records']['style_guide']]}
-    assert pipeline.submit(book, store, 1, fixtures.draft_for(book, 1))['ok']
+    assert fixtures.submit_reviewed(book, store, 1, fixtures.draft_for(book, 1))['ok']
     path.write_text('# 完整档案二\n<!-- dispatch:start -->第二版执行声线。<!-- dispatch:end -->\n参考二', encoding='utf-8')
     unchanged = pipeline.envelope(book, store, 2)
     assert store.read_document(unchanged['records']['style_guide'])['content'] == '第一版执行声线。'
@@ -75,7 +75,7 @@ def test_guide_requires_the_current_context_cache_receipt():
     store = LiteStore()
     first = pipeline.envelope(book, store, 1)
     receipt = {'context_id': 'writer-A', 'loaded': [first['records']['style_guide']]}
-    assert pipeline.submit(book, store, 1, fixtures.draft_for(book, 1))['ok']
+    assert fixtures.submit_reviewed(book, store, 1, fixtures.draft_for(book, 1))['ok']
     second = pipeline.envelope(book, store, 2, cache=receipt)
     assert 'style_guide' in second['delivery']['cached']
     warm = json.loads(pipeline.materialize(second, store, cache=receipt)['text'])['materials']

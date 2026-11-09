@@ -31,7 +31,7 @@ def test_each_chapter_is_self_contained_for_a_fresh_writer():
     book, store = installed(style_source=ARCHIVE)
     group = pipeline.group(book, store, 'v1', size=2)
     pipeline.envelope(book, store, 1, group)
-    assert pipeline.submit(book, store, 1, fixtures.draft_for(book, 1))['ok']
+    assert fixtures.submit_reviewed(book, store, 1, fixtures.draft_for(book, 1))['ok']
     work = pipeline.envelope(book, store, 2, group)
     delivered = records(work, store)  # A new writer sees only this input, no earlier group input.
     assert delivered['core_context']['constraints']['world_rules'] == book['contract']['world_rules']
@@ -48,7 +48,7 @@ def test_cache_requires_explicit_current_context_and_exact_document_hash():
     first = pipeline.envelope(book, store, 1, group)
     receipt = {'context_id': 'writer-A', 'loaded': [first['records']['style_archive'],
                                                  first['records']['volume_context']]}
-    assert pipeline.submit(book, store, 1, fixtures.draft_for(book, 1))['ok']
+    assert fixtures.submit_reviewed(book, store, 1, fixtures.draft_for(book, 1))['ok']
     warm = pipeline.envelope(book, store, 2, group, cache=receipt)
     assert 'core_context' in warm['required']
     assert 'style_archive' not in warm['required']
@@ -69,7 +69,7 @@ def test_style_switch_invalidates_the_old_cached_archive(tmp_path):
     group = pipeline.group(book, store, 'v1')
     first = pipeline.envelope(book, store, 1, group)
     receipt = {'context_id': 'writer-A', 'loaded': [first['records']['style_archive']]}
-    assert pipeline.submit(book, store, 1, fixtures.draft_for(book, 1))['ok']
+    assert fixtures.submit_reviewed(book, store, 1, fixtures.draft_for(book, 1))['ok']
     path.write_text('新作者声线版本二。', encoding='utf-8')
     pipeline.recontract_patch(book, source='作者确认版本二', style_source=str(path))
     work = pipeline.envelope(book, store, 2, group, cache=receipt)
@@ -229,7 +229,7 @@ def test_canonical_delivery_has_one_outline_and_measures_actual_input():
 
 def test_brief_references_historical_quotes_without_copying_them():
     book, store = installed()
-    assert pipeline.submit(book, store, 1, fixtures.draft_for(book, 1))['ok']
+    assert fixtures.submit_reviewed(book, store, 1, fixtures.draft_for(book, 1))['ok']
     work = pipeline.envelope(book, store, 2)
     anchors = store.read_document(work['records']['anchor_sentences'])
     assert anchors['prior']['anchors']
@@ -257,7 +257,7 @@ def test_old_actor_returns_next_volume_after_save_and_fresh_context(tmp_path):
                 assert delivered['state']['facts']['shen:limit'] == '不会识字。'
                 assert delivered['state']['resources'] == book['state']['resources']
                 assert delivered['core_context']['volume']['id'] == 'v2'
-            outcome = pipeline.submit(book, store, n, draft(book, n, 500))
+            outcome = fixtures.submit_reviewed(book, store, n, draft(book, n, 500))
             assert outcome['ok'], outcome.get('findings')
         if volume['id'] == 'v1':
             path = tmp_path / 'volume-end.json'

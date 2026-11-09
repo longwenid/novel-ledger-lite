@@ -34,33 +34,118 @@ def produce(before, after, events, chapter):
     return delta
 
 
-def inverted_entries(events, chapter):
-    """asset id → chapter for every coordinate a recall query may name.
+def _event_addresses(event):
+    """Extract projection coordinates and searchable identities together, without live state."""
+    references, coordinates = set(), set()
 
-    只索引带稳定 id 的资产类事件（承诺/读者认知/历史断言/实体/人物发展/场景登记）——
-    recall 的查询域就是这些坐标；事实与资源的坐标已经活在 delta_index 里。
+    def name(value):
+        if isinstance(value, str) and value:
+            coordinates.add(value)
+
+    def reference(kind, key):
+        if isinstance(key, str) and key:
+            references.add((kind, key))
+            name(key)
+
+    def compound(kind, entity, key):
+        if isinstance(entity, str) and entity and isinstance(key, str) and key:
+            reference(kind, entity + ':' + key)
+
+    op = event.get('op')
+    entity = event.get('entity')
+    ident = entity.get('id') if isinstance(entity, dict) else entity
+    for value in (ident, event.get('id'), event.get('topic')):
+        name(value)
+
+    if op in ('entity', 'alias'):
+        reference('entities', ident)
+    elif op == 'state':
+        compound('facts', ident, event.get('key'))
+    elif op == 'relation':
+        source, target, key = event.get('from'), event.get('to'), event.get('key')
+        for value in (source, target):
+            name(value)
+        if all(isinstance(v, str) and v for v in (source, target, key)):
+            reference('relations', source + '>' + target + ':' + key)
+    elif op == 'knowledge':
+        compound('knowledge', ident, event.get('topic'))
+    elif op == 'resource':
+        asset, unit = event.get('asset'), event.get('unit')
+        for holder in (event.get('from'), event.get('to')):
+            name(holder)
+            if all(isinstance(v, str) and v for v in (holder, asset, unit)):
+                reference('resources', facts.resource_key(holder, asset, unit))
+    elif op == 'clock':
+        thread = event.get('thread')
+        reference('clock_threads' if thread else 'clock', thread or 'main')
+        if not thread:
+            name('clock')              # Chapter outlines also call the main clock `clock`.
+    elif op == 'hook':
+        reference('hooks', event.get('id'))
+    elif op == 'place':
+        place = event.get('place')
+        reference('places', place.get('id') if isinstance(place, dict) else None)
+    elif op == 'move':
+        reference('placements', ident)
+    elif op == 'historical_assertion':
+        reference('historical_assertions', event.get('id'))
+    elif op == 'character_development':
+        reference('developments', ident)
+    elif op == 'story_node':
+        reference('story_nodes', event.get('node'))
+        reference('thread_progress', event.get('line'))
+    elif op == 'story_thread':
+        reference('thread_progress', event.get('thread'))
+    elif op == 'reader_knowledge':
+        reference('reader_knowledge', event.get('topic'))
+    elif op == 'character_current':
+        reference('character_current', ident)
+    elif op in ('anchor', 'anchor_assert', 'anchor_change'):
+        compound('anchors', ident, event.get('key'))
+    elif op in ('link', 'link_change'):
+        reference('links', event.get('id'))
+    elif op == 'placement':
+        # A handoff can remove one representation while establishing the other.
+        reference('placements', ident)
+        reference('custody', ident)
+        if isinstance(event.get('after'), dict) and 'holder' in event['after']:
+            reference('arrivals', ident)
+    elif op == 'travel':
+        reference('placements', ident)
+        if 'arrive' in event:
+            reference('arrivals', ident)
+    elif op == 'perceive':
+        # Perception has no implicit knowledge/state mutation; its recorded participants
+        # and path remain searchable without presenting them as changed projections.
+        for field in ('observer', 'target', 'from', 'to', 'link'):
+            name(event.get(field))
+    return references, coordinates
+
+
+def event_references(event) -> set[tuple[str, str]]:
+    """Direct projection coordinates an event records, preserving field identity.
+
+    These are primary coordinates, suitable for following a coordinate's history. Searchable
+    participants/topics are deliberately separate: a resource flow and a state change involving
+    the same person must not become each other's successors. Derived effects requiring live
+    state (such as arrival times of carried objects) are not invented from an event alone.
     """
+    return _event_addresses(event)[0]
+
+
+def event_coordinates(event) -> set[str]:
+    """Canonical searchable keys, including entity/topic/id queries and both transfer holders."""
+    return _event_addresses(event)[1]
+
+
+def inverted_entries(events, chapter):
+    """Searchable event coordinate → committed chapter; the index never substitutes for history."""
     rows = {}
     for event in events:
-        op = event.get('op')
-        if op == 'hook':
-            ident = event.get('id')
-        elif op == 'reader_knowledge':
-            ident = event.get('topic')
-        elif op == 'historical_assertion':
-            ident = event.get('id')
-        elif op in ('entity', 'place'):
-            ident = (event.get('entity') or event.get('place') or {}).get('id')
-        elif op == 'alias':
-            ident = event.get('entity')
-        elif op == 'character_development':
-            ident = event.get('entity')
-        else:
-            ident = None
-        if isinstance(ident, str) and ident:
-            rows.setdefault(ident, [])
-            if chapter not in rows[ident]:
-                rows[ident].append(chapter)
+        for coordinate in sorted(event_coordinates(event)):
+            pages = rows.setdefault(coordinate, [])
+            if chapter not in pages:
+                pages.append(chapter)
     return rows
 
 

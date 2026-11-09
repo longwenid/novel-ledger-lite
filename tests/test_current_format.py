@@ -15,7 +15,7 @@ def bundle(tmp_path):
     book, _, _ = fixtures.open_installed_book(with_scenes=True)
     store = LiteStore()
     group = pipeline.group(book, store, 'v1')
-    assert pipeline.submit(book, store, 1, fixtures.draft_for(book, 1))['ok']
+    assert fixtures.submit_reviewed(book, store, 1, fixtures.draft_for(book, 1))['ok']
     path = tmp_path / 'book.json'
     pipeline.save(book, store, path)
     return book, store, group, path, json.loads(path.read_text(encoding='utf-8'))
@@ -34,7 +34,7 @@ def test_current_bundle_roundtrips_without_rewriting_progress_or_groups(tmp_path
     book, store, group, path, raw = bundle(tmp_path)
     assert raw['schema'] == BUNDLE_SCHEMA
     assert raw['book']['schema'] == SCHEMA
-    assert raw['store']['schema'] == STORE_SCHEMA
+    assert raw['store']['schema'] == 'novel-ledger-lite.store/4'
     loaded, saved = pipeline.load(path)
     assert loaded == book
     assert saved.to_dict() == store.to_dict()

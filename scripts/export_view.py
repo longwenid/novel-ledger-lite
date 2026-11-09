@@ -11,23 +11,31 @@ GUI 右栏可逐文件读取的派生产物（`.novel-ledger/view.json` 与每�
 
 产物：
 
-    <out>/view.json            总览、设定、卷表、章表（小文件，一行一条记录）
+    <out>/view.json            小型版本清单，引用完整写作视图分片
+    <out>/chunks/<sha>.json    单行 UTF-8 分片（含正文，逐片及重组后验 SHA-256）
     <out>/chapters/ch0001.md   每章正文（标题行 + 正文段落）
 """
 from __future__ import annotations
 
 import argparse
-import io
+import hashlib
 import json
 import os
 import sys
+import tempfile
 from datetime import datetime, timezone
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from novel_ledger_lite import pipeline, world  # noqa: E402
 
-VIEW_SCHEMA = 'novel-writing-view/1'
+VIEW_SCHEMA = 'novel-writing-view/2'
+MANIFEST_SCHEMA = 'novel-writing-manifest/1'
+CONTENT_SCHEMA = 'novel-writing-content/1'
+CHUNK_SCHEMA = 'novel-writing-chunk/1'
+# Each transport file is one physical line and stays comfortably below the
+# workspace reader's byte ceiling, independently of prose line lengths.
+MAX_TRANSPORT_BYTES = 128 * 1024
 
 WORLD_FIELD_LABELS = {
     'name': '名称', 'environment': '环境', 'resources': '资源', 'access': '进出', 'story_pressure': '叙事压力',
@@ -55,13 +63,6 @@ FACET_LABELS = (
 )
 
 
-def _clip(value, limit=200):
-    if not isinstance(value, str):
-        return value
-    text = ' '.join(value.split())
-    return text if len(text) <= limit else text[:limit] + '…'
-
-
 def _scalar(value):
     if isinstance(value, bool):
         return '是' if value else '否'
@@ -74,6 +75,60 @@ def _scalar(value):
     if isinstance(value, dict):
         return json.dumps(value, ensure_ascii=False, sort_keys=True)
     return '' if value is None else str(value)
+
+
+def _json_bytes(value):
+    return json.dumps(value, ensure_ascii=False, sort_keys=True,
+                      separators=(',', ':')).encode('utf-8')
+
+
+def _json_character_bytes(char):
+    """Bytes occupied by one character inside an ensure_ascii=False string."""
+    if char in ('"', '\\', '\b', '\f', '\n', '\r', '\t'):
+        return 2
+    code = ord(char)
+    if code < 32:
+        return 6
+    return len(char.encode('utf-8'))
+
+
+def _atomic_bytes(path, raw):
+    descriptor, temporary = tempfile.mkstemp(prefix='.export-', dir=os.path.dirname(path) or '.')
+    try:
+        with os.fdopen(descriptor, 'wb') as handle:
+            handle.write(raw)
+        os.replace(temporary, path)
+    finally:
+        if os.path.exists(temporary):
+            os.unlink(temporary)
+
+
+def _content(out_dir, text):
+    """Write lossless, content-addressed JSON chunks and return their manifest."""
+    chunks_dir = os.path.join(out_dir, 'chunks')
+    os.makedirs(chunks_dir, exist_ok=True)
+    pieces, start, size = [], 0, 0
+    # Leave room for schema, index and punctuation in the serialized envelope.
+    budget = MAX_TRANSPORT_BYTES - 256
+    for position, char in enumerate(text):
+        cost = _json_character_bytes(char)
+        if size + cost > budget:
+            pieces.append(text[start:position])
+            start, size = position, 0
+        size += cost
+    pieces.append(text[start:])
+    references = []
+    for index, piece in enumerate(pieces):
+        raw = _json_bytes({'schema': CHUNK_SCHEMA, 'index': index, 'text': piece})
+        if len(raw) > MAX_TRANSPORT_BYTES:
+            raise ValueError('写作视图分片超过传输预算。')
+        checksum = hashlib.sha256(raw).hexdigest()
+        name = 'chunks/%s.json' % checksum
+        _atomic_bytes(os.path.join(out_dir, name), raw)
+        references.append({'file': name, 'bytes': len(raw), 'sha256': checksum})
+    raw_text = text.encode('utf-8')
+    return {'schema': CONTENT_SCHEMA, 'bytes': len(raw_text),
+            'sha256': hashlib.sha256(raw_text).hexdigest(), 'chunks': references}
 
 
 def _documents(store_raw):
@@ -136,7 +191,7 @@ def _characters(book, contract):
         knowledge.setdefault(who, []).append({
             'topic': topic,
             'stance': _scalar(value.get('stance')),
-            'claim': _clip(_scalar(value.get('claim')), 160),
+            'claim': _scalar(value.get('claim')),
         })
     places = state.get('places') or {}
     placements = state.get('placements') or {}
@@ -183,7 +238,7 @@ def _resources(book):
         seed = row.get('seed') or {}
         hooks.append({
             'id': _scalar(key),
-            'text': _clip(_scalar(row.get('text')), 200),
+            'text': _scalar(row.get('text')),
             'status': _scalar(row.get('status')),
             'due': row.get('due'),
             'seed_chapter': seed.get('chapter'),
@@ -207,7 +262,7 @@ def _volumes(book, contract, hooks_by_id):
             live = hooks_by_id.get(_scalar(hook.get('id'))) or {}
             volume_hooks.append({
                 'id': _scalar(hook.get('id')),
-                'text': _clip(_scalar(hook.get('text')), 160),
+                'text': _scalar(hook.get('text')),
                 'plant': hook.get('plant'),
                 'payoff': hook.get('payoff'),
                 'status': live.get('status') or 'open',
@@ -261,35 +316,29 @@ def build_view(bundle_path, out_dir):
             title = _scalar(row.get('title') or '')
             han = row.get('han')
             heading = title if title.startswith('第') else '第%d章 %s' % (n, title)
-            with io.open(os.path.join(out_dir, file_name), 'w', encoding='utf-8', newline='\n') as handle:
-                handle.write('# %s\n\n' % heading.strip())
-                handle.write(prose.strip('\n'))
-                handle.write('\n')
+            body = '# %s\n\n%s\n' % (heading.strip(), prose.strip('\n'))
+            _atomic_bytes(os.path.join(out_dir, file_name), body.encode('utf-8'))
+            content = _content(out_dir, body)
             written += 1
             han_total += han if isinstance(han, int) else 0
         else:
             han = None
             title = ''
+            content = None
         chapters.append({
             'n': n,
             'volume': volume_of.get(n, ''),
             'title': title,
             'state': 'written' if is_written else ('outlined' if plan else 'planned'),
             'han': han,
-            'synopsis': _clip(_scalar(plan.get('synopsis')), 160),
-            'summary': _clip(_scalar(row.get('summary')), 160),
-            'beat': _clip(_scalar((plan.get('plot') or {}).get('beat')), 160),
+            'synopsis': _scalar(plan.get('synopsis')),
+            'summary': _scalar(row.get('summary')),
+            'beat': _scalar((plan.get('plot') or {}).get('beat')),
             'scenes': [_scalar((scene or {}).get('label')) for scene in (plan.get('scenes') or [])
                        if isinstance(scene, dict)],
             'file': file_name if is_written else '',
+            'content': content,
         })
-
-    # 派生产物要能被 GUI 一次读完（上限 2 MiB）：超量时只收起列表里的长摘要。
-    if len(json.dumps(chapters, ensure_ascii=False)) > 1_200_000:
-        for chapter in chapters:
-            chapter['synopsis'] = chapter['synopsis'][:80]
-            chapter['summary'] = chapter['summary'][:80]
-            chapter['beat'] = chapter['beat'][:80]
 
     people, protagonist, head = _characters(book, contract)
     resources, hooks_all, _ = _resources(book)
@@ -333,9 +382,14 @@ def build_view(bundle_path, out_dir):
         'places': places_rows,
     }
     path = os.path.join(out_dir, 'view.json')
-    with io.open(path, 'w', encoding='utf-8', newline='\n') as handle:
-        json.dump(view, handle, ensure_ascii=False, sort_keys=True)
-        handle.write('\n')
+    manifest = {'schema': MANIFEST_SCHEMA, 'view_schema': VIEW_SCHEMA,
+                'content': _content(out_dir, _json_bytes(view).decode('utf-8'))}
+    raw_manifest = _json_bytes(manifest)
+    if len(raw_manifest) > MAX_TRANSPORT_BYTES:
+        raise ValueError('写作视图清单超过传输预算，未生成不完整视图。')
+    # Publish the entrypoint last; a reader sees the previous complete export
+    # until all immutable chunks belonging to the new one exist.
+    _atomic_bytes(path, raw_manifest)
     return {'view': path, 'chapters': written, 'chapter_files': written, 'bytes': os.path.getsize(path)}
 
 

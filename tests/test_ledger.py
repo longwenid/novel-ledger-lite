@@ -23,7 +23,7 @@ def test_submit_advances_ledger_and_produces_delta():
     book, _, _ = open_installed_book()
     store = _store()
     before = copy.deepcopy(book['state'])
-    result = pipeline.submit(book, store, 1, draft_for(book, 1))
+    result = fixtures.submit_reviewed(book, store, 1, draft_for(book, 1))
     assert result['ok'], result
     row = result['row']
     assert row['han'] == han_count(draft_for(book, 1)['prose'])
@@ -47,7 +47,7 @@ def test_rejects_evidence_not_verbatim():
     draft = draft_for(book, 1)
     draft['drift_check']['items'][0]['evidence']['quote'] = '这句不在正文里'
     before_state = copy.deepcopy(book['state'])
-    result = pipeline.submit(book, store, 1, draft)
+    result = fixtures.submit_reviewed(book, store, 1, draft)
     assert not result['ok']
     assert book['state'] == before_state and store.last_chapter() == 0
 
@@ -60,7 +60,7 @@ def test_rejects_before_value_contradicting_projection():
     for item in draft['drift_check']['items']:
         if item['kind'] == 'resources':
             item['actual'] = {'from': '999', 'to': item['planned']['to']}
-    result = pipeline.submit(book, store, 1, draft)
+    result = fixtures.submit_reviewed(book, store, 1, draft)
     assert not result['ok']
     assert any(f['criterion'] == 'drift_before' for f in result['findings'])
 
@@ -69,11 +69,11 @@ def test_rejects_duplicate_prose_across_window():
     """8 章重复窗：与前章逐字重复的句子被机械拦截。"""
     book, _, _ = open_installed_book()
     store = _store()
-    assert pipeline.submit(book, store, 1, draft_for(book, 1))['ok']
+    assert fixtures.submit_reviewed(book, store, 1, draft_for(book, 1))['ok']
     draft = draft_for(book, 2)
     first = draft_for(book, 1)['prose']
     draft['prose'] = draft['prose'] + '。' + first[:30]      # 搬运前章 30 字
-    result = pipeline.submit(book, store, 2, draft)
+    result = fixtures.submit_reviewed(book, store, 2, draft)
     assert not result['ok']
     assert any(f['criterion'] in ('repetition', 'language') for f in result['findings'])
 
@@ -91,9 +91,9 @@ def test_hook_deadline_intercepted():
     """到期承诺拦截：due ≤ 本章仍未兑现 → 拒绝结算。"""
     book, _, _ = open_installed_book()
     store = _store()
-    pipeline.submit(book, store, 1, draft_for(book, 1))
+    fixtures.submit_reviewed(book, store, 1, draft_for(book, 1))
     book['state']['hooks'][fixtures.HOOK_ID]['due'] = 2       # 人工把期限拉到第 2 章
-    result = pipeline.submit(book, store, 2, draft_for(book, 2))
+    result = fixtures.submit_reviewed(book, store, 2, draft_for(book, 2))
     assert not result['ok']
     assert any(f['criterion'] == 'hook_due' for f in result['findings'])
 

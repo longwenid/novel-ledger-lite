@@ -25,7 +25,7 @@ def test_full_loop_smoke():
         envelope = pipeline.envelope(book, store, n, group_row)
         assert envelope['required']
         assert envelope['stage'] == 'write'
-        outcome = pipeline.submit(book, store, n, draft_for(book, n))
+        outcome = fixtures.submit_reviewed(book, store, n, draft_for(book, n))
         assert outcome['ok'], [f for f in outcome.get('findings', [])]
         results.append(outcome)
     assert book['written_han'] > 0 and book['status'] == 'running'
@@ -68,7 +68,7 @@ def test_loop_rejects_writing_without_frozen_outline():
     with pytest.raises(Exception):
         pipeline.envelope(book, store, 1)
     with pytest.raises(Exception):
-        pipeline.submit(book, store, 1, {'title': 't', 'summary': 's', 'self_check': 'c',
+        fixtures.submit_reviewed(book, store, 1, {'title': 't', 'summary': 's', 'self_check': 'c',
                                          'prose': '正文', 'drift_check': {'items': [], 'unplanned': [],
                                                                           'verdict': 'clean'}})
 
@@ -77,9 +77,9 @@ def test_volume_diff_lists_required_sealed_channel():
     """required/sealed 通道（方案三补丁 a）：封线承诺未兑现时，卷界差异单显式点名。"""
     book, _, _ = open_installed_book()
     store = LiteStore()
-    assert pipeline.submit(book, store, 1, draft_for(book, 1))['ok']
-    assert pipeline.submit(book, store, 2, draft_for(book, 2))['ok']
-    assert pipeline.submit(book, store, 3, draft_for(book, 3))['ok']
+    assert fixtures.submit_reviewed(book, store, 1, draft_for(book, 1))['ok']
+    assert fixtures.submit_reviewed(book, store, 2, draft_for(book, 2))['ok']
+    assert fixtures.submit_reviewed(book, store, 3, draft_for(book, 3))['ok']
     # 第 4 章本应 payoff；用第 3 章的稿子顶替第 4 章会被章纲对账拒绝——
     # 这里直接伪造「卷末承诺仍 open」的状态来看差异单的点名行为。
     pipeline._checkpoint(book, 4, 'v1')

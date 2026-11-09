@@ -105,16 +105,18 @@ def related(field, key, value, people, named):
     return field == 'reader_knowledge'
 
 
-def catalog(book, plan=None, people=(), view=None, *, kind=None, query='', page=0, per=20):
-    """Bounded, searchable metadata; excerpts identify entries and are never canonical values."""
-    require(type(page) is int and page >= 0 and type(per) is int and 1 <= per <= 100,
-            'context_catalog', '目录分页须为非负页号，每页 1～100 条。')
-    require(isinstance(query, str), 'context_catalog', '目录查询须为文本。')
+def _catalog_kind(kind):
     if kind == 'place_records':
         kind = 'places'
     elif kind is not None:
         kind, _ = story_memory.coordinate({'kind': kind, 'key': 'main'})
         kind = field_of(kind)
+    return kind
+
+
+def _catalog_rows(book, plan, people, view, *, kind=None, query=''):
+    """Collect discoverable coordinates once, without fetching their full values."""
+    kind = _catalog_kind(kind)
     fields = CURRENT_FIELDS + HISTORY_FIELDS + ('entities', 'places', 'hooks')
     require(kind is None or kind in fields, 'context_catalog', '该资源种类没有补读目录。')
     people = set(people)
@@ -149,12 +151,56 @@ def catalog(book, plan=None, people=(), view=None, *, kind=None, query='', page=
                          'preview': label[:80],
                          'last_chapter': delta.last_chapter(book.get('delta_index') or {}, field, key)})
     rows.sort(key=lambda row: (-row['last_chapter'], row['kind'], row['key']))
+    return rows
+
+
+def catalog(book, plan=None, people=(), view=None, *, kind=None, query='', page=0, per=20):
+    """Bounded, searchable metadata; excerpts identify entries and are never canonical values."""
+    require(type(page) is int and page >= 0 and type(per) is int and 1 <= per <= 100,
+            'context_catalog', '目录分页须为非负页号，每页 1～100 条。')
+    require(isinstance(query, str), 'context_catalog', '目录查询须为文本。')
+    rows = _catalog_rows(book, plan, people, view, kind=kind, query=query)
+    kind = _catalog_kind(kind)
     start = page * per
     return {'items': rows[start:start + per], 'page': page, 'per': per, 'total': len(rows),
             'has_more': start + per < len(rows), 'query': query, 'kind': kind,
             'scope': 'chapter_related' if plan else 'all_resources',
             'resolve': '先用 pipeline.catalog 搜索/翻页，再用 pipeline.resource 按 kind/key 取真值。',
             'boundary': 'preview 只是定位片段，不是可据以写作的完整事实；knowledge 属于人物，reader_knowledge 属于读者。'}
+
+
+def package_supplements(book, plan, people, view, *, included=()):
+    """Preserve the verified projection; never turn its omitted history back into mandatory input.
+
+    Current values and all explicitly named/pinned dependencies remain full. Only the history
+    already excluded by a complete-dependency projection can stay deferred. Incomplete scene
+    dependencies retain the conservative expansion used by standalone packets.
+    """
+    complete = (view.get('material_scope') or {}).get('mode') == 'declared_dependencies'
+    named = {(field_of(kind), key) for kind, key in story_memory.reads(plan)}
+    named.update((field_of(kind), key) for kind, key in (
+        story_memory.coordinate(row) for row in book['contract'].get('pinned') or []))
+    full, deferred = [], []
+    counts = {}
+    for row in _catalog_rows(book, plan, people, view):
+        coordinate = row['kind'], row['key']
+        if coordinate in included:
+            continue
+        if complete and row['kind'] in HISTORY_FIELDS and coordinate not in named:
+            deferred.append(row)
+            counts[row['kind']] = counts.get(row['kind'], 0) + 1
+        else:
+            full.append(row)
+    return full, {
+        'items': deferred[:20], 'total': len(deferred), 'by_kind': counts,
+        'shown': min(20, len(deferred)), 'has_more': len(deferred) > 20,
+        'scope': 'declared_dependencies' if complete else 'conservative',
+        'boundary': '这里只列完整依赖声明下未点名的远期历史定位片段，不是事实正文，也不表示人物或读者不知道。'
+                    '当前事实、资产、关系、人物状态及显式依赖不按年龄省略。',
+        'resolve': '写作者仍只读本文件；如需任何未携带材料，停止并说明所需人物、话题或ID，'
+                   '由准备者检索完整目录、核实真值后补充资源或历史章节并重新签发。'
+                   '不得依据片段猜测、重置状态或自行补读。',
+    }
 
 
 def delivery_cache(cache):

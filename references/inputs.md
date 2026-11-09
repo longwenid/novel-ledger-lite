@@ -47,9 +47,16 @@
 ## 正文提交
 
 提交对象包含非空 `title/prose/summary/self_check` 以及 `drift_check={items,unplanned,verdict}`。
+使用单文件写作包时还须回传包内 `package_ref`，原样复制即可，不计算哈希。本章已签发单文件包时，
+提交会核验最新签发引用和当前来源；旧引用、缺引用、来源已变均不能提交。
 每项章纲增量对应一条自比：`{kind,key,planned,status,actual,evidence}`。planned 与冻结章纲
 一致；正常提交 status 为 kept，actual 使用 clock.advance_days、hook.action 或资源等的 to。
 `evidence={chapter,quote}` 必须逐字存在于本章正文且可唯一定位；前态由引擎投影核对。
+引文还应在语义上支持所报变化；独立审读须核对整章有无计划外资产或知情变化及申报漏项，
+不能只验证引文存在或沿用写手的 clean 声明。
+所有提交必须先用 `review_request` 让不同于写作者的独立读者阅读完整材料和整章，
+将实际报告交给 `record_content_review` 并回传得到的 `review_ref`。
+审读类别、逐项事件证据、缺料停写和失效规则见 [content-review.md](content-review.md)。
 
 `items` 须精确覆盖本章所有变化，`unplanned` 正常为空，`verdict` 为 clean。
 声明偏差只用于诊断，不授权变更既定章纲；被拒时按 findings 修复正文重提。
@@ -58,7 +65,8 @@
 ## 运行与验证
 
 `python3 scripts/run_example.py` 不依赖 pytest、分词器或模型服务，运行内置四章稿的
-完整导入、分组、提交、保存重载和验收；指定 `--output 路径` 可保留示例账本。
+完整导入、分组、冻结审读报告绑定、提交、保存重载和验收；指定 `--output 路径` 可保留示例账本。
+示例仅复用已独立审读的固定稿件和报告，设计、文风材料或稿件指纹变化即拒绝，不能为任意稿件自动颁发凭证。
 引擎通过 Python API 调用，示例脚本只是接入演示，不生成创作正文。
 
 ## 上下文接入

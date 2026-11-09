@@ -79,7 +79,7 @@ def test_envelope_carries_anchors_and_previous_chapter():
     """差量信封：前 1 章全文＋前情锚句（hook_refs 引用驱动）＋场景锚句（窗口驱动）。"""
     book, _, _ = open_installed_book()
     store = store_module.LiteStore()
-    assert pipeline.submit(book, store, 1, draft_for(book, 1))['ok']
+    assert fixtures.submit_reviewed(book, store, 1, draft_for(book, 1))['ok']
     envelope = pipeline.envelope(book, store, 2)
     records = {name: store.read_document(key) for name, key in envelope['records'].items()}
     # 前文窗口降维：默认只带前 1 章全文。
@@ -118,7 +118,7 @@ def test_group_pack_shared_and_chapter_delta_thinner():
     assert group_row['members'] == [1, 2]
     head = pipeline.envelope(book, store, 1, group_row)
     assert 'core_context' in head['required']                     # 每章核心约束必读
-    assert pipeline.submit(book, store, 1, draft_for(book, 1))['ok']
+    assert fixtures.submit_reviewed(book, store, 1, draft_for(book, 1))['ok']
     tail = pipeline.envelope(book, store, 2, group_row)
     assert 'contract' not in tail['required']
     assert 'core_context' in tail['required']                  # 完整契约是可选背景
@@ -173,6 +173,6 @@ def test_volume_anchor_record_name_and_required_dedup():
     # 续章仍然保留生效 style，避免重复发送两个锚记录。
     group_row = pipeline.group(book, store, 'v1', size=2)
     assert group_row['pack']['style_volume_anchor']['frozen_at'] == 1
-    assert pipeline.submit(book, store, 1, draft_for(book, 1))['ok']
+    assert fixtures.submit_reviewed(book, store, 1, draft_for(book, 1))['ok']
     tail = pipeline.envelope(book, store, 2, group_row)
     assert 'style_volume_anchor' not in tail['required'] and 'style' in tail['required']

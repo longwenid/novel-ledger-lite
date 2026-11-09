@@ -283,5 +283,41 @@ def submit_chapters(book, store, through=None):
     for n in range(volume['first'], last + 1):
         envelope = pipeline.envelope(book, store, n)
         assert envelope['required'], '每章信封必须有必读记录'
-        results.append(pipeline.submit(book, store, n, draft_for(book, n)))
+        results.append(submit_reviewed(book, store, n, draft_for(book, n)))
     return results
+
+
+def attach_synthetic_review(book, store, chapter, draft):
+    """Mechanical test receipt only: never use this as a real prose quality judgment."""
+    from novel_ledger_lite.content_review import CHECKS
+    request = pipeline.review_request(book, store, chapter, draft, writer='synthetic-fixture-writer')
+    entries = request['manifest']['event_checks']
+    items = (draft.get('drift_check') or {}).get('items') or []
+    event_checks = []
+    for entry in entries:
+        match = next((item for item in items if item.get('kind') == entry['kind']
+                      and item.get('key') == entry['key'] and item.get('planned') == entry['planned']), None)
+        ref = match.get('evidence') if match else None
+        # Malformed drafts are deliberately passed to submit's mechanical gates in
+        # negative tests. Their synthetic review is not a claim of semantic validity.
+        if not isinstance(ref, dict) or ref.get('quote') not in draft['prose']:
+            ref = {'chapter': chapter, 'quote': draft['prose'], 'start': 0}
+        event_checks.append({'id': entry['id'], 'status': 'pass',
+                             'notes': '合成夹具：仅测试逐项审读引用与提交机械链。', 'evidence': ref})
+    report = {'request_ref': request['request_ref'],
+              'reviewer': 'synthetic-fixture-reader', 'verdict': 'pass', 'read_complete': True,
+              'checks': [{'id': key, 'status': 'pass', 'notes': '合成夹具，不代表真实语义审读。'}
+                         for key in CHECKS], 'event_checks': event_checks, 'findings': []}
+    draft['review_ref'] = pipeline.record_content_review(book, store, request['request_ref'], report)
+    return draft
+
+
+def submit_reviewed(book, store, chapter, draft):
+    """Explicit synthetic-review helper for mechanics tests; production has no bypass."""
+    # Keep tests of pre-review package/order/input rejection on the real API path.
+    from novel_ledger_lite.contracts import Error
+    try:
+        candidate = attach_synthetic_review(book, store, chapter, copy.deepcopy(draft))
+    except Error:
+        return pipeline.submit(book, store, chapter, draft)
+    return pipeline.submit(book, store, chapter, candidate)

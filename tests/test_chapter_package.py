@@ -64,7 +64,8 @@ def test_old_package_expires_after_submission_and_next_contains_actual_previous_
     book, store = installed()
     first = pipeline.chapter_package(book, store, 1)
     draft = fixtures.draft_for(book, 1)
-    assert pipeline.submit(book, store, 1, draft)['ok']
+    draft['package_ref'] = first['package_ref']
+    assert fixtures.submit_reviewed(book, store, 1, draft)['ok']
     with pytest.raises(Error):
         pipeline.validate_chapter_package(book, store, first)
     second = pipeline.chapter_package(book, store, 2)
@@ -117,7 +118,7 @@ def test_host_can_request_an_additional_resource_and_regenerate():
 
 def test_saved_book_and_file_validate_after_loading_in_fresh_session(tmp_path):
     book, store = installed()
-    assert pipeline.submit(book, store, 1, fixtures.draft_for(book, 1))['ok']
+    assert fixtures.submit_reviewed(book, store, 1, fixtures.draft_for(book, 1))['ok']
     package = pipeline.chapter_package(book, store, 2)
     assert package['metrics']['bytes'] == len(package['text'].encode('utf-8'))
     bundle_path = tmp_path / 'book.json'

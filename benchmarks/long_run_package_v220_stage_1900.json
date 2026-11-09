@@ -1,0 +1,126 @@
+{
+  "engine_version": "lite-2.2.0",
+  "engine_source_hash": "999eea094d505764c901957642e7c48e7e552f00246ee398f6a4ec7c66ffc77b",
+  "workload": "synthetic mechanics only; random Han filler, no model-generated novel or literary judgment",
+  "delivery": "chapter_package -> validate -> synthetic review -> submit(package_ref, review_ref)",
+  "planned_chapters": 3000,
+  "han_per_chapter": 3500,
+  "confirmed_submissions": 1900,
+  "confirmed_han": 6650000,
+  "status": "stopped_at_user_requested_validation_limit",
+  "stop_reason": "User confirmed validation scale sufficient and requested release finalization.",
+  "confirmation_basis": "Conservative last emitted progress milestone; each milestone follows successful submission and assertions. The interrupted in-progress chapter is not counted.",
+  "progress": [
+    {
+      "through": 100,
+      "han": 350000,
+      "seconds": 7.73
+    },
+    {
+      "through": 200,
+      "han": 700000,
+      "seconds": 20.15
+    },
+    {
+      "through": 300,
+      "han": 1050000,
+      "seconds": 38.76
+    },
+    {
+      "through": 400,
+      "han": 1400000,
+      "seconds": 62.65
+    },
+    {
+      "through": 500,
+      "han": 1750000,
+      "seconds": 92.35
+    },
+    {
+      "through": 600,
+      "han": 2100000,
+      "seconds": 128.61
+    },
+    {
+      "through": 700,
+      "han": 2450000,
+      "seconds": 168.25
+    },
+    {
+      "through": 800,
+      "han": 2800000,
+      "seconds": 213.77
+    },
+    {
+      "through": 900,
+      "han": 3150000,
+      "seconds": 266.56
+    },
+    {
+      "through": 1000,
+      "han": 3500000,
+      "seconds": 327.1
+    },
+    {
+      "through": 1100,
+      "han": 3850000,
+      "seconds": 393.51
+    },
+    {
+      "through": 1200,
+      "han": 4200000,
+      "seconds": 467.4
+    },
+    {
+      "through": 1300,
+      "han": 4550000,
+      "seconds": 552.26
+    },
+    {
+      "through": 1400,
+      "han": 4900000,
+      "seconds": 643.48
+    },
+    {
+      "through": 1500,
+      "han": 5250000,
+      "seconds": 756.5
+    },
+    {
+      "through": 1600,
+      "han": 5600000,
+      "seconds": 856.22
+    },
+    {
+      "through": 1700,
+      "han": 5950000,
+      "seconds": 968.27
+    },
+    {
+      "through": 1800,
+      "han": 6300000,
+      "seconds": 1084.03
+    },
+    {
+      "through": 1900,
+      "han": 6650000,
+      "seconds": 1214.05
+    }
+  ],
+  "midpoint_resume": {
+    "chapter": 1500,
+    "save_load_state_match": true,
+    "continued_through_at_least": 1900
+  },
+  "full_3000_audit": {
+    "executed": false,
+    "ok": null
+  },
+  "end_of_run_recovery_checks": {
+    "executed": false
+  },
+  "limitations": [
+    "No final 3000-chapter report or final state hash was produced.",
+    "Synthetic receipts test the protocol only; real semantic evidence is in tests/fixtures/independent_review_cases.json and references/example_project.json."
+  ]
+}

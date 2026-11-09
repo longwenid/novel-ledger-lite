@@ -113,7 +113,7 @@ def test_external_style_is_frozen_until_explicit_recontract_even_mid_group(tmp_p
     pipeline.install_outlines(book, 'v1', fixtures.volume_row(volume), fixtures.chapter_rows(book))
     store = LiteStore()
     group = pipeline.group(book, store, 'v1')
-    assert pipeline.submit(book, store, 1, fixtures.draft_for(book, 1))['ok']
+    assert fixtures.submit_reviewed(book, store, 1, fixtures.draft_for(book, 1))['ok']
     path.write_text('作者确认的第二版文风。', encoding='utf-8')
     # 文件被外部改写不能改变本书冻结材料。
     solo = pipeline.envelope(book, store, 2)

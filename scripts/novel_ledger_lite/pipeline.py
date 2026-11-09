@@ -103,6 +103,64 @@ def _next_chapter_of(book):
 
 
 # ------------------------------------------------------------------ outline gate
+def _outline_repair_tail(book, volume, volume_outline, data):
+    """Check any re-emitted history, then validate only the unwritten suffix."""
+    require(isinstance(data, dict) and isinstance(data.get('chapters'), list)
+            and data['chapters'] and all(isinstance(row, dict) and type(row.get('chapter')) is int
+                                         for row in data['chapters']),
+            'chapter_outline', '章纲须为带连续整数章号的 chapters 数组。')
+    numbers = [row['chapter'] for row in data['chapters']]
+    require(volume['first'] <= numbers[0] <= volume['end']
+            and numbers == list(range(numbers[0], volume['end'] + 1)),
+            'chapter_outline', '章纲须从起始章连续覆盖到本卷末章。')
+    last = book['last_chapter']
+    old_volume = book['volumes_outline'].get(volume['id']) or {}
+    historical = [plan for plan in book['plans'].values()
+                  if volume['first'] <= plan['chapter'] <= min(last, volume['end'])]
+    # Definitions that already produced committed events cannot be retroactively edited.
+    used = {'nodes': set(), 'threads': set(), 'hooks': set()}
+    for plan in historical:
+        used['nodes'].update(row['node'] for row in (plan.get('plot') or {}).get('nodes') or [])
+        used['threads'].update(row['thread'] for row in (plan.get('plot') or {}).get('threads') or [])
+        used['hooks'].update(row['hook'] for row in plan.get('hooks') or [])
+        used['hooks'].update(plan.get('hook_refs') or [])
+    for field, identifiers in used.items():
+        before = {row['id']: row for row in old_volume.get(field) or []}
+        after = {row['id']: row for row in volume_outline.get(field) or []}
+        for ident in identifiers & before.keys():
+            require(after.get(ident) == before[ident], 'outline_history',
+                    '已写章节使用过的卷纲定义不可更改或删除。', {'kind': field, 'id': ident})
+    for raw in data['chapters']:
+        if raw['chapter'] > last:
+            continue
+        existing = book['plans'].get(str(raw['chapter']))
+        allowed = (set(drift_validation.CHAPTER_FIELDS) | set(drift_validation.PROTOCOL_FIELDS)
+                   | set(drift_validation.EXPRESSION_FIELDS) | {'hook_contracts', 'absorbs'})
+        require(existing is not None and not set(raw) - allowed, 'outline_history',
+                '已写章纲缺失或包含未经登记的历史字段。', {'chapter': raw['chapter']})
+        normalized = drift_validation._normalize_chapter(
+            raw, book['state'], book.get('world'), drift_validation._node_registry(old_volume),
+            drift_validation._hook_registry(old_volume))
+        story_memory.bind(normalized, book['plans'], checked_through=book['outline_protocol_checked'])
+        require(normalized == existing, 'outline_history', '已提交章节的章纲不可改写。',
+                {'chapter': raw['chapter']})
+        for ident in raw.get('absorbs') or []:
+            require(any(row['id'] == ident and raw['chapter'] in (row.get('absorbed_by') or [])
+                        for row in book['design_drift']), 'outline_history',
+                    '不能向已写章节追加漂移吸收记录。', {'chapter': raw['chapter'], 'id': ident})
+    future = [row for row in data['chapters'] if row['chapter'] > last]
+    if not future:
+        require(volume_outline == old_volume, 'outline_history', '已完成卷的卷纲不可改写。')
+        return None
+    expected = max(last + 1, volume['first'])
+    require(future[0]['chapter'] == expected
+            and ('from_chapter' not in data or type(data['from_chapter']) is int
+                 and data['from_chapter'] == expected),
+            'outline_history', '修纲须从下一待写章节开始，不能覆盖历史或跳过未写章节。',
+            {'expected': expected})
+    return {**data, 'chapters': future, 'from_chapter': expected}
+
+
 @_current_book
 def install_outlines(book, volume_id, volume_row_outline, chapters_data):
     """Validate and atomically freeze one volume and its chapter outlines.
@@ -119,6 +177,9 @@ def install_outlines(book, volume_id, volume_row_outline, chapters_data):
                 and isinstance(entry.get('plant'), list) and isinstance(entry.get('payoff'), list),
                 'volume_outline', '卷纲 hooks 每条须带 id/text/plant/payoff 窗口。',
                 {'hook': entry.get('id') if isinstance(entry, dict) else None})
+    chapters_data = _outline_repair_tail(book, volume, volume_row_outline, chapters_data)
+    if chapters_data is None:
+        return {'volume': volume_id, 'chapters': [], 'absorbed': []}
     # absorbs 是作者在章纲行上的吸收声明；机械门规范化只保留已登记键（CHAPTER_FIELDS/
     # PROTOCOL_FIELDS），所以提取发生在门前、回写发生在门后——声明与引擎行分离。
     absorb_map = {}
@@ -155,10 +216,11 @@ def install_outlines(book, volume_id, volume_row_outline, chapters_data):
     candidate = dict(book)
     candidate['design_drift'] = drift_rows
     candidate['volumes_outline'] = {**book['volumes_outline'], volume_id: copy.deepcopy(volume_row_outline)}
-    candidate['chapter_outlines'] = {**book['chapter_outlines'], volume_id: rows}
     candidate['plans'] = dict(book['plans'])
     for row in rows:
         candidate['plans'][str(row['chapter'])] = row
+    candidate['chapter_outlines'] = {**book['chapter_outlines'], volume_id: [
+        candidate['plans'][str(n)] for n in range(volume['first'], volume['end'] + 1)]}
     candidate['outline_protocol_checked'] = checked_through
     book_state.check_book(candidate)
     book.update(candidate)
@@ -242,15 +304,44 @@ def catalog(book, *, chapter=None, kind=None, query='', page=0, per=20):
 
 # ------------------------------------------------------------------ submit gate
 @_current_book
+def review_request(book, store, chapter, draft, *, writer):
+    """Freeze a complete request for a reader independent of the writer."""
+    from . import content_review
+    return content_review.request(book, store, chapter, draft, writer=writer)
+
+
+@_current_book
+def record_content_review(book, store, request_ref, report):
+    """Retain the actual independent reader's report; no auto-approval is provided."""
+    from . import content_review
+    return content_review.record(book, store, request_ref, report)
+
+
+@_current_book
 def submit(book, store, chapter, draft):
     """Reconcile, settle, and advance the ledger by one chapter.
 
-    draft: {title, prose, summary, self_check, drift_check}. findings 非空即拒绝候选
+    draft: {title, prose, summary, self_check, drift_check, package_ref?}.
+    已签发单文件包的章节必须回传其当前 package_ref。findings 非空即拒绝候选
     （书不变）；通过则原子推进：状态、delta、投影索引、倒排、章行链哈希、组内锚句原料、
     卷界 checkpoint＋差异单＋文风卷首锚回比。
     """
     require(type(chapter) is int and chapter == store.last_chapter() + 1,
             'chapter_order', '章节必须连续顺序提交。', {'chapter': chapter})
+    issued = store.latest_chapter_package(chapter)
+    current_source = None
+    package_ref = draft.get('package_ref')
+    if issued is not None:
+        from . import chapter_package as packages
+        require(package_ref == issued[0], 'chapter_package_required',
+                '本章已签发独立写作包；交稿须回传最新 package_ref，不能绕过章包提交。',
+                {'chapter': chapter, 'expected': issued[0]})
+        current_source = packages._source_hash(book, store)
+        require(issued[1]['source_hash'] == current_source,
+                'chapter_package_stale', '写作包来源已变化；请重新生成并复核正文后再提交。')
+    else:
+        require(package_ref is None, 'chapter_package_required',
+                'package_ref 没有本项目签发记录；请由当前项目重新生成写作包。')
     require(all(text(draft.get(k)) for k in ('title', 'summary', 'self_check')), 'draft',
             '执笔需要 title/summary/self_check。')
     prose = draft.get('prose')
@@ -302,12 +393,19 @@ def submit(book, store, chapter, draft):
                 {'planned': expected_days, 'settled': state['clock'] - book['state']['clock']})
     require(all(p in state['entities'] for p in plan.get('participants', [])), 'entity_coverage',
             '章纲参与人尚无已核验的正文身份。')
+    from . import content_review
+    # Reuse only the fingerprint computed inside this synchronous submission;
+    # no cross-call cache may hide changes to mutable source material.
+    review_ref = content_review.require_approved(book, store, chapter, draft, source_hash=current_source)
     row = {'n': chapter, 'title': draft['title'], 'prose': store.document(prose),
            'events': store.document(events), 'plan': store.document(plan),
            'review': {'drift_check': copy.deepcopy(draft.get('drift_check')),
                       'design_drift': copy.deepcopy(settlement['deviations']),
-                      'self_check': draft['self_check'], 'style_report': copy.deepcopy(style_report)},
+                      'self_check': draft['self_check'], 'style_report': copy.deepcopy(style_report),
+                      'content_review_ref': review_ref},
            'state_hash': digest(state), 'summary': draft['summary'], 'han': count}
+    if package_ref is not None:
+        row['review']['package_ref'] = package_ref
     contract_hash = store.document(contract)
     delta = delta_ledger.produce(book['state'], state, events, chapter)
     # L3 delta 随章行入链（派生数据；真源 events 已入链，delta 只服务近窗分级与组内重放段）。
@@ -401,17 +499,22 @@ def resource(book, kind, key):
 
 @_current_book
 def recall(book, store, asset):
-    """倒排定位→取页（方案三补丁 c）。无匹配 O(1)——索引 miss 直接空返回，不再线性翻页。"""
-    pages = (book.get('inverted') or {}).get(asset) or []
-    hits = []
-    for n in pages:
-        for event in store.events_page(n):
-            entity = event.get('entity')
-            ident = event.get('id') or event.get('topic') \
-                or (entity.get('id') if isinstance(entity, dict) else entity)
-            if asset == ident or asset == event.get('id') or asset == event.get('topic'):
-                hits.append({'chapter': n, 'event': event})
-    return {'chapters': list(pages), 'hits': hits}
+    """Recall exact event coordinates from committed source pages, including stale-index saves.
+
+    The current-format inverted index has no completeness/version marker. A hit, as well as a
+    miss, can omit older events, so verify all committed event pages rather than treating the
+    derived index or the current state as proof that a historical event did not happen.
+    """
+    pages, hits = [], []
+    for row in store.headers('main'):
+        n = row['n']
+        matched = [{'chapter': n, 'event': event}
+                   for event in store.read_document(row['events'])
+                   if asset in delta_ledger.event_coordinates(event)]
+        if matched:
+            pages.append(n)
+            hits.extend(matched)
+    return {'chapters': pages, 'hits': hits}
 
 
 @_current_book
@@ -442,6 +545,10 @@ def verify_full(book, store):
     problems = []
     previous_chain = None
     rows = store.headers('main')
+    outline_copies = {}
+    for plans in book['chapter_outlines'].values():
+        for plan in plans:
+            outline_copies.setdefault(plan['chapter'], []).append(plan)
     expected_end = book['contract']['volumes'][-1]['end']
     if len(rows) != expected_end:
         problems.append({'kind': 'incomplete', 'detail': '已提交章数未覆盖契约的全部章节。',
@@ -459,13 +566,22 @@ def verify_full(book, store):
         try:
             prose = store.read_document(row['prose'])
             events = store.read_document(row['events'])
-            store.read_document(row['plan'])
+            committed_plan = store.read_document(row['plan'])
             store.read_document(contract_hash)
         except Error as error:
             problems.append({'chapter': row['n'], 'kind': 'record', 'detail': error.message,
                              'code': error.code})
             break
+        if book['plans'].get(str(row['n'])) != committed_plan:
+            problems.append({'chapter': row['n'], 'kind': 'outline_history',
+                             'detail': '当前账本章纲与该章提交时的不可变章纲不符。'})
+        if any(plan != committed_plan for plan in outline_copies.get(row['n'], [])):
+            problems.append({'chapter': row['n'], 'kind': 'outline_history',
+                             'detail': '卷内历史章纲与该章提交时的不可变章纲不符。'})
         try:
+            from . import content_review
+            content_review.verify_committed(store, row, before_state_hash=digest(state),
+                                            previous_chain=previous_chain)
             state, _ = facts.settle(state, events, prose, row['n'])
         except Error as error:
             problems.append({'chapter': row['n'], 'kind': 'replay', 'detail': error.message})
@@ -495,9 +611,8 @@ def verify_full(book, store):
 # ------------------------------------------------------------------ persistence
 @_current_book
 def save(book, store, path):
-    os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
-    with open(path, 'w', encoding='utf-8') as handle:
-        handle.write(json.dumps({'schema': contracts.BUNDLE_SCHEMA, 'book': book, 'store': store.to_dict()}, ensure_ascii=False, sort_keys=True))
+    from .persistence import save_json
+    save_json({'schema': contracts.BUNDLE_SCHEMA, 'book': book, 'store': store.to_dict()}, path)
 
 
 def load(path):
@@ -509,8 +624,22 @@ def load(path):
     book = raw['book']
     book_state.check_book(book)
     store = LiteStore.from_dict(raw['store'])
+    from . import content_review
+    for row in store.headers('main'):
+        if row['review'].get('content_review_ref') is not None or row['n'] in store._review_heads:
+            content_review.verify_committed(store, row)
     require(book['last_chapter'] == store.last_chapter(), 'book_state',
             '账本进度与已提交章节不符，不自动修正。')
+    for row in store.headers('main'):
+        require(book['plans'].get(str(row['n'])) == store.read_document(row['plan']),
+                'outline_history', '账本历史章纲与提交时的不可变章纲不符。', {'chapter': row['n']})
+    for plans in book['chapter_outlines'].values():
+        for plan in plans:
+            require(book['plans'].get(str(plan['chapter'])) == plan,
+                    'outline_history', '卷内章纲与账本登记不符。', {'chapter': plan['chapter']})
+    if store.last_chapter():
+        require(digest(book['state']) == store.chapter('main', store.last_chapter())['state_hash'],
+                'book_state', '当前状态与最后提交章节不符，不自动修正。')
     for group_row in book['groups']:
         pack = store.read_document(group_row['hash'])
         embedded = {key: value for key, value in group_row['pack'].items() if key != 'hash'}

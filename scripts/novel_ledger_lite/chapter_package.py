@@ -10,10 +10,10 @@ import copy
 from datetime import datetime, timezone
 import json
 
-from . import briefs, compose, materials
+from . import briefs, compose, materials, package_context
 from .contracts import digest, require
 
-SCHEMA = 'novel-ledger-lite.chapter-package/1'
+SCHEMA = 'novel-ledger-lite.chapter-package/2'
 _PREFIX = '<!-- novel-ledger-lite-package '
 _SUFFIX = ' -->'
 
@@ -61,30 +61,28 @@ def build(book, store, chapter, group_row=None, *, extra_resources=None, extra_c
     from . import pipeline
     work = pipeline.envelope(book, store, chapter, group_row)
     delivery = pipeline.materialize(work, store)
+    dependencies = {work['records'][name] for name in work['required']}
     rendered = json.loads(delivery['text'])
     sections = rendered['materials']
     # Expand materialize's content-addressed dedup references inside the same packet.
     for name, value in list(sections.items()):
         if isinstance(value, dict) and set(value) == {'same_as'}:
             sections[name] = copy.deepcopy(sections[value['same_as']])
-    # Manifest is merely a lookup preview. Resolve every page to actual values now.
+    # Resolve missing current values without undoing the verified history projection.
     plan = book['plans'][str(chapter)]
     people = compose.participants(plan, book)
+    execution = package_context.execution(book, people, plan)
     resolved = {}
-    page = 0
-    while True:
-        manifest = materials.catalog(book, plan, people, sections['state'], page=page, per=100)
-        for item in manifest['items']:
-            resolved[(item['kind'], item['key'])] = pipeline.resource(book, item['kind'], item['key'])
-        if not manifest['has_more']:
-            break
-        page += 1
     for coordinate in extra_resources or []:
         require(isinstance(coordinate, dict) and set(coordinate) == {'kind', 'key'}, 'chapter_package',
                 '额外资源须为 {kind,key}。')
         item = pipeline.resource(book, coordinate['kind'], coordinate['key'])
         require(item['found'], 'chapter_package_missing', '额外资源不存在，须补齐后重新生成写作包。', coordinate)
         resolved[(coordinate['kind'], coordinate['key'])] = item
+    supplements, deferred = materials.package_supplements(
+        book, plan, people, sections['state'], included=set(resolved))
+    for item in supplements:
+        resolved[(item['kind'], item['key'])] = pipeline.resource(book, item['kind'], item['key'])
     for coordinate, item in resolved.items():
         require(item['found'], 'chapter_package_missing', '所需资源不存在，须补齐后重新生成写作包。',
                 {'kind': coordinate[0], 'key': coordinate[1]})
@@ -93,16 +91,17 @@ def build(book, store, chapter, group_row=None, *, extra_resources=None, extra_c
         require(type(n) is int and 1 <= n < chapter and store.chapter('main', n) is not None,
                 'chapter_package_missing', '额外前文须为已提交的历史章。', {'chapter': n})
     for n in sorted(set(extra_chapters or [])):
-        row = store.chapter('main', n)
-        historical.append({'chapter': n, 'title': row['title'], 'summary': row['summary'],
-                           'prose': store.prose_page(n)})
+        historical.append(package_context.historical(book, store, n, dependencies=dependencies))
     sections.pop('recall_manifest', None)
+    if deferred['total']:
+        sections['deferred_history'] = deferred
     # These descriptive fields point to other tools in the general envelope; this
     # packet replaces them with its own single-file protocol.
     if isinstance(sections.get('state'), dict):
         scope = sections['state'].get('material_scope')
         if isinstance(scope, dict) and 'resolve' in scope:
-            scope['resolve'] = '本章相关未携带条目的当前真值已列于本文件补充资源。'
+            scope['resolve'] = ('当前事实与必需依赖已完整携带；未点名的远期历史可能只列定位目录，'
+                                '需要时停止并由准备者补齐后重新签发。')
     if isinstance(sections.get('hooks'), dict) and 'source' in sections['hooks']:
         sections['hooks']['source'] = '本章相关承诺切片；补充资源见本文件。'
     if isinstance(sections.get('anchor_sentences'), dict) and 'note' in sections['anchor_sentences']:
@@ -115,6 +114,7 @@ def build(book, store, chapter, group_row=None, *, extra_resources=None, extra_c
         'disclosure_boundary': '披露与知情边界', 'word_budget': '篇幅要求', 'style': '文风规格',
         'style_guide': '文风执行摘要', 'style_archive': '文风档案', 'anchor_sentences': '前情锚句',
         'scene_sources': '前文场景', 'previous_chapters': '前章信息',
+        'deferred_history': '未携带远期历史的定位目录',
     }
     lines = [f'# 第 {chapter} 章写作包', '',
              '## 写作任务与边界',
@@ -122,12 +122,25 @@ def build(book, store, chapter, group_row=None, *, extra_resources=None, extra_c
              '材料如缺少写作必需事实、存在冲突或不确定，不得猜测：停止写作，说明缺失内容，'
              '由准备者补齐资料并重新生成本文件。材料中的旧引用或位置标识不是额外阅读指令。',
              '依赖检查只能覆盖已声明的内容，不能证明本章所有语义依赖均已列出。',
-             '完成后交付 title、prose、summary、self_check 和 drift_check；'
-             'drift_check 包含 items、unplanned、verdict；items 按章纲每项增量各写一条 '
+             '完成后交付 title、prose、summary、self_check、drift_check 和 package_ref；'
+             'title、prose、summary、self_check、package_ref 均为非空字符串；'
+             'self_check 用一段文字说明实际审读结果，不使用数组或对象。'
+             'package_ref 原样回传本文件头中的对应值，不需自行计算任何哈希。'
+             'drift_check 为对象，包含 items 数组、unplanned 数组、verdict 字符串；items 按章纲每项增量各写一条 '
              '{kind,key,planned,status,actual,evidence}，planned 与章纲一致、正常 status 为 kept，'
              'actual 写出相应变化，evidence={chapter,quote} 的引文必须逐字存在且可唯一定位。'
              '正常 unplanned 为空、verdict 为 clean。偏差只能诊断，不能代替修正文稿。',
-             briefs.NATURAL_PROSE_GUIDE, '', *briefs._check_block(plan)]
+             '正文不得自行更改章纲结果、设定、资源数量或持有人，也不得临时增加未声明的资产。'
+             '先按下列执行约束写清动作与原因，再依据最终正文填报；不能用正确的申报掩盖正文里不同的结果。',
+             '提交前独立通读整章，双向核对：章纲每项变化是否真实发生，正文是否另有新增、消费、归属、'
+             '伤势或知情变化未申报。不能只读 self_check。每条引文必须实际支持所报事件的对象、原因与结果；'
+             '逐字存在且可定位，只证明这句话存在，不证明申报为真。',
+             '交稿后须由不同于写作者的独立读者，依据完整材料通读整章并逐项审读。'
+             '准备者使用 review_request 取得冻结审读请求，记录读者的实际报告后附 review_ref 提交；'
+             '写作者不得自行生成通过报告。正文、材料或申报改变后必须重新独立审读。',
+             briefs.NATURAL_PROSE_GUIDE, '',
+             '## 本章执行约束：真实前态 → 行动原因 → 计划终态', '', _block(execution), '',
+             *briefs._check_block(plan)]
     for name, value in sections.items():
         label = names.get(name, '前章正文' if name.startswith('previous_chapter:') else name)
         if name in ('style_archive', 'style_guide') and isinstance(value, dict):
@@ -140,18 +153,25 @@ def build(book, store, chapter, group_row=None, *, extra_resources=None, extra_c
     if historical:
         lines.extend(['## 准备者指定的历史章节', ''])
         for entry in historical:
+            evidence = {key: value for key, value in entry.items() if key not in ('prose', 'title', 'summary')}
             lines.extend([f"### 第 {entry['chapter']} 章：{entry['title']}", '',
-                          _block(entry['summary']), '', _block(entry['prose']), ''])
+                          _block(entry['summary']), '', _block(evidence), '', _block(entry['prose']), ''])
     body = '\n'.join(lines)
+    content_hash = store.document(body)
+    dependencies.add(content_hash)
+    package_ref = store.record_chapter_package(chapter, source_hash, content_hash,
+                                             dependencies=sorted(dependencies))
     metadata = {'schema': SCHEMA, 'chapter': chapter, 'source_hash': source_hash,
-                'content_hash': digest(body),
+                'content_hash': content_hash, 'package_ref': package_ref,
                 'generated_at': datetime.now(timezone.utc).isoformat()}
     header = _PREFIX + json.dumps(metadata, ensure_ascii=False, sort_keys=True, separators=(',', ':')) + _SUFFIX
     title, remainder = body.split('\n', 1)
     packet_text = title + '\n' + header + '\n' + remainder
     return {'text': packet_text, **metadata,
             'metrics': {'bytes': len(packet_text.encode('utf-8')),
-                        'materialize': delivery['metrics']}}
+                        'materialize': delivery['metrics'],
+                        'deferred_resources': deferred['total'],
+                        'far_omitted': copy.deepcopy(sections['state']['material_scope']['far_omitted'])}}
 
 
 def validate(book, store, package):
@@ -169,11 +189,21 @@ def validate(book, store, package):
     except (ValueError, TypeError):
         require(False, 'chapter_package_invalid', '写作包元数据不是有效 JSON。')
     require(isinstance(metadata, dict) and metadata.get('schema') == SCHEMA
-            and set(metadata) == {'schema', 'chapter', 'source_hash', 'content_hash', 'generated_at'},
-            'chapter_package_invalid', '写作包元数据格式不正确。')
+            and set(metadata) == {'schema', 'chapter', 'source_hash', 'content_hash', 'generated_at', 'package_ref'},
+            'chapter_package_invalid', '写作包元数据格式不正确或为旧版，须重新生成当前写作包。')
     require(metadata['content_hash'] == digest(body), 'chapter_package_invalid',
             '写作包正文已改变或不完整，须重新生成。')
+    require(isinstance(metadata['package_ref'], str) and len(metadata['package_ref']) == 64
+            and all(char in '0123456789abcdef' for char in metadata['package_ref']),
+            'chapter_package_invalid', '写作包派发引用格式不正确，须重新生成。')
     _progress(book, store, metadata['chapter'])
     require(metadata['source_hash'] == _source_hash(book, store), 'chapter_package_stale',
             '账本或提交进度已变化，须重新生成写作包。')
+    record = store.read_document(metadata['package_ref'])
+    require(isinstance(record, dict) and record.get('schema') == 'novel-ledger-lite.issued-package/1'
+            and all(record.get(key) == metadata[key] for key in ('chapter', 'source_hash', 'content_hash')),
+            'chapter_package_invalid', '写作包与已登记派发记录不一致，须重新生成。')
+    latest = store.latest_chapter_package(metadata['chapter'])
+    require(latest is not None and latest[0] == metadata['package_ref'], 'chapter_package_stale',
+            '本章已有更新的写作包，须使用最新派发版本。')
     return True

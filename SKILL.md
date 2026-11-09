@@ -1,12 +1,12 @@
 ---
 name: novel-ledger-lite
-description: 在作者已确认总纲、卷纲与章纲后，使用冻结资源、差量上下文和逐章核账进行长篇小说快速写作；面向约千万字体量，支持分卷接续、保存恢复和全量验收。用于按既定章纲持续执笔，不用于故事或章纲设计。
+description: 在作者已确认总纲、卷纲与章纲后，使用冻结资源、差量上下文、独立审读和逐章核账进行长篇小说快速写作；面向约千万字体量，支持分卷接续、保存恢复和全量验收。用于按既定章纲持续执笔，不用于故事或章纲设计。
 ---
 
 # novel-ledger-lite
 
-独立的长篇写作执行技能。目标是总纲、卷纲、章纲确认后的快速执笔，控制每章材料 Token，
-保持人物、资源、时间线、知情与伏笔账本一致。输入可由作者或任意工具提供，按本项目格式
+独立的长篇写作执行技能。目标是总纲、卷纲、章纲确认后的快速执笔，以不偏离作者确认内容为第一约束，
+保持人物、资源、时间线、知情与伏笔账本一致，再控制材料重复。输入可由作者或任意工具提供，按本项目格式
 校验后使用；不要求安装其他写作技能、服务或代码仓库。
 
 ## 环境与输入
@@ -32,7 +32,8 @@ description: 在作者已确认总纲、卷纲与章纲后，使用冻结资源�
    `source` 说明决定来源，`world_model` 可省略。世界模型与文风档案在导入时保存冻结副本。
 2. 每卷执行 `pipeline.install_outlines(book, volume_id, volume_outline, chapters_data)`。
    章纲连续覆盖该卷，增量与 enter/exit 状态链须通过模拟。失败按错误详情修正输入重交，
-   不改写历史账本。此步骤核验既定章纲，不重新设计剧情。
+   不改写历史账本。修纲只处理下一待写章起的尾部；重传的已写前缀必须与冻结历史相同，
+   已使用的节点与伏笔定义也不能追改。此步骤核验既定章纲，不重新设计剧情。
 3. `group_row = pipeline.group(book, store, volume_id, size=5)` 冻结一组共享材料。
    同卷再次调用接续下一组；已覆盖全卷会拒绝。恢复已有组用 `pipeline.group_for(book, chapter)`。
 4. 上一章提交通过后，准备者调用 `package = pipeline.chapter_package(book, store, chapter, group_row)`，
@@ -40,12 +41,21 @@ description: 在作者已确认总纲、卷纲与章纲后，使用冻结资源�
    `pipeline.validate_chapter_package(book, store, 文件内容)` 校验文件完整性和账本时效。
    正文写作者只读取这一个文件；发现缺失、冲突或不确定时停止，由准备者补齐后重新生成并校验。
    生成细节和补充资料接口见 [references/architecture.md](references/architecture.md#单章-markdown-写作包)。
-   写作后用 `pipeline.submit(book, store, chapter, draft)` 提交。
-   `draft` 必须含 `title/prose/summary/self_check/drift_check`。只在 `ok=True` 后推进下一章；
+   写作后调用 `review = pipeline.review_request(book, store, chapter, draft, writer=写作者标识)`，
+   将 `review["text"]` 完整交给不同于写作者的独立读者。可用独立子代理或另一真实审读会话；
+   无独立读者时停在待审，不由写作者替自己填通过报告。读者先读材料与整章，再逐项核对并返回包内约定的报告。
+   准备者原样记录实际报告：`draft["review_ref"] = pipeline.record_content_review(book, store, review["request_ref"], report)`，
+   然后用 `pipeline.submit(book, store, chapter, draft)` 提交。
+   `draft` 必须含 `title/prose/summary/self_check/drift_check`；单文件包交稿还须原样回传包内
+   `package_ref`，所有提交还必须带独立审读的 `review_ref`。本章一旦签发单文件包，提交不能省略引用或沿用已被补充包替换的旧引用。
+   缺料、拒绝、未读完、不确定或检查未覆盖的报告均不能放行。正文、申报、材料或文风变化后重新发起审读；
+   旧报告不能批准新稿。每轮请求只登记一份报告，重新审读须新请求；不能重放旧报告或沿用旧通过引用。
+   只在 `ok=True` 后推进下一章；
    拒绝时根据 `findings` 修正当前稿，不能用偏差说明代替修复，不能跳章或覆盖历史。
 5. 卷末查看提交结果的 `volume_boundary`，核对未兑承诺、带入下卷项目与漂移吸收情况。
 6. 阶段保存用 `pipeline.save(book, store, path)`，接续用 `pipeline.load(path)`；
-   完本用 `pipeline.verify_full(book, store)`，只有 `ok=True` 才通过机械验收。
+   完本用 `pipeline.verify_full(book, store)`，只有 `ok=True` 才通过机械验收及审读记录验链。
+   保存通过同目录临时文件落盘后原子替换；失败保留上一份有效文件，不能把失败当作保存成功。
 
 引擎不提供故事设计、自动返修调度或无人值守主机。候选被拒后的修正由当前写作会话执行；
 本项目 JSON 账本用于保存恢复，其他格式的旧项目需显式转换，不直接混读。
@@ -61,8 +71,10 @@ DSH Web GUI 可开「写作模式」右栏：左边照常是会话，右边按�
   python3 scripts/export_view.py 项目.json --out .novel-ledger
   ```
 
-  它写 `.novel-ledger/view.json` 与每章一个 `.novel-ledger/chapters/chNNNN.md`，
-  不改动账本；账本变了就重跑一次。
+  它写 `.novel-ledger/view.json` 清单、`chunks/` 校验分片与每章一个 `chapters/chNNNN.md`，
+  不改动账本；账本变了就重跑一次。保留整个导出目录，新插件会完整重组视图和正文，缺块或截断时报错。
+  新导出需配套新版插件；新版仍能读取旧 view/1。旧分片保留供正在阅读的界面使用，
+  可删除整个派生目录后重新导出，不要单独删 `chunks/`。
 - 打开方式：会话标题栏右侧「写作模式」按钮，或右栏 guide 里的卡片；
   面板右上角「刷新」重新读取。
 - 面板先找工作区根 `.novel-ledger/view.json`，再找一级子目录中的同名文件，
@@ -83,6 +95,13 @@ DSH Web GUI 可开「写作模式」右栏：左边照常是会话，右边按�
 - 派工前自动汇总场景人物、资源、知情话题、节点前置与显式引用，并检查依赖存在性和前态；
   缺失或冲突会拒绝派工。`complete` 只表示作者声明，不证明语义依赖完整。
 - 单章 Markdown 写作包不依赖会话缓存。底层 `envelope` / `materialize` 的可选缓存机制仅供其他交付方式使用。
+- 完整依赖声明下，未点名远期知情和历史保留定位目录，由准备者按实际需要补齐；不把目录片段当事实。
+  不设固定 Token 截断线；当前状态、点名与 pinned、未兑承诺和引用原文必须完整，依赖不明时保守全量。
+- 写作包显列本章起点、章纲规定的变化原因和终态，以及参与者完整当前资产。正文只能在这些
+  条件内展开；缺少关键资产、需要计划外转移或消耗时，先核实、修纲、重新发包。
+- 提交前独立阅读整章，对照章纲与包中当前状态，检查额外资产、数量、归属、伤势和知情变化。
+  核账表不得漏报或反报；引文须支持所申报的变化，逐字存在本身不证明语义正确。
+  独立读者还须双向检查正文里未申报的变化，不得只复核写作者的核账表。正文审读门槛对底层无包提交同样生效。
 - 换文风必须记录作者决定，调用
   `pipeline.recontract_patch(book, source=决定来源, style_profile=档名)` 或 `style_source=路径`。
   换档从下一待写章生效；仅指定内置档时清除旧外部源，历史契约保留供验链。
@@ -97,11 +116,17 @@ python3 tests/benchmark_long_run.py --chapters 3000 --output /tmp/novel-ledger-l
 ```
 
 1000 万字是目标体量，合成压测只验证机械链路与材料趋势。活跃资源、引用规模、章长和
-依赖声明质量都会影响 Token；正文的语义与文学质量仍需实际阅读评估。
+依赖声明质量都会影响 Token；正文的语义与文学质量仍需实际阅读评估。压测合成凭证只测试协议，
+不得用于实际作品，也不构成文学或语义通过证明。门禁绑定所登记的报告与材料、稿件和历史，
+不把哈希或报告字段伪称为自然语言真伪判定器；宿主须实际调用独立读者并如实记录结果。
 派工协议为 task/2：`payload.chapter_outline` 是记录名，章纲正文仅在该记录中出现一次。
-仅支持当前格式：账本 `novel-ledger-lite/2`、存储 `novel-ledger-lite.store/2`、
+支持账本 `novel-ledger-lite/2`；未签发单文件包的原存储为 `novel-ledger-lite.store/2`，
+签发但尚无审读记录时为携带必填签发引用的 `novel-ledger-lite.store/3`；
+登记独立审读后使用含 `package_heads/review_heads` 的 `novel-ledger-lite.store/4`；
 持久化文件 `novel-ledger-lite.bundle/2`、派工 `novel-ledger-lite.task/2`。旧版本、缺少版本标识
-或必要字段的数据直接拒绝，不补字段、不重建旧组包、不从外部文件补建档案、不自动迁移。
+或必要字段的数据直接拒绝，不补字段、不重建旧组包、不从外部文件补建档案。原有
+store/2、store/3 作品可加载接续，但后续提交也必须独立审读。无审读凭证的旧历史不能通过完整审读验收；
+需要保留旧历史时不得谎称它已被审读。签发或审读记录丢失不允许降级绕过门槛。
 单文件写作应使用 `chapter_package`；其他交付方式通过 `materialize` 渲染，避免自行重复拼接任务卡和文档。
 它返回总字节、分项字节和缓存命中数；可传 `token_counter` 与 `tokenizer_id` 测量实际输入 Token。
 当前实现、测量口径和限制见 [DESIGN.md](DESIGN.md)。

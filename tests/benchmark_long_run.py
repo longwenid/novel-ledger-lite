@@ -66,9 +66,18 @@ def draft(book, chapter, target_han):
             'drift_check': {'items': items, 'unplanned': [], 'verdict': 'clean'}}
 
 
-def run(chapters=3000, chapter_han=3500, volume_size=30):
+def run(chapters=3000, chapter_han=3500, volume_size=30, *, delivery='package', before_submit=None):
+    """Measure the actual dispatch text; a hook can attach a separately produced review.
+
+    Synthetic mechanics do not establish semantic or literary quality. By default the fixture
+    attaches a synthetic review solely to exercise the review/receipt chain. before_submit can
+    replace that fixture; it receives (book, store, chapter, draft, package_or_none) and may
+    return a replacement draft.
+    """
     import tiktoken  # 仅压测度量依赖；引擎不依赖 tokenizer。
 
+    if delivery not in ('package', 'envelope'):
+        raise ValueError('delivery must be package or envelope')
     encoding = tiktoken.get_encoding('cl100k_base')
     source_files = sorted((Path(__file__).resolve().parents[1] / 'scripts' / 'novel_ledger_lite').glob('*.py'))
     source_hash = digest({path.name: path.read_text(encoding='utf-8') for path in source_files})
@@ -89,7 +98,8 @@ def run(chapters=3000, chapter_han=3500, volume_size=30):
     started = time.perf_counter()
     resume = None
     total_payload_bytes = 0
-    calls = {'envelope': 0, 'materialize': 0, 'submit': 0, 'resource': 0,
+    calls = {'envelope': 0, 'materialize': 0, 'chapter_package': 0, 'validate_chapter_package': 0,
+             'content_review': 0, 'submit': 0, 'resource': 0,
              'catalog': 0, 'recall': 0, 'rejected_drafts': 0}
     for volume in book['contract']['volumes']:
         outline, rows = outlines(book, volume)
@@ -98,25 +108,46 @@ def run(chapters=3000, chapter_han=3500, volume_size=30):
         for n in range(volume['first'], volume['end'] + 1):
             if group is None or n > group['members'][1]:
                 group = pipeline.group(book, store, volume['id'], size=5)
-            envelope = pipeline.envelope(book, store, n, group)
-            calls['envelope'] += 1
-            assert not envelope['warnings'], envelope['warnings']
             sampled = n in milestones or n - 1 in milestones
-            delivered = pipeline.materialize(envelope, store,
-                token_counter=(lambda value: len(encoding.encode(value))) if sampled else None,
-                tokenizer_id='cl100k_base')
+            packet = None
+            if delivery == 'package':
+                packet = pipeline.chapter_package(book, store, n, group)
+                calls['chapter_package'] += 1
+                pipeline.validate_chapter_package(book, store, packet['text'])
+                calls['validate_chapter_package'] += 1
+                payload = packet['text']
+                metrics = packet['metrics']['materialize']
+                omitted = packet['metrics']['far_omitted']
+            else:
+                envelope = pipeline.envelope(book, store, n, group)
+                assert not envelope['warnings'], envelope['warnings']
+                delivered = pipeline.materialize(envelope, store)
+                payload, metrics = delivered['text'], delivered['metrics']
+                state_record = store.read_document(envelope['records']['state'])
+                omitted = state_record['material_scope']['far_omitted']
+            # chapter_package invokes exactly one envelope and canonical materialization.
+            calls['envelope'] += 1
             calls['materialize'] += 1
-            payload = delivered['text']
             total_payload_bytes += len(payload.encode())
             if sampled:
-                state_record = store.read_document(envelope['records']['state'])
                 observations.append({'chapter': n, 'group_head': n == group['members'][0],
                                      'payload_bytes': len(payload.encode()),
-                                     'tokens_cl100k_base': delivered['metrics']['tokens'],
-                                     'state_bytes': delivered['metrics']['by_record']['state']['bytes'],
-                                     'category_bytes': delivered['metrics']['category_bytes'],
-                                     'far_omitted': state_record['material_scope']['far_omitted']})
-            result = pipeline.submit(book, store, n, draft(book, n, chapter_han))
+                                     'tokens_cl100k_base': len(encoding.encode(payload)),
+                                     'state_bytes': metrics['by_record']['state']['bytes'],
+                                     'materialize_category_bytes': metrics['category_bytes'],
+                                     'deferred_resources': packet['metrics']['deferred_resources'] if packet else None,
+                                     'far_omitted': omitted})
+            submission = draft(book, n, chapter_han)
+            if packet is not None:
+                submission['package_ref'] = packet['package_ref']
+            if before_submit is None:
+                submission = fixtures.attach_synthetic_review(book, store, n, submission)
+            else:
+                reviewed = before_submit(book, store, n, submission, packet)
+                if reviewed is not None:
+                    submission = reviewed
+            calls['content_review'] += 1
+            result = pipeline.submit(book, store, n, submission)
             calls['submit'] += 1
             calls['rejected_drafts'] += int(not result['ok'])
             assert result['ok'], result.get('findings')
@@ -151,7 +182,11 @@ def run(chapters=3000, chapter_han=3500, volume_size=30):
         '压测期间引擎源码发生变化，请用最终代码重新运行。'
     return {'workload': 'synthetic mechanics only; random Han filler, not a novel or literary evaluation',
             'engine_source_hash': source_hash,
-            'measurement': 'task/2 canonical materialize text; self-contained dispatch with no assumed cache',
+            'delivery': delivery,
+            'content_review': ('synthetic fixture receipt; no semantic or literary judgment'
+                               if before_submit is None else 'caller-provided before_submit hook'),
+            'measurement': ('chapter-package/2 actual standalone Markdown, validated with issued-reference submission'
+                            if delivery == 'package' else 'task/2 canonical materialize text; self-contained dispatch with no assumed cache'),
             'calls': calls,
             'chapters': chapters, 'volumes': len(book['contract']['volumes']),
             'han_per_chapter': chapter_han, 'written_han': book['written_han'],
@@ -177,9 +212,11 @@ if __name__ == '__main__':
     parser.add_argument('--chapters', type=int, default=3000)
     parser.add_argument('--chapter-han', type=int, default=3500)
     parser.add_argument('--volume-size', type=int, default=30)
+    parser.add_argument('--delivery', choices=('package', 'envelope'), default='package',
+                        help='Measure the default standalone chapter packet, or the low-level envelope.')
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
-    report = run(args.chapters, args.chapter_han, args.volume_size)
+    report = run(args.chapters, args.chapter_han, args.volume_size, delivery=args.delivery)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding='utf-8')
     print(json.dumps({k: v for k, v in report.items() if k != 'samples'}, ensure_ascii=False), flush=True)

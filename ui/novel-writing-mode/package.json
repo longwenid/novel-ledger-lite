@@ -1,6 +1,6 @@
 {
   "name": "@local/novel-writing-mode",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "description": "写作模式：在右侧栏阅读小说设定、章节信息与正文（novel-ledger-lite 配套界面）",

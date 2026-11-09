@@ -17,7 +17,13 @@ from novel_ledger_lite.store import LiteStore
 
 def run(output):
     project = json.loads((SKILL_ROOT / 'references' / 'example_project.json').read_text(encoding='utf-8'))
+    design = {key: project[key] for key in ('contract', 'world', 'volumes')}
+    if project['review_design_hash'] != digest(design):
+        raise RuntimeError('示例设计已改变，冻结审读报告失效。')
     book = pipeline.open_book(project['contract'], '作者确认的演示输入', project.get('world'))
+    reviewed_style = {key: value for key, value in (book['style_archive'] or {}).items() if key != 'path'}
+    if project['review_style_hash'] != digest(reviewed_style):
+        raise RuntimeError('示例文风材料已改变，冻结审读报告失效。')
     store = LiteStore()
     dispatch_bytes = 0
     for volume in project['volumes']:
@@ -30,7 +36,17 @@ def run(output):
             package = pipeline.chapter_package(book, store, chapter, group)
             pipeline.validate_chapter_package(book, store, package['text'])
             dispatch_bytes += len(package['text'].encode('utf-8'))
-            result = pipeline.submit(book, store, chapter, project['drafts'][str(chapter)])
+            draft = dict(project['drafts'][str(chapter)], package_ref=package['package_ref'])
+            # These are frozen reports for the bundled, independently read sample,
+            # never an automatic approval facility for arbitrary user prose.
+            reviewed = project['review_reports'][str(chapter)]
+            if reviewed['draft_hash'] != digest(project['drafts'][str(chapter)]):
+                raise RuntimeError('示例稿件已改变，冻结审读报告失效。')
+            request = pipeline.review_request(book, store, chapter, draft, writer='example-writer')
+            report = dict(reviewed['report'], request_ref=request['request_ref'])
+            draft['review_ref'] = pipeline.record_content_review(
+                book, store, request['request_ref'], report)
+            result = pipeline.submit(book, store, chapter, draft)
             if not result['ok']:
                 raise RuntimeError(json.dumps(result, ensure_ascii=False))
     pipeline.save(book, store, output)

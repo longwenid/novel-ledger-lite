@@ -1,12 +1,19 @@
 {
+  "demo_source": {
+    "kind": "bundled_release_demo",
+    "revised_on": "2026-11-09",
+    "reason": "此次正式发布验证中独立读者发现旧演示缺少具体来源证据、知情上限及一致终态，现重新冻结演示设计。",
+    "scope": "仅仓库内置四章演示，非任何用户作品。",
+    "authoring_order": "先冻结本文件契约、世界与卷章纲，再按该设计执笔；旧缺料报告保留为负例。"
+  },
   "contract": {
-    "title": "夜班退件（独立示例）",
+    "title": "夜班退件：两个日期（独立示例）",
     "genre": "都市生活",
-    "reader_promise": "一个夜班工人查清退件来源并承担自己的选择。",
-    "ending": "退件来源公开，工人承担违规开箱的后果。",
+    "reader_promise": "查清十七号箱为何重复登记，并交代误抄日期与违规开箱各由谁负责。",
+    "ending": "沈桐公开承认外联日期是自己误抄，重复退件登记被更正；他自报违规开箱，接受书面警告和暂停开箱权限，没有罚款或收入变化。",
     "world_premise": "一座仓库的夜班退件纠纷。",
-    "story_engine": "核对退件来源，追查签字责任。",
-    "opposition": "主管担心调查影响考核。",
+    "story_engine": "对照同一箱号的封条查验页、登记存根、箱内原单，逐步区分日期差异、误抄嫌疑与可确认的重登原因。",
+    "opposition": "查单登记不等于开箱许可；沈桐既想查清重登，又不愿面对自己的誊写错误和越规查验。",
     "voice": "以动作、物件、对白和后果呈现夜班人情。",
     "style_traits": [
       "少重复解释。",
@@ -16,18 +23,24 @@
       "id": "shen",
       "name": "沈桐",
       "identity": "夜班工人",
-      "desire": "查清责任。",
-      "limit": "不牵连无关同事。"
+      "desire": "查清十七号箱的重复登记，不把自己的错误推给同事。",
+      "limit": "只就单据和本人行为担责，不编造旁人的过错。"
     },
     "world_rules": [
-      "夜班退件必须登记负责人。"
+      "十七号箱是同一只仓库所有的箱子，箱号唯一，不复用；原封在第三章之前完整，箱内原单未替换。",
+      "外联由沈桐从原单誊写；同箱号若誊成另一个日期，登记时会按另一日再记一笔。",
+      "每次登记查阅一份电子档或纸质原单，查单费账户扣一元；查单登记不等于开箱许可，无押金、退款、工资或其他收支。",
+      "单据、箱子均留在原处归仓库，查阅和更正不产生资产取得、携带或归属变化。",
+      "未经值班主管许可拆箱属于违规；自报并核实时书面警告、暂停开箱权限，保留在岗及查单资格，不罚钱。",
+      "四日、五日是调查前的旧单日期；四章每章次日开始，主线时钟逐日推进。",
+      "固定查验台在纸单调阅时同步影像到结案复核档，不另收费、不生成个人资产；主管第四章才调出本箱影像核验。"
     ],
-    "narrative_tracking": false,
+    "narrative_tracking": true,
     "editorial_features": false,
     "style_profile": "市井修仙",
-    "chapter_min": 30,
-    "chapter_max": 200,
-    "chapter_aim": 60,
+    "chapter_min": 100,
+    "chapter_max": 500,
+    "chapter_aim": 300,
     "volume_outline": {
       "scope": "rolling",
       "words": 2500,
@@ -35,13 +48,13 @@
     },
     "chapter_outline": {
       "scope": "volume",
-      "words": 60,
-      "tolerance": 30
+      "words": 180,
+      "tolerance": 140
     },
     "volumes": [
       {
         "id": "v1",
-        "purpose": "查明来源并面对后果。",
+        "purpose": "按四日核验链查清同箱重登，公开更正并承担违规代价。",
         "end": 4
       }
     ],
@@ -50,12 +63,17 @@
         "id": "shen",
         "name": "沈桐",
         "kind": "person"
+      },
+      {
+        "id": "chief",
+        "name": "值班主管",
+        "kind": "person"
       }
     ],
     "initial_resources": [
       {
         "holder": "shen",
-        "asset": "车费",
+        "asset": "查单费",
         "unit": "元",
         "quantity": "4"
       }
@@ -71,54 +89,105 @@
       }
     ],
     "placements": {
-      "shen": "office"
-    }
+      "shen": "office",
+      "chief": "office"
+    },
+    "initial_facts": [
+      {
+        "entity": "shen",
+        "key": "opening_context",
+        "value": "十七号箱在后院待核；只知道自己曾经手该箱的登记，尚未核清外联日期，也未向主管说明来源问题。"
+      },
+      {
+        "entity": "chief",
+        "key": "opening_context",
+        "value": "一直在值班室处理值班事务，只知十七号箱待核，不知道误抄日期和其后违规开箱的事实。"
+      }
+    ]
   },
   "world": {
-    "premise": "一座仓库的夜班退件纠纷。",
     "geography": [
       {
         "id": "office",
         "name": "值班室",
-        "environment": "夜间照明的作业区。",
-        "resources": "退回的货物与登记册。",
-        "access": "夜班人员可进。",
-        "story_pressure": "退件必须有人签字。",
+        "environment": "值班主管在办公桌处理事务，旁边有可独立使用的查档终端与公开更正栏。",
+        "resources": "电子登记存根、外联影像及更正表；终端只显示查阅内容，不发放文件所有权。",
+        "access": "在岗人员可走路进入和按登记查档。",
+        "story_pressure": "来源确认后须在此公开更正与接受处理。",
         "links": []
       },
       {
         "id": "yard",
         "name": "仓库后院",
-        "environment": "夜间照明的作业区。",
-        "resources": "退回的货物与登记册。",
-        "access": "夜班人员可进。",
-        "story_pressure": "退件必须有人签字。",
+        "environment": "十七号箱原地待核，有封条查验台。",
+        "resources": "原封十七号箱、封条查验页和箱内原单，均归仓库所有。",
+        "access": "从值班室可步行到达；进入后院不等于获准开箱。",
+        "story_pressure": "原单在箱内；未经主管允许不能为了求证而拆封。",
         "links": []
       }
     ],
     "history": [],
     "rules": [
       {
-        "id": "r1",
-        "principle": "夜班退件必须登记负责人。",
-        "scope": "本仓库的夜班退件处理。",
-        "limits": "只约束已登记的退件。",
-        "consequences": "违反者承担登记责任。",
+        "id": "archive",
+        "principle": "箱号一箱唯一；沈桐誊写的外联日期决定按哪一天登记，外联誊错日会使同箱被当作另一日退件重复登记。",
+        "scope": "十七号箱及本次对照的旧单。",
+        "limits": "只看日期差异不能确认原因，须看到同箱号登记和箱内原单。",
+        "consequences": "查实误抄后由誊写人更正并公开说明。",
+        "links": []
+      },
+      {
+        "id": "fee",
+        "principle": "每次登记查阅一份电子档或纸质原单，查单费账户扣一元。",
+        "scope": "本次四次调阅：封条查验页、登记存根、箱内原单、结案复核档。",
+        "limits": "查阅不带走文件、不产生所有权；不因步行收费；本演示无其他收支。",
+        "consequences": "四元账户按四次调阅依次余三、二、一、零元。",
+        "links": []
+      },
+      {
+        "id": "opening",
+        "principle": "查单登记不是开箱许可；未经值班主管允许拆箱即违规。",
+        "scope": "后院的原封十七号箱。",
+        "limits": "主管此前未给沈桐开箱许可；箱子从不转移归属，拆封后仍留后院。",
+        "consequences": "自报并核实时给予书面警告、暂停开箱权限；在岗与查单资格保留，无罚款。",
         "links": []
       }
     ],
     "factions": [],
     "society": [],
-    "everyday": [],
+    "everyday": [
+      {
+        "id": "documents",
+        "practice": "封条查验页记十七号箱封条为四日，外联影像却写五日；登记存根在四日和五日各列同一箱号，均由沈桐署名；箱内原单写四日，箱号及沈桐签字与两处记录一致。纸质原单查验时，固定查验台把当次影像同步到结案复核档，供主管随后核实；不交付个人副本，也不另收费。",
+        "constraint": "前两章只能见当章获准调阅的页，不能提前看箱内原单；原封到第三章才被拆开。所有日期均早于调查。",
+        "story_use": "第一章只知日期有异；第二章怀疑同箱因外联误抄重登；第三章以未替换原单确认误抄，不归咎新人物。",
+        "links": [
+          "rules:archive",
+          "rules:opening"
+        ]
+      },
+      {
+        "id": "correction",
+        "practice": "第四章调阅结案复核档后可在终端填写更正表，公开栏展示本箱来源与误抄责任；主管听完本人对违规开箱的自报、核看固定查验台同步的原单影像与外联影像，再登记处理。",
+        "constraint": "更正只撤销重复登记，不改变箱子归属与任何金额；其他夜班人员可查公开栏，但正文不声称未出场人员已读。",
+        "story_use": "公开查实的来源并明确谁负责，处罚必须写成实际生效的处理而非未来口号。",
+        "links": [
+          "rules:opening",
+          "rules:fee"
+        ]
+      }
+    ],
     "economy": [
       {
-        "id": "asset-1",
-        "resource": "车费",
-        "production": "按班次发放。",
-        "distribution": "由主管登记后发放。",
-        "scarcity": "不足时需要自付。",
-        "conflict": "谁承担这笔支出。",
-        "links": []
+        "id": "fee-account",
+        "resource": "沈桐的四元查单费账户",
+        "production": "开篇已存四元，不再补入。",
+        "distribution": "查阅登记时每次扣一元，不经手现金或转账给已登记人物。",
+        "scarcity": "第四次调阅后归零。",
+        "conflict": "每次求证都消耗有限账户余额，不把费用与走路混为一谈。",
+        "links": [
+          "rules:fee"
+        ]
       }
     ],
     "characters": [
@@ -126,56 +195,207 @@
         "id": "shen",
         "name": "沈桐",
         "role": "夜班工人",
-        "desire": "查清责任。",
-        "limit": "不牵连无关同事。",
-        "knowledge_boundary": "只知自己经手的货物。",
+        "desire": "查清十七号箱为何重复登记。",
+        "limit": "不把自己的错推给无关同事。",
+        "knowledge_boundary": "开篇只知自己经手过登记；按前三章线索、怀疑、确认的边界得知误抄原因，不因作者真相自动知情。",
         "links": [
-          "rules:r1"
+          "rules:archive",
+          "rules:fee",
+          "rules:opening"
+        ]
+      },
+      {
+        "id": "chief",
+        "name": "值班主管",
+        "role": "值班主管",
+        "desire": "依据单据纠正登记并落实开箱规程。",
+        "limit": "无核实不罚人，不对本案罚款。",
+        "knowledge_boundary": "前三章只知箱子待核，未参与沈桐的单独查档；第四章听说明并核单后才确认来源与违规事实。",
+        "links": [
+          "rules:opening",
+          "everyday:correction"
         ]
       }
     ],
-    "mysteries": [],
+    "mysteries": [
+      {
+        "id": "source",
+        "truth": "十七号箱原单日期四日，沈桐把外联日期誊为五日，故同箱在四日和五日重复登记；不是第二只箱，也不是他人换单。第三章才可由箱内原单确认这一事实。",
+        "disclosure": "第一章日期差异hinted；第二章同箱双登记与沈桐署名suspected；第三章原单核实后人物与读者confirmed；第四章向主管及公开更正栏说明。",
+        "causal_role": "防止只靠“判断落定”升级知情。作者真相只能由本章实际可读证据获得。",
+        "links": [
+          "everyday:documents",
+          "rules:archive"
+        ]
+      }
+    ],
     "mechanisms": [],
     "powers": [],
-    "cosmology": []
+    "cosmology": [],
+    "premise": "同一仓库十七号箱因誊写日期有误形成重复退件登记。四章只涉及沈桐与值班主管、值班室和后院。"
   },
   "volumes": [
     {
       "id": "v1",
       "outline": {
         "id": "v1",
-        "purpose": "把退件来源从个人纠纷推到制度责任。",
-        "stage": "",
-        "arc": "本卷从一次退回的箱子写起，沈桐先被制度挡在门外，随后用旧凭据撬开缺口，卷末由他公开来源并承担违规的代价。",
+        "purpose": "用可见单据逐步查清重登来源，并把本人责任落实为公开更正与实际后果。",
+        "stage": "四日核验与结案",
+        "arc": "日期差异只是线索；同箱双登记引出对自己误抄的怀疑；拆箱原单证实后不能把违规藏起来；公开更正并接受警告、暂停开箱权限。",
         "turns": [
           {
-            "at": "卷中",
-            "turn": "旧凭据暴露出签字矛盾。"
+            "at": "第二章",
+            "turn": "登记存根上相同箱号与同一署名把怀疑引向自己的誊写。"
           },
           {
-            "at": "卷尾",
-            "turn": "沈桐公开来源并接受处理。"
+            "at": "第三章",
+            "turn": "真相被核实，但沈桐为求证又造成开箱违规。"
+          },
+          {
+            "at": "第四章",
+            "turn": "他选择同时自报两件事，接受无金钱罚款的实际处分。"
           }
         ],
-        "climax": "公开来源与签字矛盾，沈桐承担违规开箱的后果。",
-        "nodes": [],
-        "threads": [],
-        "resources": [],
-        "places": [],
-        "knowledge": [],
-        "characters": [],
+        "climax": "沈桐公开承认自己误抄日期导致同箱重登，也不隐瞒违规拆箱；主管核单后警告并暂停开箱权限。",
+        "nodes": [
+          {
+            "id": "date-clue",
+            "kind": "main",
+            "line": "main",
+            "purpose": "十七号箱封条四日、外联五日只构成日期差异线索，尚不知原因。",
+            "ending_condition": "十七号箱封条四日、外联五日只构成日期差异线索，尚不知原因。",
+            "required": true,
+            "window": [
+              1,
+              1
+            ],
+            "depends_on": []
+          },
+          {
+            "id": "duplicate-entry",
+            "kind": "main",
+            "line": "main",
+            "purpose": "同一十七号箱在四日和五日两次登记且均为沈桐署名，怀疑是自己誊写外联日期有误，尚缺箱内原单确认。",
+            "ending_condition": "同一十七号箱在四日和五日两次登记且均为沈桐署名，怀疑是自己誊写外联日期有误，尚缺箱内原单确认。",
+            "required": true,
+            "window": [
+              2,
+              2
+            ],
+            "depends_on": [
+              "date-clue"
+            ]
+          },
+          {
+            "id": "verified-copy-error",
+            "kind": "main",
+            "line": "main",
+            "purpose": "箱内四日原单与封条及唯一箱号相合，确认沈桐把外联誊为五日，导致同一箱重复登记。",
+            "ending_condition": "箱内四日原单与封条及唯一箱号相合，确认沈桐把外联誊为五日，导致同一箱重复登记。",
+            "required": true,
+            "window": [
+              3,
+              3
+            ],
+            "depends_on": [
+              "duplicate-entry"
+            ]
+          },
+          {
+            "id": "accepted-responsibility",
+            "kind": "main",
+            "line": "main",
+            "purpose": "来源和本人误抄公开更正，主管核实违规开箱，沈桐实际接受警告及暂停开箱权限。",
+            "ending_condition": "来源和本人误抄公开更正，主管核实违规开箱，沈桐实际接受警告及暂停开箱权限。",
+            "required": true,
+            "window": [
+              4,
+              4
+            ],
+            "depends_on": [
+              "verified-copy-error"
+            ]
+          }
+        ],
+        "threads": [
+          {
+            "id": "main",
+            "kind": "main",
+            "purpose": "查清同箱重登并实际承担本人两项责任。",
+            "ending_condition": "重复登记更正，沈桐接受警告与暂停开箱权限。",
+            "required": true
+          }
+        ],
+        "resources": [
+          {
+            "key": "[\"shen\",\"查单费\",\"元\"]",
+            "from": "4",
+            "to": "0",
+            "reason": "四次登记调阅各扣一元，无其他收支。"
+          }
+        ],
+        "places": [
+          {
+            "entity": "shen",
+            "from": "office",
+            "to": "office",
+            "reason": "四次查验按值班室和后院往返，最后在值班室结案。"
+          }
+        ],
+        "knowledge": [
+          {
+            "who": "shen",
+            "topic": "source",
+            "to": "confirmed",
+            "reason": "箱内四日原单与封条及唯一箱号相合，确认沈桐把外联誊为五日，导致同一箱重复登记。"
+          },
+          {
+            "who": "chief",
+            "topic": "source",
+            "to": "confirmed",
+            "reason": "第四章听沈桐说明并核对单据。"
+          },
+          {
+            "who": "chief",
+            "topic": "opening",
+            "to": "confirmed",
+            "reason": "第四章自报与核实昨日未经许可开箱。"
+          }
+        ],
+        "characters": [
+          {
+            "entity": "shen",
+            "to": {
+              "desire": "按更正后的记录完成本职工作",
+              "stance": "已接受书面警告和暂停开箱权限，在岗与查单资格保留",
+              "relationship_focus": "向值班主管如实担责，不把误抄和违规推给同事"
+            },
+            "reason": "如实自报并接受已经登记生效的处理。"
+          }
+        ],
+        "relations": [],
+        "reader_knowledge": [
+          {
+            "topic": "source",
+            "to": "confirmed"
+          },
+          {
+            "topic": "responsibility",
+            "to": "confirmed"
+          }
+        ],
         "clock": {
           "advance_days": 4,
           "to": 4
         },
-        "exit_state": "卷末：车费结余；沈桐在后院；对来源已确认；承诺已兑现。",
+        "exit_state": "沈桐和值班主管都在值班室，箱子及原单仍在后院；查单费为零，来源已确认并公开更正；书面警告与暂停开箱权限已生效，保留在岗和查单资格，无罚款，承诺兑现。",
         "style": {
-          "trend": "以短句、动作与凭据核对推进，卷末用较长段落交代责任后果。"
+          "trend": "用原单、外联、签字及动作呈现判断变化，末章用对话和生效处理落地责任。"
         },
         "hooks": [
           {
             "id": "hook-v1-required",
-            "text": "读者看到退回凭据的来历，并要知道它最终由谁负责。",
+            "text": "十七号箱为什么出现两个日期，重复登记与越规查验最终由谁担责？",
             "plant": [
               1,
               1
@@ -194,18 +414,24 @@
         "chapters": [
           {
             "chapter": 1,
-            "synopsis": "沈桐核对第一批退件的封条与签字，花掉车费并移动核对位置，对凭据来历形成新的判断。",
+            "synopsis": "次日沈桐从值班室步行到后院，登记查阅封条查验页扣一元，账户四元变三元。原封十七号箱的查验页写四日，外联影像写五日；仅形成来源有异的线索，不知谁误抄，也不能确定是否重登。沈桐说日期不对，要把箱子来历和责任查清；不拆箱、不引入别的人或额外资产。",
             "plot": {
-              "beat": "沈桐核对封条与签字，逼出下一处矛盾。",
-              "nodes": [],
+              "beat": "十七号箱封条四日、外联五日只构成日期差异线索，尚不知原因。",
+              "nodes": [
+                {
+                  "node": "date-clue",
+                  "after": "resolved",
+                  "outcome": "十七号箱封条四日、外联五日只构成日期差异线索，尚不知原因。"
+                }
+              ],
               "threads": []
             },
             "resources": [
               {
-                "key": "[\"shen\",\"车费\",\"元\"]",
+                "key": "[\"shen\",\"查单费\",\"元\"]",
                 "from": "4",
                 "to": "3",
-                "reason": "核对退件时花掉一趟车费。"
+                "reason": "调阅封条查验页扣查单费一元。"
               }
             ],
             "places": [
@@ -213,8 +439,8 @@
                 "entity": "shen",
                 "from": "office",
                 "to": "yard",
-                "route": "从值班室走到仓库后院。",
-                "reason": "换到另一处核对退件。"
+                "route": "从值班室步行到仓库后院。",
+                "reason": "到该处完成本章规定的单据查阅与核验。"
               }
             ],
             "knowledge": [
@@ -223,7 +449,7 @@
                 "topic": "source",
                 "from": null,
                 "to": "hinted",
-                "reason": "本章核对让沈桐对来源多了一层判断。"
+                "reason": "十七号箱封条四日、外联五日只构成日期差异线索，尚不知原因。"
               }
             ],
             "characters": [],
@@ -239,13 +465,23 @@
               },
               {
                 "kind": "resources",
-                "key": "[\"shen\",\"车费\",\"元\"]",
+                "key": "[\"shen\",\"查单费\",\"元\"]",
                 "expected": "4"
               },
               {
                 "kind": "places",
                 "key": "shen",
                 "expected": "office"
+              },
+              {
+                "kind": "node",
+                "key": "date-clue",
+                "expected": null
+              },
+              {
+                "kind": "thread",
+                "key": "main",
+                "expected": null
               },
               {
                 "kind": "knowledge",
@@ -261,7 +497,7 @@
               },
               {
                 "kind": "resources",
-                "key": "[\"shen\",\"车费\",\"元\"]",
+                "key": "[\"shen\",\"查单费\",\"元\"]",
                 "expected": "3"
               },
               {
@@ -270,16 +506,39 @@
                 "expected": "yard"
               },
               {
+                "kind": "node",
+                "key": "date-clue",
+                "expected": "resolved"
+              },
+              {
+                "kind": "thread",
+                "key": "main",
+                "expected": "active"
+              },
+              {
                 "kind": "knowledge",
                 "key": "shen:source",
                 "expected": "hinted"
               }
             ],
-            "disclosures": [],
+            "disclosures": [
+              {
+                "topic": "source",
+                "after": "hinted",
+                "claim": "十七号箱封条四日、外联五日只构成日期差异线索，尚不知原因。"
+              }
+            ],
             "world_refs": [
-              "rules:r1",
+              "rules:archive",
+              "rules:fee",
+              "rules:opening",
+              "everyday:documents",
+              "everyday:correction",
               "geography:office",
-              "characters:shen"
+              "geography:yard",
+              "characters:shen",
+              "characters:chief",
+              "mysteries:source"
             ],
             "new_entities": [],
             "hook_refs": [],
@@ -287,17 +546,20 @@
               {
                 "hook": "hook-v1-required",
                 "action": "plant",
-                "note": "本卷开篇埋下对读者的具体承诺。"
+                "note": "提出需要查清的来源和责任问题。"
               }
             ],
-            "reader_refs": [],
+            "reader_refs": [
+              "source"
+            ],
             "history_refs": [],
             "scenes": [
               {
-                "label": "核对现场",
-                "intent": "核对第一批退件。",
-                "conflict": "签字制度挡着开箱。",
-                "turn": "凭据矛盾浮出。",
+                "id": "demo-scene-1",
+                "label": "封条日期",
+                "intent": "次日沈桐从值班室步行到后院，登记查阅封条查验页扣一元，账户四元变三元。原封十七号箱的查验页写四日，外联影像写五日；仅形成来源有异的线索，不知谁误抄，也不能确定是否重登。沈桐说日期不对，要把箱子来历和责任查清；不拆箱、不引入别的人或额外资产。",
+                "conflict": "日期差异尚不能说明来源。",
+                "turn": "十七号箱封条四日、外联五日只构成日期差异线索，尚不知原因。",
                 "present": [
                   "shen"
                 ],
@@ -307,10 +569,10 @@
                 "dialogue_intents": [
                   {
                     "entity": "shen",
-                    "seeks": "查清来历。",
-                    "withholds": "不提违规开箱。",
-                    "pressure": "登记制度压着。",
-                    "tactic": "拿旧凭据对照。",
+                    "seeks": "说清当章证据能够支持的结论。",
+                    "withholds": "前两章不冒称已确认，第三章尚未向主管披露；第四章不隐瞒。",
+                    "pressure": "既定查档和开箱规则。",
+                    "tactic": "照单据说话，不牵连无关同事。",
                     "knowledge_topics": [
                       "source"
                     ]
@@ -318,12 +580,16 @@
                 ],
                 "reads": [
                   {
-                    "kind": "knowledge",
-                    "key": "shen:source"
-                  },
-                  {
                     "kind": "clock",
                     "key": "main"
+                  },
+                  {
+                    "kind": "resources",
+                    "key": "[\"shen\",\"查单费\",\"元\"]"
+                  },
+                  {
+                    "kind": "knowledge",
+                    "key": "shen:source"
                   }
                 ],
                 "depends_on": []
@@ -331,25 +597,34 @@
             ],
             "pacing": {},
             "style": {
-              "pov": "第三人称限知",
-              "rhythm": "短句交代动作，核对结果后用完整句说明后果。"
+              "pov": "第三人称限知，以沈桐当章可知为限；主管知情须在第四章听述核单后表明。",
+              "rhythm": "短句落实查档动作、单据内容与判断上限，末章让对话落到已生效处理。"
             },
-            "dependency_coverage": "complete"
+            "dependency_coverage": "complete",
+            "story_events": [
+              "单据与箱子不转移归属，正文没有额外费用、收入或新人物。"
+            ]
           },
           {
             "chapter": 2,
-            "synopsis": "沈桐核对第二批退件的封条与签字，花掉车费并移动核对位置，对凭据来历形成新的判断。",
+            "synopsis": "再过一日沈桐从后院走到值班室，自行调阅登记存根扣一元，三元变二元。四日和五日两行都是唯一箱号十七，签字均为沈桐；他因同箱双登记开始怀疑自己把外联日期抄错，但未见箱内原单，不能认定。主管仍在别处办公，不参与这次查档，也不得提前知情。",
             "plot": {
-              "beat": "沈桐核对封条与签字，逼出下一处矛盾。",
-              "nodes": [],
+              "beat": "同一十七号箱在四日和五日两次登记且均为沈桐署名，怀疑是自己誊写外联日期有误，尚缺箱内原单确认。",
+              "nodes": [
+                {
+                  "node": "duplicate-entry",
+                  "after": "resolved",
+                  "outcome": "同一十七号箱在四日和五日两次登记且均为沈桐署名，怀疑是自己誊写外联日期有误，尚缺箱内原单确认。"
+                }
+              ],
               "threads": []
             },
             "resources": [
               {
-                "key": "[\"shen\",\"车费\",\"元\"]",
+                "key": "[\"shen\",\"查单费\",\"元\"]",
                 "from": "3",
                 "to": "2",
-                "reason": "核对退件时花掉一趟车费。"
+                "reason": "调阅登记存根扣查单费一元。"
               }
             ],
             "places": [
@@ -357,8 +632,8 @@
                 "entity": "shen",
                 "from": "yard",
                 "to": "office",
-                "route": "从仓库后院走到值班室。",
-                "reason": "换到另一处核对退件。"
+                "route": "从仓库后院步行到值班室。",
+                "reason": "到该处完成本章规定的单据查阅与核验。"
               }
             ],
             "knowledge": [
@@ -367,7 +642,7 @@
                 "topic": "source",
                 "from": "hinted",
                 "to": "suspected",
-                "reason": "本章核对让沈桐对来源多了一层判断。"
+                "reason": "同一十七号箱在四日和五日两次登记且均为沈桐署名，怀疑是自己誊写外联日期有误，尚缺箱内原单确认。"
               }
             ],
             "characters": [],
@@ -383,13 +658,23 @@
               },
               {
                 "kind": "resources",
-                "key": "[\"shen\",\"车费\",\"元\"]",
+                "key": "[\"shen\",\"查单费\",\"元\"]",
                 "expected": "3"
               },
               {
                 "kind": "places",
                 "key": "shen",
                 "expected": "yard"
+              },
+              {
+                "kind": "node",
+                "key": "duplicate-entry",
+                "expected": null
+              },
+              {
+                "kind": "thread",
+                "key": "main",
+                "expected": "active"
               },
               {
                 "kind": "knowledge",
@@ -405,7 +690,7 @@
               },
               {
                 "kind": "resources",
-                "key": "[\"shen\",\"车费\",\"元\"]",
+                "key": "[\"shen\",\"查单费\",\"元\"]",
                 "expected": "2"
               },
               {
@@ -414,30 +699,56 @@
                 "expected": "office"
               },
               {
+                "kind": "node",
+                "key": "duplicate-entry",
+                "expected": "resolved"
+              },
+              {
+                "kind": "thread",
+                "key": "main",
+                "expected": "active"
+              },
+              {
                 "kind": "knowledge",
                 "key": "shen:source",
                 "expected": "suspected"
               }
             ],
-            "disclosures": [],
+            "disclosures": [
+              {
+                "topic": "source",
+                "after": "suspected",
+                "claim": "同一十七号箱在四日和五日两次登记且均为沈桐署名，怀疑是自己誊写外联日期有误，尚缺箱内原单确认。"
+              }
+            ],
             "world_refs": [
-              "rules:r1",
+              "rules:archive",
+              "rules:fee",
+              "rules:opening",
+              "everyday:documents",
+              "everyday:correction",
               "geography:office",
-              "characters:shen"
+              "geography:yard",
+              "characters:shen",
+              "characters:chief",
+              "mysteries:source"
             ],
             "new_entities": [],
             "hook_refs": [
               "hook-v1-required"
             ],
             "hooks": [],
-            "reader_refs": [],
+            "reader_refs": [
+              "source"
+            ],
             "history_refs": [],
             "scenes": [
               {
-                "label": "核对现场",
-                "intent": "核对第二批退件。",
-                "conflict": "签字制度挡着开箱。",
-                "turn": "凭据矛盾浮出。",
+                "id": "demo-scene-2",
+                "label": "同箱双登记",
+                "intent": "再过一日沈桐从后院走到值班室，自行调阅登记存根扣一元，三元变二元。四日和五日两行都是唯一箱号十七，签字均为沈桐；他因同箱双登记开始怀疑自己把外联日期抄错，但未见箱内原单，不能认定。主管仍在别处办公，不参与这次查档，也不得提前知情。",
+                "conflict": "同签名引向自己，但尚无原单。",
+                "turn": "同一十七号箱在四日和五日两次登记且均为沈桐署名，怀疑是自己誊写外联日期有误，尚缺箱内原单确认。",
                 "present": [
                   "shen"
                 ],
@@ -447,10 +758,10 @@
                 "dialogue_intents": [
                   {
                     "entity": "shen",
-                    "seeks": "查清来历。",
-                    "withholds": "不提违规开箱。",
-                    "pressure": "登记制度压着。",
-                    "tactic": "拿旧凭据对照。",
+                    "seeks": "说清当章证据能够支持的结论。",
+                    "withholds": "前两章不冒称已确认，第三章尚未向主管披露；第四章不隐瞒。",
+                    "pressure": "既定查档和开箱规则。",
+                    "tactic": "照单据说话，不牵连无关同事。",
                     "knowledge_topics": [
                       "source"
                     ]
@@ -458,38 +769,53 @@
                 ],
                 "reads": [
                   {
-                    "kind": "knowledge",
-                    "key": "shen:source"
-                  },
-                  {
                     "kind": "clock",
                     "key": "main"
+                  },
+                  {
+                    "kind": "resources",
+                    "key": "[\"shen\",\"查单费\",\"元\"]"
+                  },
+                  {
+                    "kind": "knowledge",
+                    "key": "shen:source"
                   }
                 ],
-                "depends_on": []
+                "depends_on": [
+                  "demo-scene-1"
+                ]
               }
             ],
             "pacing": {},
             "style": {
-              "pov": "第三人称限知",
-              "rhythm": "短句交代动作，核对结果后用完整句说明后果。"
+              "pov": "第三人称限知，以沈桐当章可知为限；主管知情须在第四章听述核单后表明。",
+              "rhythm": "短句落实查档动作、单据内容与判断上限，末章让对话落到已生效处理。"
             },
-            "dependency_coverage": "complete"
+            "dependency_coverage": "complete",
+            "story_events": [
+              "单据与箱子不转移归属，正文没有额外费用、收入或新人物。"
+            ]
           },
           {
             "chapter": 3,
-            "synopsis": "沈桐核对第三批退件的封条与签字，花掉车费并移动核对位置，对凭据来历形成新的判断。",
+            "synopsis": "第三个次日沈桐从值班室走到后院，登记查阅箱内原单扣一元，二元变一元。主管没有准许开箱，沈桐仍拆开原封查验：原单箱号十七、日期四日，与封条一致，外联五日则是自己誊写。由此确认误抄导致同箱重登；他明知违规，决定翌日自报，箱和原单都留后院，不立刻处罚或扣钱。",
             "plot": {
-              "beat": "沈桐核对封条与签字，逼出下一处矛盾。",
-              "nodes": [],
+              "beat": "箱内四日原单与封条及唯一箱号相合，确认沈桐把外联誊为五日，导致同一箱重复登记。",
+              "nodes": [
+                {
+                  "node": "verified-copy-error",
+                  "after": "resolved",
+                  "outcome": "箱内四日原单与封条及唯一箱号相合，确认沈桐把外联誊为五日，导致同一箱重复登记。"
+                }
+              ],
               "threads": []
             },
             "resources": [
               {
-                "key": "[\"shen\",\"车费\",\"元\"]",
+                "key": "[\"shen\",\"查单费\",\"元\"]",
                 "from": "2",
                 "to": "1",
-                "reason": "核对退件时花掉一趟车费。"
+                "reason": "登记查阅箱内原单扣查单费一元，不代表开箱获准。"
               }
             ],
             "places": [
@@ -497,8 +823,8 @@
                 "entity": "shen",
                 "from": "office",
                 "to": "yard",
-                "route": "从值班室走到仓库后院。",
-                "reason": "换到另一处核对退件。"
+                "route": "从值班室步行到仓库后院。",
+                "reason": "到该处完成本章规定的单据查阅与核验。"
               }
             ],
             "knowledge": [
@@ -507,10 +833,23 @@
                 "topic": "source",
                 "from": "suspected",
                 "to": "confirmed",
-                "reason": "本章核对让沈桐对来源多了一层判断。"
+                "reason": "箱内四日原单与封条及唯一箱号相合，确认沈桐把外联誊为五日，导致同一箱重复登记。"
               }
             ],
-            "characters": [],
+            "characters": [
+              {
+                "entity": "shen",
+                "from": null,
+                "to": {
+                  "desire": "如实结清十七号箱的重登原因",
+                  "stance": "已确认自己误抄日期，决定自报未经许可开箱",
+                  "relationship_focus": "向值班主管说明本人两项责任，不牵连旁人"
+                },
+                "choice": "未经许可仍拆开原封箱核对原单，并决定翌日自报。",
+                "cost": "留下必须自报的违规开箱责任，尚未受罚且无额外扣款。",
+                "change": "从只追查来源转为准备面对自己误抄和越规查验的责任。"
+              }
+            ],
             "relations": [],
             "clock": {
               "advance_days": 1
@@ -523,7 +862,7 @@
               },
               {
                 "kind": "resources",
-                "key": "[\"shen\",\"车费\",\"元\"]",
+                "key": "[\"shen\",\"查单费\",\"元\"]",
                 "expected": "2"
               },
               {
@@ -532,9 +871,24 @@
                 "expected": "office"
               },
               {
+                "kind": "node",
+                "key": "verified-copy-error",
+                "expected": null
+              },
+              {
+                "kind": "thread",
+                "key": "main",
+                "expected": "active"
+              },
+              {
                 "kind": "knowledge",
                 "key": "shen:source",
                 "expected": "suspected"
+              },
+              {
+                "kind": "character",
+                "key": "shen",
+                "expected": null
               }
             ],
             "exit": [
@@ -545,7 +899,7 @@
               },
               {
                 "kind": "resources",
-                "key": "[\"shen\",\"车费\",\"元\"]",
+                "key": "[\"shen\",\"查单费\",\"元\"]",
                 "expected": "1"
               },
               {
@@ -554,30 +908,65 @@
                 "expected": "yard"
               },
               {
+                "kind": "node",
+                "key": "verified-copy-error",
+                "expected": "resolved"
+              },
+              {
+                "kind": "thread",
+                "key": "main",
+                "expected": "active"
+              },
+              {
                 "kind": "knowledge",
                 "key": "shen:source",
                 "expected": "confirmed"
+              },
+              {
+                "kind": "character",
+                "key": "shen",
+                "expected": {
+                  "desire": "如实结清十七号箱的重登原因",
+                  "stance": "已确认自己误抄日期，决定自报未经许可开箱",
+                  "relationship_focus": "向值班主管说明本人两项责任，不牵连旁人"
+                }
               }
             ],
-            "disclosures": [],
+            "disclosures": [
+              {
+                "topic": "source",
+                "after": "confirmed",
+                "claim": "箱内四日原单与封条及唯一箱号相合，确认沈桐把外联誊为五日，导致同一箱重复登记。"
+              }
+            ],
             "world_refs": [
-              "rules:r1",
+              "rules:archive",
+              "rules:fee",
+              "rules:opening",
+              "everyday:documents",
+              "everyday:correction",
               "geography:office",
-              "characters:shen"
+              "geography:yard",
+              "characters:shen",
+              "characters:chief",
+              "mysteries:source"
             ],
             "new_entities": [],
             "hook_refs": [
               "hook-v1-required"
             ],
             "hooks": [],
-            "reader_refs": [],
+            "reader_refs": [
+              "source"
+            ],
             "history_refs": [],
             "scenes": [
               {
-                "label": "核对现场",
-                "intent": "核对第三批退件。",
-                "conflict": "签字制度挡着开箱。",
-                "turn": "凭据矛盾浮出。",
+                "id": "demo-scene-3",
+                "label": "原单与代价",
+                "intent": "第三个次日沈桐从值班室走到后院，登记查阅箱内原单扣一元，二元变一元。主管没有准许开箱，沈桐仍拆开原封查验：原单箱号十七、日期四日，与封条一致，外联五日则是自己誊写。由此确认误抄导致同箱重登；他明知违规，决定翌日自报，箱和原单都留后院，不立刻处罚或扣钱。",
+                "conflict": "求证欲望与开箱许可冲突。",
+                "turn": "箱内四日原单与封条及唯一箱号相合，确认沈桐把外联誊为五日，导致同一箱重复登记。",
                 "present": [
                   "shen"
                 ],
@@ -587,10 +976,10 @@
                 "dialogue_intents": [
                   {
                     "entity": "shen",
-                    "seeks": "查清来历。",
-                    "withholds": "不提违规开箱。",
-                    "pressure": "登记制度压着。",
-                    "tactic": "拿旧凭据对照。",
+                    "seeks": "说清当章证据能够支持的结论。",
+                    "withholds": "前两章不冒称已确认，第三章尚未向主管披露；第四章不隐瞒。",
+                    "pressure": "既定查档和开箱规则。",
+                    "tactic": "照单据说话，不牵连无关同事。",
                     "knowledge_topics": [
                       "source"
                     ]
@@ -598,38 +987,60 @@
                 ],
                 "reads": [
                   {
-                    "kind": "knowledge",
-                    "key": "shen:source"
-                  },
-                  {
                     "kind": "clock",
                     "key": "main"
+                  },
+                  {
+                    "kind": "resources",
+                    "key": "[\"shen\",\"查单费\",\"元\"]"
+                  },
+                  {
+                    "kind": "knowledge",
+                    "key": "shen:source"
                   }
                 ],
-                "depends_on": []
+                "depends_on": [
+                  "demo-scene-2"
+                ]
               }
             ],
             "pacing": {},
             "style": {
-              "pov": "第三人称限知",
-              "rhythm": "短句交代动作，核对结果后用完整句说明后果。"
+              "pov": "第三人称限知，以沈桐当章可知为限；主管知情须在第四章听述核单后表明。",
+              "rhythm": "短句落实查档动作、单据内容与判断上限，末章让对话落到已生效处理。"
             },
-            "dependency_coverage": "complete"
+            "dependency_coverage": "complete",
+            "story_events": [
+              "单据与箱子不转移归属，正文没有额外费用、收入或新人物。",
+              "原封箱在本章被沈桐未经许可拆开，箱与原单留在后院；不是新获资产或转移。"
+            ]
           },
           {
             "chapter": 4,
-            "synopsis": "沈桐核对第四批退件的封条与签字，花掉车费并移动核对位置，对凭据来历形成新的判断。",
+            "synopsis": "最后一个次日沈桐从后院返回值班室，调阅结案复核档扣最后一元。向主管完整说明同箱原单四日、外联误誊五日造成重登，以及昨日未获许可仍拆箱的行为；主管核单后才确认两项事实。沈桐填写公开更正表，撤销重复登记；主管登记书面警告、暂停其开箱权限，保留在岗与查单资格，无罚款。末章止于值班室。",
             "plot": {
-              "beat": "沈桐核对封条与签字，逼出下一处矛盾。",
-              "nodes": [],
-              "threads": []
+              "beat": "来源和本人误抄公开更正，主管核实违规开箱，沈桐实际接受警告及暂停开箱权限。",
+              "nodes": [
+                {
+                  "node": "accepted-responsibility",
+                  "after": "resolved",
+                  "outcome": "来源和本人误抄公开更正，主管核实违规开箱，沈桐实际接受警告及暂停开箱权限。"
+                }
+              ],
+              "threads": [
+                {
+                  "thread": "main",
+                  "after": "resolved",
+                  "reason": "来源公开更正且警告与暂停开箱权限已生效，责任链结清。"
+                }
+              ]
             },
             "resources": [
               {
-                "key": "[\"shen\",\"车费\",\"元\"]",
+                "key": "[\"shen\",\"查单费\",\"元\"]",
                 "from": "1",
                 "to": "0",
-                "reason": "核对退件时花掉一趟车费。"
+                "reason": "调阅结案复核档扣查单费一元。"
               }
             ],
             "places": [
@@ -637,12 +1048,44 @@
                 "entity": "shen",
                 "from": "yard",
                 "to": "office",
-                "route": "从仓库后院走到值班室。",
-                "reason": "换到另一处核对退件。"
+                "route": "从仓库后院步行到值班室。",
+                "reason": "到该处完成本章规定的单据查阅与核验。"
               }
             ],
-            "knowledge": [],
-            "characters": [],
+            "knowledge": [
+              {
+                "who": "chief",
+                "topic": "source",
+                "from": null,
+                "to": "confirmed",
+                "reason": "主管听完说明并核对同箱原单与外联影像，确认沈桐误誊日期造成重登。"
+              },
+              {
+                "who": "chief",
+                "topic": "opening",
+                "from": null,
+                "to": "confirmed",
+                "reason": "主管听沈桐自报、核实其昨日未经许可拆箱后确认违规。"
+              }
+            ],
+            "characters": [
+              {
+                "entity": "shen",
+                "from": {
+                  "desire": "如实结清十七号箱的重登原因",
+                  "stance": "已确认自己误抄日期，决定自报未经许可开箱",
+                  "relationship_focus": "向值班主管说明本人两项责任，不牵连旁人"
+                },
+                "to": {
+                  "desire": "按更正后的记录完成本职工作",
+                  "stance": "已接受书面警告和暂停开箱权限，在岗与查单资格保留",
+                  "relationship_focus": "向值班主管如实担责，不把误抄和违规推给同事"
+                },
+                "choice": "同时自报误抄日期与未经许可开箱，不只选择更正有利的一项。",
+                "cost": "书面警告与暂停开箱权限已经生效，保留在岗与查单资格，无罚款。",
+                "change": "从准备自报转为已公开担责并接受处理。"
+              }
+            ],
             "relations": [],
             "clock": {
               "advance_days": 1
@@ -655,13 +1098,47 @@
               },
               {
                 "kind": "resources",
-                "key": "[\"shen\",\"车费\",\"元\"]",
+                "key": "[\"shen\",\"查单费\",\"元\"]",
                 "expected": "1"
               },
               {
                 "kind": "places",
                 "key": "shen",
                 "expected": "yard"
+              },
+              {
+                "kind": "node",
+                "key": "accepted-responsibility",
+                "expected": null
+              },
+              {
+                "kind": "thread",
+                "key": "main",
+                "expected": "active"
+              },
+              {
+                "kind": "knowledge",
+                "key": "shen:source",
+                "expected": "confirmed"
+              },
+              {
+                "kind": "knowledge",
+                "key": "chief:source",
+                "expected": null
+              },
+              {
+                "kind": "knowledge",
+                "key": "chief:opening",
+                "expected": null
+              },
+              {
+                "kind": "character",
+                "key": "shen",
+                "expected": {
+                  "desire": "如实结清十七号箱的重登原因",
+                  "stance": "已确认自己误抄日期，决定自报未经许可开箱",
+                  "relationship_focus": "向值班主管说明本人两项责任，不牵连旁人"
+                }
               }
             ],
             "exit": [
@@ -672,20 +1149,67 @@
               },
               {
                 "kind": "resources",
-                "key": "[\"shen\",\"车费\",\"元\"]",
+                "key": "[\"shen\",\"查单费\",\"元\"]",
                 "expected": "0"
               },
               {
                 "kind": "places",
                 "key": "shen",
                 "expected": "office"
+              },
+              {
+                "kind": "node",
+                "key": "accepted-responsibility",
+                "expected": "resolved"
+              },
+              {
+                "kind": "thread",
+                "key": "main",
+                "expected": "resolved"
+              },
+              {
+                "kind": "knowledge",
+                "key": "shen:source",
+                "expected": "confirmed"
+              },
+              {
+                "kind": "knowledge",
+                "key": "chief:source",
+                "expected": "confirmed"
+              },
+              {
+                "kind": "knowledge",
+                "key": "chief:opening",
+                "expected": "confirmed"
+              },
+              {
+                "kind": "character",
+                "key": "shen",
+                "expected": {
+                  "desire": "按更正后的记录完成本职工作",
+                  "stance": "已接受书面警告和暂停开箱权限，在岗与查单资格保留",
+                  "relationship_focus": "向值班主管如实担责，不把误抄和违规推给同事"
+                }
               }
             ],
-            "disclosures": [],
+            "disclosures": [
+              {
+                "topic": "responsibility",
+                "after": "confirmed",
+                "claim": "沈桐已公开更正误抄和重登，主管核实开箱违规并给予书面警告、暂停开箱权限，保留其余资格且无罚款。"
+              }
+            ],
             "world_refs": [
-              "rules:r1",
+              "rules:archive",
+              "rules:fee",
+              "rules:opening",
+              "everyday:documents",
+              "everyday:correction",
               "geography:office",
-              "characters:shen"
+              "geography:yard",
+              "characters:shen",
+              "characters:chief",
+              "mysteries:source"
             ],
             "new_entities": [],
             "hook_refs": [],
@@ -693,54 +1217,92 @@
               {
                 "hook": "hook-v1-required",
                 "action": "payoff",
-                "note": "本卷末兑现本卷承诺。"
+                "note": "明确公布误抄导致重登的来源，并由本人承担违规处理。"
               }
             ],
-            "reader_refs": [],
+            "reader_refs": [
+              "source"
+            ],
             "history_refs": [],
             "scenes": [
               {
-                "label": "核对现场",
-                "intent": "核对第四批退件。",
-                "conflict": "签字制度挡着开箱。",
-                "turn": "凭据矛盾浮出。",
+                "id": "demo-scene-4",
+                "label": "公开更正",
+                "intent": "最后一个次日沈桐从后院返回值班室，调阅结案复核档扣最后一元。向主管完整说明同箱原单四日、外联误誊五日造成重登，以及昨日未获许可仍拆箱的行为；主管核单后才确认两项事实。沈桐填写公开更正表，撤销重复登记；主管登记书面警告、暂停其开箱权限，保留在岗与查单资格，无罚款。末章止于值班室。",
+                "conflict": "可以只更正抄错，也可以把越规查验一并自报。",
+                "turn": "来源和本人误抄公开更正，主管核实违规开箱，沈桐实际接受警告及暂停开箱权限。",
                 "present": [
-                  "shen"
+                  "shen",
+                  "chief"
                 ],
                 "speakers": [
-                  "shen"
+                  "shen",
+                  "chief"
                 ],
                 "dialogue_intents": [
                   {
                     "entity": "shen",
-                    "seeks": "查清来历。",
-                    "withholds": "不提违规开箱。",
-                    "pressure": "登记制度压着。",
-                    "tactic": "拿旧凭据对照。",
+                    "seeks": "说清当章证据能够支持的结论。",
+                    "withholds": "前两章不冒称已确认，第三章尚未向主管披露；第四章不隐瞒。",
+                    "pressure": "既定查档和开箱规则。",
+                    "tactic": "照单据说话，不牵连无关同事。",
                     "knowledge_topics": [
                       "source"
+                    ]
+                  },
+                  {
+                    "entity": "chief",
+                    "seeks": "核实来源和违规事实。",
+                    "withholds": "核实前不作责任判断。",
+                    "pressure": "按已知规程处理且不得罚款。",
+                    "tactic": "核对原单影像与更正表后明确处理。",
+                    "knowledge_topics": [
+                      "source",
+                      "opening"
                     ]
                   }
                 ],
                 "reads": [
                   {
+                    "kind": "clock",
+                    "key": "main"
+                  },
+                  {
+                    "kind": "resources",
+                    "key": "[\"shen\",\"查单费\",\"元\"]"
+                  },
+                  {
                     "kind": "knowledge",
                     "key": "shen:source"
                   },
                   {
-                    "kind": "clock",
-                    "key": "main"
+                    "kind": "knowledge",
+                    "key": "chief:source"
+                  },
+                  {
+                    "kind": "knowledge",
+                    "key": "chief:opening"
+                  },
+                  {
+                    "kind": "character",
+                    "key": "shen"
                   }
                 ],
-                "depends_on": []
+                "depends_on": [
+                  "demo-scene-3"
+                ]
               }
             ],
             "pacing": {},
             "style": {
-              "pov": "第三人称限知",
-              "rhythm": "短句交代动作，核对结果后用完整句说明后果。"
+              "pov": "第三人称限知，以沈桐当章可知为限；主管知情须在第四章听述核单后表明。",
+              "rhythm": "短句落实查档动作、单据内容与判断上限，末章让对话落到已生效处理。"
             },
-            "dependency_coverage": "complete"
+            "dependency_coverage": "complete",
+            "story_events": [
+              "单据与箱子不转移归属，正文没有额外费用、收入或新人物。",
+              "终端公开更正栏显示误抄导致同箱重登，撤销重复登记；不声称未出场人员已阅。"
+            ]
           }
         ]
       }
@@ -748,12 +1310,27 @@
   ],
   "drafts": {
     "1": {
-      "title": "第一章 核对",
-      "summary": "沈桐核对第一批退件的封条与签字，花掉车费",
-      "self_check": "本章按章纲完成核对与承诺载体。",
-      "prose": "次日清晨，沈桐开始第一批退件的核对。。他花掉一元车费，登记第一批核对记录。。他从值班室走到仓库后院，核对第一批封条。。凭据来历的第一层判断落定。。第一批退件凭据的来历，最终要由经手人负责交代。。",
+      "title": "第一章 两个日期",
+      "summary": "封条页四日、外联五日形成日期差异线索；沈桐付一元查单费到后院核验，提出要查清来历与责任，尚未拆箱或认定原因。",
+      "self_check": "核对本章只到日期差异线索；四元扣一元、值班室到后院、推进一日，未拆箱，未预知误抄责任。",
+      "prose": "次日清晨，沈桐从值班室走到仓库后院。十七号箱还在查验台边，封口完整。\n\n他登记调阅封条查验页，查单费扣去一元，四元余额变成三元。页上记着箱号十七、四日；旁边的外联影像却把同一箱号写在五日。\n\n“四日和五日，对不上。”他沿着两行日期看了一遍。日期有差异，只能算来源出错的线索，还不能说是哪个环节出了错。箱内原单尚未看过，他把手从封口处收回。\n\n“这个箱子为什么有两个日期？来历和经手责任，总得查清楚。”沈桐记住要查的页码，没有拆箱。",
       "drift_check": {
         "items": [
+          {
+            "kind": "node",
+            "key": "date-clue",
+            "planned": {
+              "after": "resolved"
+            },
+            "status": "kept",
+            "actual": {
+              "after": "resolved"
+            },
+            "evidence": {
+              "chapter": 1,
+              "quote": "他登记调阅封条查验页，查单费扣去一元，四元余额变成三元。页上记着箱号十七、四日；旁边的外联影像却把同一箱号写在五日。\n\n“四日和五日，对不上。”他沿着两行日期看了一遍。日期有差异，只能算来源出错的线索，还不能说是哪个环节出了错。箱内原单尚未看过，他把手从封口处收回。"
+            }
+          },
           {
             "kind": "hook",
             "key": "hook-v1-required",
@@ -766,12 +1343,12 @@
             },
             "evidence": {
               "chapter": 1,
-              "quote": "第一批退件凭据的来历，最终要由经手人负责交代。"
+              "quote": "“这个箱子为什么有两个日期？来历和经手责任，总得查清楚。”沈桐记住要查的页码，没有拆箱。"
             }
           },
           {
             "kind": "resources",
-            "key": "[\"shen\",\"车费\",\"元\"]",
+            "key": "[\"shen\",\"查单费\",\"元\"]",
             "planned": {
               "from": "4",
               "to": "3"
@@ -782,7 +1359,7 @@
             },
             "evidence": {
               "chapter": 1,
-              "quote": "他花掉一元车费，登记第一批核对记录。"
+              "quote": "他登记调阅封条查验页，查单费扣去一元，四元余额变成三元。"
             }
           },
           {
@@ -798,7 +1375,7 @@
             },
             "evidence": {
               "chapter": 1,
-              "quote": "他从值班室走到仓库后院，核对第一批封条。"
+              "quote": "次日清晨，沈桐从值班室走到仓库后院。十七号箱还在查验台边，封口完整。"
             }
           },
           {
@@ -814,7 +1391,7 @@
             },
             "evidence": {
               "chapter": 1,
-              "quote": "凭据来历的第一层判断落定。"
+              "quote": "他登记调阅封条查验页，查单费扣去一元，四元余额变成三元。页上记着箱号十七、四日；旁边的外联影像却把同一箱号写在五日。\n\n“四日和五日，对不上。”他沿着两行日期看了一遍。日期有差异，只能算来源出错的线索，还不能说是哪个环节出了错。箱内原单尚未看过，他把手从封口处收回。"
             }
           },
           {
@@ -829,7 +1406,22 @@
             },
             "evidence": {
               "chapter": 1,
-              "quote": "次日清晨，沈桐开始第一批退件的核对。"
+              "quote": "次日清晨，沈桐从值班室走到仓库后院。十七号箱还在查验台边，封口完整。"
+            }
+          },
+          {
+            "kind": "disclosure",
+            "key": "source",
+            "planned": {
+              "after": "hinted"
+            },
+            "status": "kept",
+            "actual": {
+              "after": "hinted"
+            },
+            "evidence": {
+              "chapter": 1,
+              "quote": "他登记调阅封条查验页，查单费扣去一元，四元余额变成三元。页上记着箱号十七、四日；旁边的外联影像却把同一箱号写在五日。\n\n“四日和五日，对不上。”他沿着两行日期看了一遍。日期有差异，只能算来源出错的线索，还不能说是哪个环节出了错。箱内原单尚未看过，他把手从封口处收回。"
             }
           }
         ],
@@ -838,15 +1430,30 @@
       }
     },
     "2": {
-      "title": "第二章 核对",
-      "summary": "沈桐核对第二批退件的封条与签字，花掉车费",
-      "self_check": "本章按章纲完成核对与承诺载体。",
-      "prose": "次日清晨，沈桐开始第二批退件的核对。。他花掉一元车费，登记第二批核对记录。。他从仓库后院走到值班室，核对第二批封条。。凭据来历的第二层判断落定。。",
+      "title": "第二章 两个签名",
+      "summary": "存根显示同箱号在两日重复登记且均由沈桐署名；他再付一元后怀疑自己误抄外联日期，仍等待原单证实。",
+      "self_check": "核对同箱双登记与两处本人签名只支持怀疑；三元扣一元、后院到值班室、推进一日，没有让未参与查档的主管提前知情。",
+      "prose": "又过了一日，沈桐从仓库后院走到值班室，独自坐到查档终端前。\n\n为调阅登记存根，他支付一元查单费，账户由三元减为二元。存根的四日、五日两行，竟都写着唯一的箱号十七，落款也都是沈桐。\n\n他把两处签字放在同一屏里。“同一只箱子，我登了两次。”外联那行五日越看越扎眼，他开始怀疑是自己把日期誊错，才让同箱又登记一遍。\n\n“但还缺箱内原单，不能现在就认定。”他停在这一步，没有把怀疑说成结论，也没有向主管交代尚未核准的原因。",
       "drift_check": {
         "items": [
           {
+            "kind": "node",
+            "key": "duplicate-entry",
+            "planned": {
+              "after": "resolved"
+            },
+            "status": "kept",
+            "actual": {
+              "after": "resolved"
+            },
+            "evidence": {
+              "chapter": 2,
+              "quote": "为调阅登记存根，他支付一元查单费，账户由三元减为二元。存根的四日、五日两行，竟都写着唯一的箱号十七，落款也都是沈桐。\n\n他把两处签字放在同一屏里。“同一只箱子，我登了两次。”外联那行五日越看越扎眼，他开始怀疑是自己把日期誊错，才让同箱又登记一遍。\n\n“但还缺箱内原单，不能现在就认定。”他停在这一步，没有把怀疑说成结论，也没有向主管交代尚未核准的原因。"
+            }
+          },
+          {
             "kind": "resources",
-            "key": "[\"shen\",\"车费\",\"元\"]",
+            "key": "[\"shen\",\"查单费\",\"元\"]",
             "planned": {
               "from": "3",
               "to": "2"
@@ -857,7 +1464,7 @@
             },
             "evidence": {
               "chapter": 2,
-              "quote": "他花掉一元车费，登记第二批核对记录。"
+              "quote": "为调阅登记存根，他支付一元查单费，账户由三元减为二元。"
             }
           },
           {
@@ -873,7 +1480,7 @@
             },
             "evidence": {
               "chapter": 2,
-              "quote": "他从仓库后院走到值班室，核对第二批封条。"
+              "quote": "又过了一日，沈桐从仓库后院走到值班室，独自坐到查档终端前。"
             }
           },
           {
@@ -889,7 +1496,7 @@
             },
             "evidence": {
               "chapter": 2,
-              "quote": "凭据来历的第二层判断落定。"
+              "quote": "为调阅登记存根，他支付一元查单费，账户由三元减为二元。存根的四日、五日两行，竟都写着唯一的箱号十七，落款也都是沈桐。\n\n他把两处签字放在同一屏里。“同一只箱子，我登了两次。”外联那行五日越看越扎眼，他开始怀疑是自己把日期誊错，才让同箱又登记一遍。\n\n“但还缺箱内原单，不能现在就认定。”他停在这一步，没有把怀疑说成结论，也没有向主管交代尚未核准的原因。"
             }
           },
           {
@@ -904,7 +1511,22 @@
             },
             "evidence": {
               "chapter": 2,
-              "quote": "次日清晨，沈桐开始第二批退件的核对。"
+              "quote": "又过了一日，沈桐从仓库后院走到值班室，独自坐到查档终端前。"
+            }
+          },
+          {
+            "kind": "disclosure",
+            "key": "source",
+            "planned": {
+              "after": "suspected"
+            },
+            "status": "kept",
+            "actual": {
+              "after": "suspected"
+            },
+            "evidence": {
+              "chapter": 2,
+              "quote": "为调阅登记存根，他支付一元查单费，账户由三元减为二元。存根的四日、五日两行，竟都写着唯一的箱号十七，落款也都是沈桐。\n\n他把两处签字放在同一屏里。“同一只箱子，我登了两次。”外联那行五日越看越扎眼，他开始怀疑是自己把日期誊错，才让同箱又登记一遍。\n\n“但还缺箱内原单，不能现在就认定。”他停在这一步，没有把怀疑说成结论，也没有向主管交代尚未核准的原因。"
             }
           }
         ],
@@ -913,15 +1535,30 @@
       }
     },
     "3": {
-      "title": "第三章 核对",
-      "summary": "沈桐核对第三批退件的封条与签字，花掉车费",
-      "self_check": "本章按章纲完成核对与承诺载体。",
-      "prose": "次日清晨，沈桐开始第三批退件的核对。。他花掉一元车费，登记第三批核对记录。。他从值班室走到仓库后院，核对第三批封条。。凭据来历的第三层判断落定。。",
+      "title": "第三章 原封之内",
+      "summary": "沈桐付第三元并违规拆箱，原单四日与封条相合，确认自己误抄五日导致重登；决定向主管同时自报误抄与违规，箱及原单留后院。",
+      "self_check": "核对原单与外联提供实际确认依据；二元扣一元、值班室到后院，违规开箱和准备自报已在人物变化中申报，箱与原单未带走。",
+      "prose": "第三个清晨，已是次日，沈桐从值班室步行到仓库后院。\n\n他登记查阅箱内原单，查单费再扣一元，二元余额只剩一元。登记页提醒：准许查单，不等于准许拆箱。主管还没有给开箱许可，他却没有等，拆开了原封。\n\n箱内原单写着十七号、四日，与封条查验页相合；外联仍是十七号、五日，誊写和签字都是他自己的。沈桐这才确认，自己把四日抄成五日，才使同一只箱子重复登记。\n\n“误抄是我的，没获准就拆箱也是我的。”他把原单放回箱里，箱子留在后院。真相查到了，开箱违规也已经发生。他决定次日把两件事一起向主管自报，不把自己的错误推给同事。",
       "drift_check": {
         "items": [
           {
+            "kind": "node",
+            "key": "verified-copy-error",
+            "planned": {
+              "after": "resolved"
+            },
+            "status": "kept",
+            "actual": {
+              "after": "resolved"
+            },
+            "evidence": {
+              "chapter": 3,
+              "quote": "箱内原单写着十七号、四日，与封条查验页相合；外联仍是十七号、五日，誊写和签字都是他自己的。沈桐这才确认，自己把四日抄成五日，才使同一只箱子重复登记。"
+            }
+          },
+          {
             "kind": "resources",
-            "key": "[\"shen\",\"车费\",\"元\"]",
+            "key": "[\"shen\",\"查单费\",\"元\"]",
             "planned": {
               "from": "2",
               "to": "1"
@@ -932,7 +1569,7 @@
             },
             "evidence": {
               "chapter": 3,
-              "quote": "他花掉一元车费，登记第三批核对记录。"
+              "quote": "他登记查阅箱内原单，查单费再扣一元，二元余额只剩一元。"
             }
           },
           {
@@ -948,7 +1585,7 @@
             },
             "evidence": {
               "chapter": 3,
-              "quote": "他从值班室走到仓库后院，核对第三批封条。"
+              "quote": "第三个清晨，已是次日，沈桐从值班室步行到仓库后院。"
             }
           },
           {
@@ -964,7 +1601,31 @@
             },
             "evidence": {
               "chapter": 3,
-              "quote": "凭据来历的第三层判断落定。"
+              "quote": "箱内原单写着十七号、四日，与封条查验页相合；外联仍是十七号、五日，誊写和签字都是他自己的。沈桐这才确认，自己把四日抄成五日，才使同一只箱子重复登记。"
+            }
+          },
+          {
+            "kind": "characters",
+            "key": "shen",
+            "planned": {
+              "from": null,
+              "to": {
+                "desire": "如实结清十七号箱的重登原因",
+                "stance": "已确认自己误抄日期，决定自报未经许可开箱",
+                "relationship_focus": "向值班主管说明本人两项责任，不牵连旁人"
+              }
+            },
+            "status": "kept",
+            "actual": {
+              "to": {
+                "desire": "如实结清十七号箱的重登原因",
+                "stance": "已确认自己误抄日期，决定自报未经许可开箱",
+                "relationship_focus": "向值班主管说明本人两项责任，不牵连旁人"
+              }
+            },
+            "evidence": {
+              "chapter": 3,
+              "quote": "他登记查阅箱内原单，查单费再扣一元，二元余额只剩一元。登记页提醒：准许查单，不等于准许拆箱。主管还没有给开箱许可，他却没有等，拆开了原封。\n\n箱内原单写着十七号、四日，与封条查验页相合；外联仍是十七号、五日，誊写和签字都是他自己的。沈桐这才确认，自己把四日抄成五日，才使同一只箱子重复登记。\n\n“误抄是我的，没获准就拆箱也是我的。”他把原单放回箱里，箱子留在后院。真相查到了，开箱违规也已经发生。他决定次日把两件事一起向主管自报，不把自己的错误推给同事。"
             }
           },
           {
@@ -979,7 +1640,22 @@
             },
             "evidence": {
               "chapter": 3,
-              "quote": "次日清晨，沈桐开始第三批退件的核对。"
+              "quote": "第三个清晨，已是次日，沈桐从值班室步行到仓库后院。"
+            }
+          },
+          {
+            "kind": "disclosure",
+            "key": "source",
+            "planned": {
+              "after": "confirmed"
+            },
+            "status": "kept",
+            "actual": {
+              "after": "confirmed"
+            },
+            "evidence": {
+              "chapter": 3,
+              "quote": "箱内原单写着十七号、四日，与封条查验页相合；外联仍是十七号、五日，誊写和签字都是他自己的。沈桐这才确认，自己把四日抄成五日，才使同一只箱子重复登记。"
             }
           }
         ],
@@ -988,12 +1664,42 @@
       }
     },
     "4": {
-      "title": "第四章 核对",
-      "summary": "沈桐核对第四批退件的封条与签字，花掉车费",
-      "self_check": "本章按章纲完成核对与承诺载体。",
-      "prose": "次日清晨，沈桐开始第四批退件的核对。。他花掉一元车费，登记第四批核对记录。。他从仓库后院走到值班室，核对第四批封条。。凭据来历的第四层判断落定。。第四批退件凭据的来历由沈桐当众交代，责任就此落实。。",
+      "title": "第四章 一起交代",
+      "summary": "最后一元用于结案复核；沈桐在值班室公开更正误抄和重登、向主管自报开箱违规，主管核验后登记警告及暂停开箱权限，无罚款。",
+      "self_check": "核对误抄来源和开箱违规分别向主管说明并被核实；最后一元归零，在值班室公开更正，警告和暂停权限实际生效，无额外金钱变化。",
+      "prose": "最后一个次日，沈桐从仓库后院走回值班室。\n\n他调阅结案复核档，支付最后一元查单费，一元余额归零。值班主管还不知道差错的原因，沈桐请他看终端：“十七号箱原单是四日，我把外联誊成五日，同一箱因此登记两遍。”\n\n主管听完，把查验台同步的原单影像与外联对照，核过两处签字，才确认误抄造成了重登。沈桐又说：“原单是我昨日没获许可就拆箱查的。”主管核实自己未曾批准开箱，也确认了这项违规。\n\n沈桐在公开更正栏填明原单四日、本人误抄五日和重复登记的原因，撤销了多出的一笔。主管随即在处理栏登记书面警告、暂停沈桐开箱权限；终端显示处理已生效，在岗与查单资格保留，没有罚款。\n\n“我接受，查单不能当开箱许可。”沈桐在值班室看完更正与处理结果，接着按改正后的记录工作。",
       "drift_check": {
         "items": [
+          {
+            "kind": "node",
+            "key": "accepted-responsibility",
+            "planned": {
+              "after": "resolved"
+            },
+            "status": "kept",
+            "actual": {
+              "after": "resolved"
+            },
+            "evidence": {
+              "chapter": 4,
+              "quote": "他调阅结案复核档，支付最后一元查单费，一元余额归零。值班主管还不知道差错的原因，沈桐请他看终端：“十七号箱原单是四日，我把外联誊成五日，同一箱因此登记两遍。”\n\n主管听完，把查验台同步的原单影像与外联对照，核过两处签字，才确认误抄造成了重登。沈桐又说：“原单是我昨日没获许可就拆箱查的。”主管核实自己未曾批准开箱，也确认了这项违规。\n\n沈桐在公开更正栏填明原单四日、本人误抄五日和重复登记的原因，撤销了多出的一笔。主管随即在处理栏登记书面警告、暂停沈桐开箱权限；终端显示处理已生效，在岗与查单资格保留，没有罚款。\n\n“我接受，查单不能当开箱许可。”沈桐在值班室看完更正与处理结果，接着按改正后的记录工作。"
+            }
+          },
+          {
+            "kind": "thread",
+            "key": "main",
+            "planned": {
+              "after": "resolved"
+            },
+            "status": "kept",
+            "actual": {
+              "after": "resolved"
+            },
+            "evidence": {
+              "chapter": 4,
+              "quote": "他调阅结案复核档，支付最后一元查单费，一元余额归零。值班主管还不知道差错的原因，沈桐请他看终端：“十七号箱原单是四日，我把外联誊成五日，同一箱因此登记两遍。”\n\n主管听完，把查验台同步的原单影像与外联对照，核过两处签字，才确认误抄造成了重登。沈桐又说：“原单是我昨日没获许可就拆箱查的。”主管核实自己未曾批准开箱，也确认了这项违规。\n\n沈桐在公开更正栏填明原单四日、本人误抄五日和重复登记的原因，撤销了多出的一笔。主管随即在处理栏登记书面警告、暂停沈桐开箱权限；终端显示处理已生效，在岗与查单资格保留，没有罚款。\n\n“我接受，查单不能当开箱许可。”沈桐在值班室看完更正与处理结果，接着按改正后的记录工作。"
+            }
+          },
           {
             "kind": "hook",
             "key": "hook-v1-required",
@@ -1006,12 +1712,12 @@
             },
             "evidence": {
               "chapter": 4,
-              "quote": "第四批退件凭据的来历由沈桐当众交代，责任就此落实。"
+              "quote": "他调阅结案复核档，支付最后一元查单费，一元余额归零。值班主管还不知道差错的原因，沈桐请他看终端：“十七号箱原单是四日，我把外联誊成五日，同一箱因此登记两遍。”\n\n主管听完，把查验台同步的原单影像与外联对照，核过两处签字，才确认误抄造成了重登。沈桐又说：“原单是我昨日没获许可就拆箱查的。”主管核实自己未曾批准开箱，也确认了这项违规。\n\n沈桐在公开更正栏填明原单四日、本人误抄五日和重复登记的原因，撤销了多出的一笔。主管随即在处理栏登记书面警告、暂停沈桐开箱权限；终端显示处理已生效，在岗与查单资格保留，没有罚款。\n\n“我接受，查单不能当开箱许可。”沈桐在值班室看完更正与处理结果，接着按改正后的记录工作。"
             }
           },
           {
             "kind": "resources",
-            "key": "[\"shen\",\"车费\",\"元\"]",
+            "key": "[\"shen\",\"查单费\",\"元\"]",
             "planned": {
               "from": "1",
               "to": "0"
@@ -1022,7 +1728,7 @@
             },
             "evidence": {
               "chapter": 4,
-              "quote": "他花掉一元车费，登记第四批核对记录。"
+              "quote": "他调阅结案复核档，支付最后一元查单费，一元余额归零。"
             }
           },
           {
@@ -1038,7 +1744,67 @@
             },
             "evidence": {
               "chapter": 4,
-              "quote": "他从仓库后院走到值班室，核对第四批封条。"
+              "quote": "最后一个次日，沈桐从仓库后院走回值班室。"
+            }
+          },
+          {
+            "kind": "knowledge",
+            "key": "chief:source",
+            "planned": {
+              "from": null,
+              "to": "confirmed"
+            },
+            "status": "kept",
+            "actual": {
+              "to": "confirmed"
+            },
+            "evidence": {
+              "chapter": 4,
+              "quote": "他调阅结案复核档，支付最后一元查单费，一元余额归零。值班主管还不知道差错的原因，沈桐请他看终端：“十七号箱原单是四日，我把外联誊成五日，同一箱因此登记两遍。”\n\n主管听完，把查验台同步的原单影像与外联对照，核过两处签字，才确认误抄造成了重登。沈桐又说：“原单是我昨日没获许可就拆箱查的。”主管核实自己未曾批准开箱，也确认了这项违规。"
+            }
+          },
+          {
+            "kind": "knowledge",
+            "key": "chief:opening",
+            "planned": {
+              "from": null,
+              "to": "confirmed"
+            },
+            "status": "kept",
+            "actual": {
+              "to": "confirmed"
+            },
+            "evidence": {
+              "chapter": 4,
+              "quote": "他调阅结案复核档，支付最后一元查单费，一元余额归零。值班主管还不知道差错的原因，沈桐请他看终端：“十七号箱原单是四日，我把外联誊成五日，同一箱因此登记两遍。”\n\n主管听完，把查验台同步的原单影像与外联对照，核过两处签字，才确认误抄造成了重登。沈桐又说：“原单是我昨日没获许可就拆箱查的。”主管核实自己未曾批准开箱，也确认了这项违规。"
+            }
+          },
+          {
+            "kind": "characters",
+            "key": "shen",
+            "planned": {
+              "from": {
+                "desire": "如实结清十七号箱的重登原因",
+                "stance": "已确认自己误抄日期，决定自报未经许可开箱",
+                "relationship_focus": "向值班主管说明本人两项责任，不牵连旁人"
+              },
+              "to": {
+                "desire": "按更正后的记录完成本职工作",
+                "stance": "已接受书面警告和暂停开箱权限，在岗与查单资格保留",
+                "relationship_focus": "向值班主管如实担责，不把误抄和违规推给同事"
+              }
+            },
+            "status": "kept",
+            "actual": {
+              "to": {
+                "desire": "按更正后的记录完成本职工作",
+                "stance": "已接受书面警告和暂停开箱权限，在岗与查单资格保留",
+                "relationship_focus": "向值班主管如实担责，不把误抄和违规推给同事"
+              }
+            },
+            "evidence": {
+              "chapter": 4,
+              "quote": "沈桐在公开更正栏填明原单四日、本人误抄五日和重复登记的原因，撤销了多出的一笔。主管随即在处理栏登记书面警告、暂停沈桐开箱权限；终端显示处理已生效，在岗与查单资格保留，没有罚款。\n\n“我接受，查单不能当开箱许可。”沈桐在值班室看完更正与处理结果，接着按改正后的记录工作。"
             }
           },
           {
@@ -1053,7 +1819,22 @@
             },
             "evidence": {
               "chapter": 4,
-              "quote": "次日清晨，沈桐开始第四批退件的核对。"
+              "quote": "最后一个次日，沈桐从仓库后院走回值班室。"
+            }
+          },
+          {
+            "kind": "disclosure",
+            "key": "responsibility",
+            "planned": {
+              "after": "confirmed"
+            },
+            "status": "kept",
+            "actual": {
+              "after": "confirmed"
+            },
+            "evidence": {
+              "chapter": 4,
+              "quote": "他调阅结案复核档，支付最后一元查单费，一元余额归零。值班主管还不知道差错的原因，沈桐请他看终端：“十七号箱原单是四日，我把外联誊成五日，同一箱因此登记两遍。”\n\n主管听完，把查验台同步的原单影像与外联对照，核过两处签字，才确认误抄造成了重登。沈桐又说：“原单是我昨日没获许可就拆箱查的。”主管核实自己未曾批准开箱，也确认了这项违规。\n\n沈桐在公开更正栏填明原单四日、本人误抄五日和重复登记的原因，撤销了多出的一笔。主管随即在处理栏登记书面警告、暂停沈桐开箱权限；终端显示处理已生效，在岗与查单资格保留，没有罚款。\n\n“我接受，查单不能当开箱许可。”沈桐在值班室看完更正与处理结果，接着按改正后的记录工作。"
             }
           }
         ],
@@ -1061,5 +1842,455 @@
         "verdict": "clean"
       }
     }
-  }
+  },
+  "review_reports": {
+    "1": {
+      "draft_hash": "f61f099810b84d9dad3e7e6920f64a5e01ac6f6da8abf10efd43ffb8c73c3f86",
+      "report": {
+        "request_ref": "1dae3b1a5a661ee9255610c3a246173df118f8b95c8ffdd8e51b83a809ea30ab",
+        "reviewer": "example-independent-reader",
+        "verdict": "pass",
+        "read_complete": true,
+        "checks": [
+          {
+            "id": "outline",
+            "status": "pass",
+            "notes": "逐段对照章纲：次日由值班室步行到后院，登记看封条查验页，只发现十七号箱四日/五日差异；提出查清来历和责任且明确未拆箱。date-clue实际完成，未提前执行第二章双登记或第三章原单确认。"
+          },
+          {
+            "id": "continuity",
+            "status": "pass",
+            "notes": "初始沈桐在值班室、查单账户四元、未核清来源；章末在后院、三元、原封完整，主线从0推进1日。旧单四日/五日作为历史单据日期，没有与主线调查日混同。"
+          },
+          {
+            "id": "assets",
+            "status": "pass",
+            "notes": "正文唯一金额变化是调阅封条查验页扣一元，四变三；外联影像作为已有查验材料同页对照，没有第二笔调阅、退款或现金收入。箱子、单据原地归仓库，没有携带或取得资产。"
+          },
+          {
+            "id": "knowledge",
+            "status": "pass",
+            "notes": "沈桐与读者均只得到日期有异的线索，正文明确尚不知哪个环节出错且没见箱内原单；未将作者真相写成人物确认，未让未在场主管获知。"
+          },
+          {
+            "id": "causality",
+            "status": "pass",
+            "notes": "四日封条页与同箱五日外联影像形成可见矛盾，故产生查来源和责任的具体问题；不是空泛宣布判断升级。末段收手未拆箱与未获开箱许可一致。"
+          },
+          {
+            "id": "unplanned",
+            "status": "pass",
+            "notes": "已完整双向阅读正文与申报，未见额外收支、归属转移、伤势、新人物、规则改写或超前知情；记住页码只是后续查阅准备，不新增资料或资产。"
+          }
+        ],
+        "event_checks": [
+          {
+            "id": "95fe42a5518ba501d319b4099b9502e645e14a54683b0766e3bc98607ee4b2bf",
+            "status": "pass",
+            "notes": "实见同箱四日/五日两种日期，并明确只能形成线索，完成date-clue的限制性结果。",
+            "evidence": {
+              "chapter": 1,
+              "quote": "他登记调阅封条查验页，查单费扣去一元，四元余额变成三元。页上记着箱号十七、四日；旁边的外联影像却把同一箱号写在五日。\n\n“四日和五日，对不上。”他沿着两行日期看了一遍。日期有差异，只能算来源出错的线索，还不能说是哪个环节出了错。箱内原单尚未看过，他把手从封口处收回。"
+            }
+          },
+          {
+            "id": "c2e06abd67fa3c0ef696a4f04d4608da478d9495b0bb22b7775632cfd03a3c5f",
+            "status": "pass",
+            "notes": "末段用两个日期与来历、经手责任的具体问句埋下待解承诺，未声称已经解决。",
+            "evidence": {
+              "chapter": 1,
+              "quote": "“这个箱子为什么有两个日期？来历和经手责任，总得查清楚。”沈桐记住要查的页码，没有拆箱。"
+            }
+          },
+          {
+            "id": "b6e5fb6ed73f02485ca08f32d3acb76bf9ffbd4519264ad0dd96e66ad39cecdf",
+            "status": "pass",
+            "notes": "登记调阅封条查验页为扣款原因；正文四元扣一元变三元，持有人与单位一致。",
+            "evidence": {
+              "chapter": 1,
+              "quote": "他登记调阅封条查验页，查单费扣去一元，四元余额变成三元。"
+            }
+          },
+          {
+            "id": "39c2515e782558e84d876abf6f836537ba14aae436b777a91808dc0e15fcf5ba",
+            "status": "pass",
+            "notes": "首句完整写明沈桐由值班室走到仓库后院，未另移位。",
+            "evidence": {
+              "chapter": 1,
+              "quote": "次日清晨，沈桐从值班室走到仓库后院。十七号箱还在查验台边，封口完整。"
+            }
+          },
+          {
+            "id": "ab2eb544fd10401d9c70be4ad96e8e94a5dd46eb761a7e9383c4b4a2e0c5c35a",
+            "status": "pass",
+            "notes": "日期对照提供来源有异的依据；明确不知道出错环节，hinted成立且未越界。",
+            "evidence": {
+              "chapter": 1,
+              "quote": "他登记调阅封条查验页，查单费扣去一元，四元余额变成三元。页上记着箱号十七、四日；旁边的外联影像却把同一箱号写在五日。\n\n“四日和五日，对不上。”他沿着两行日期看了一遍。日期有差异，只能算来源出错的线索，还不能说是哪个环节出了错。箱内原单尚未看过，他把手从封口处收回。"
+            }
+          },
+          {
+            "id": "1f8cfd24927b30aed0f8ba23e8b7e49e65265c7a7327118bc774693260fb2e98",
+            "status": "pass",
+            "notes": "首句次日清晨把主线从开篇推进一日，旧单日期不另计天数。",
+            "evidence": {
+              "chapter": 1,
+              "quote": "次日清晨，沈桐从值班室走到仓库后院。十七号箱还在查验台边，封口完整。"
+            }
+          },
+          {
+            "id": "adc4a16f5588a5b5345bf9e98e9b15fff23b83a0f4373214955260545b449c04",
+            "status": "pass",
+            "notes": "读者看到的实际证据止于日期差异，叙述明确未见箱内原单，符合hinted。",
+            "evidence": {
+              "chapter": 1,
+              "quote": "他登记调阅封条查验页，查单费扣去一元，四元余额变成三元。页上记着箱号十七、四日；旁边的外联影像却把同一箱号写在五日。\n\n“四日和五日，对不上。”他沿着两行日期看了一遍。日期有差异，只能算来源出错的线索，还不能说是哪个环节出了错。箱内原单尚未看过，他把手从封口处收回。"
+            }
+          }
+        ],
+        "findings": []
+      }
+    },
+    "2": {
+      "draft_hash": "bc9218266d68aa531e9fbca5591791faeda2b3f0bfbff589d8af9ad1c8a45ac1",
+      "report": {
+        "request_ref": "f8714980af9162a59ab24b9fb8ba62ac0d7c2e371bb2f4f132bb09677a797437",
+        "reviewer": "example-independent-reader",
+        "verdict": "pass",
+        "read_complete": true,
+        "checks": [
+          {
+            "id": "outline",
+            "status": "pass",
+            "notes": "逐段核对真实包与全文：再过一日回值班室，自行调登记存根，见四日/五日两行唯一箱号十七且都由本人签名；由日期线索推进为误抄嫌疑，明确缺箱内原单而不认定，完成duplicate-entry节点。"
+          },
+          {
+            "id": "continuity",
+            "status": "pass",
+            "notes": "承接第一章后院、三元和仅有日期线索；本章结尾值班室、二元，主线从1到2。原封与原单尚未被查看，未提前拆箱。包中上一章全文、节点和知情claim与已审历史一致。"
+          },
+          {
+            "id": "assets",
+            "status": "pass",
+            "notes": "唯一支出是调阅登记存根扣一元，三元变二元；同屏核两处签字属于该份电子档查阅，未新增收费、个人文件、取得箱子或归属变化。"
+          },
+          {
+            "id": "knowledge",
+            "status": "pass",
+            "notes": "沈桐与读者可确认同箱双登记，但误抄作为原因仅属怀疑；末句明确不能认定，并未向主管交代。未把作者已知原单真相、后续开箱或主管认知提前写出。"
+          },
+          {
+            "id": "causality",
+            "status": "pass",
+            "notes": "在上一章两个日期基础上，用同箱号和本人两处签字把怀疑指向自己的外联誊写；以尚缺原单限定结论。推断有可见新证据，没有靠自检口号升级。"
+          },
+          {
+            "id": "unplanned",
+            "status": "pass",
+            "notes": "已完整双向阅读正文和六条申报，未见额外金额、所有权、伤势、新人物或规则变化；自语与拒绝认定不构成向主管披露，未声称主管已获知原因。"
+          }
+        ],
+        "event_checks": [
+          {
+            "id": "b49b932e7ef3b783043a90bf3813078cda9cb10ff99ed6246d67dc3c8918ef29",
+            "status": "pass",
+            "notes": "同一唯一箱号在四日和五日各登记且都署沈桐名，正文因此提出本人誊写可能有误，并保留原单待证，完成本节点要求。",
+            "evidence": {
+              "chapter": 2,
+              "quote": "为调阅登记存根，他支付一元查单费，账户由三元减为二元。存根的四日、五日两行，竟都写着唯一的箱号十七，落款也都是沈桐。\n\n他把两处签字放在同一屏里。“同一只箱子，我登了两次。”外联那行五日越看越扎眼，他开始怀疑是自己把日期誊错，才让同箱又登记一遍。\n\n“但还缺箱内原单，不能现在就认定。”他停在这一步，没有把怀疑说成结论，也没有向主管交代尚未核准的原因。"
+            }
+          },
+          {
+            "id": "806cd8d8b8e5d64aaf0ded586827753ee58bfe6f279062c26151c8247614dbb2",
+            "status": "pass",
+            "notes": "明确为调阅登记存根支出一元，账户三元减二元；原因、数量、持有人都与计划一致。",
+            "evidence": {
+              "chapter": 2,
+              "quote": "为调阅登记存根，他支付一元查单费，账户由三元减为二元。"
+            }
+          },
+          {
+            "id": "8fa62bf3cf0b727bb9c7a7f9623fd64695c8f501d64478e90786d118c1fa7bf0",
+            "status": "pass",
+            "notes": "首句从仓库后院走到值班室并独自到终端，位置承接上章。",
+            "evidence": {
+              "chapter": 2,
+              "quote": "又过了一日，沈桐从仓库后院走到值班室，独自坐到查档终端前。"
+            }
+          },
+          {
+            "id": "abf5c09b34c62ec60ffd9a66c7a0669b0a2c3f46d8383beecf10418c59bdbf3a",
+            "status": "pass",
+            "notes": "两行同箱双登记及本人签字支撑怀疑误抄；明确还缺箱内原单，未升到confirmed。",
+            "evidence": {
+              "chapter": 2,
+              "quote": "为调阅登记存根，他支付一元查单费，账户由三元减为二元。存根的四日、五日两行，竟都写着唯一的箱号十七，落款也都是沈桐。\n\n他把两处签字放在同一屏里。“同一只箱子，我登了两次。”外联那行五日越看越扎眼，他开始怀疑是自己把日期誊错，才让同箱又登记一遍。\n\n“但还缺箱内原单，不能现在就认定。”他停在这一步，没有把怀疑说成结论，也没有向主管交代尚未核准的原因。"
+            }
+          },
+          {
+            "id": "1f8cfd24927b30aed0f8ba23e8b7e49e65265c7a7327118bc774693260fb2e98",
+            "status": "pass",
+            "notes": "又过了一日明确推进一日，存根四日/五日仍是旧单日期。",
+            "evidence": {
+              "chapter": 2,
+              "quote": "又过了一日，沈桐从仓库后院走到值班室，独自坐到查档终端前。"
+            }
+          },
+          {
+            "id": "6d9ad720674d08919d8e5c95ba458292000c291a8f7dad91c53428d0dd8bb884",
+            "status": "pass",
+            "notes": "读者获知双登记与签字证据及原因嫌疑，叙述保留不能认定，符合suspected。",
+            "evidence": {
+              "chapter": 2,
+              "quote": "为调阅登记存根，他支付一元查单费，账户由三元减为二元。存根的四日、五日两行，竟都写着唯一的箱号十七，落款也都是沈桐。\n\n他把两处签字放在同一屏里。“同一只箱子，我登了两次。”外联那行五日越看越扎眼，他开始怀疑是自己把日期誊错，才让同箱又登记一遍。\n\n“但还缺箱内原单，不能现在就认定。”他停在这一步，没有把怀疑说成结论，也没有向主管交代尚未核准的原因。"
+            }
+          }
+        ],
+        "findings": []
+      }
+    },
+    "3": {
+      "draft_hash": "db2ccdd1cd7448ac66670d52a7830713a7c3e02303ba4ff87aa3481f51f9086a",
+      "report": {
+        "request_ref": "b6aa1b2480906bb5200e0241a3c1675adb0be68f97dfc0bb97913bc0d697ffe2",
+        "reviewer": "example-independent-reader",
+        "verdict": "pass",
+        "read_complete": true,
+        "checks": [
+          {
+            "id": "outline",
+            "status": "pass",
+            "notes": "已逐段对照包内章纲：第三个次日到后院，付第三次查单费，明知登记不等于许可仍拆原封，看原单四日与外联五日对照，确认本人误抄导致重登；决定翌日自报两项责任，未提前处罚。"
+          },
+          {
+            "id": "continuity",
+            "status": "pass",
+            "notes": "第二章结束在值班室、二元、对误抄仅怀疑，原单未见；本章先步行到后院、时钟2到3，余额一元，首次拆封，箱与原单仍留后院，与前文和固定规则相合。"
+          },
+          {
+            "id": "assets",
+            "status": "pass",
+            "notes": "调阅箱内原单扣一元，二变一；登记查阅未被写成开箱许可。原单看后放回、箱子原地，不产生取得或转移；没有罚款、退款、工资等额外金额变化。"
+          },
+          {
+            "id": "knowledge",
+            "status": "pass",
+            "notes": "真实看见未替换的十七号箱原单四日，结合封条和本人誊写五日的外联，才使沈桐和读者从suspected升到confirmed。主管未在场，本章只决定次日向其说明，没有让主管提前知情。"
+          },
+          {
+            "id": "causality",
+            "status": "pass",
+            "notes": "原单提供第二章缺少的核实依据，先有越规查验再有确认；登记页先提醒许可边界，结尾把误抄与违规分别认下，决定自报是该选择及其责任的后果，不是空口转变。"
+          },
+          {
+            "id": "unplanned",
+            "status": "pass",
+            "notes": "完整双向核对七条申报与全文；拆封及违规责任已在章纲story_events、人物choice/cost和正文中明示，不是漏报的新变化。未见伤势、新资产、新人物、所有权或规则改写，处罚仍留第四章。"
+          }
+        ],
+        "event_checks": [
+          {
+            "id": "6ecf1119e6ab2127feb708577b6971f49c493c1e9e62153bb0ea833fcfd180d0",
+            "status": "pass",
+            "notes": "原单十七号四日与封条一致、本人外联却写五日，正文明确确认本人誊错而同箱重登，节点实际解决。",
+            "evidence": {
+              "chapter": 3,
+              "quote": "箱内原单写着十七号、四日，与封条查验页相合；外联仍是十七号、五日，誊写和签字都是他自己的。沈桐这才确认，自己把四日抄成五日，才使同一只箱子重复登记。"
+            }
+          },
+          {
+            "id": "6b8cf6a4ce4eddf10ac812e24db68945e4d03a2edf5a0bb244fda6585234b6e9",
+            "status": "pass",
+            "notes": "为登记查阅箱内原单再扣一元，二元只剩一元；并明确扣费不代表开箱获准。",
+            "evidence": {
+              "chapter": 3,
+              "quote": "他登记查阅箱内原单，查单费再扣一元，二元余额只剩一元。"
+            }
+          },
+          {
+            "id": "39c2515e782558e84d876abf6f836537ba14aae436b777a91808dc0e15fcf5ba",
+            "status": "pass",
+            "notes": "第三个清晨从值班室步行到仓库后院，后文箱和人物均未另行离开。",
+            "evidence": {
+              "chapter": 3,
+              "quote": "第三个清晨，已是次日，沈桐从值班室步行到仓库后院。"
+            }
+          },
+          {
+            "id": "2d9a71e9549f6a857f15ddb8e18cd4d5c5ecd98d85f1cba2560fb3896714a8f6",
+            "status": "pass",
+            "notes": "完整核对未替换原单、唯一箱号、封条与本人外联后才确认误抄，依据支持suspected到confirmed。",
+            "evidence": {
+              "chapter": 3,
+              "quote": "箱内原单写着十七号、四日，与封条查验页相合；外联仍是十七号、五日，誊写和签字都是他自己的。沈桐这才确认，自己把四日抄成五日，才使同一只箱子重复登记。"
+            }
+          },
+          {
+            "id": "11ae6e8ca1e97f6cf8ff8b6137f0185c28c5bb776ccec14c20c21fd3d459070c",
+            "status": "pass",
+            "notes": "登记页提醒后仍无许可拆封，造成须承担的违规责任；确认误抄后明言两项都是自己的并决定翌日自报，choice、cost和转向如实担责都有落点。",
+            "evidence": {
+              "chapter": 3,
+              "quote": "他登记查阅箱内原单，查单费再扣一元，二元余额只剩一元。登记页提醒：准许查单，不等于准许拆箱。主管还没有给开箱许可，他却没有等，拆开了原封。\n\n箱内原单写着十七号、四日，与封条查验页相合；外联仍是十七号、五日，誊写和签字都是他自己的。沈桐这才确认，自己把四日抄成五日，才使同一只箱子重复登记。\n\n“误抄是我的，没获准就拆箱也是我的。”他把原单放回箱里，箱子留在后院。真相查到了，开箱违规也已经发生。他决定次日把两件事一起向主管自报，不把自己的错误推给同事。"
+            }
+          },
+          {
+            "id": "1f8cfd24927b30aed0f8ba23e8b7e49e65265c7a7327118bc774693260fb2e98",
+            "status": "pass",
+            "notes": "次日明确推进一日，结尾打算次日自报只是未来意图，未额外推进主线时钟。",
+            "evidence": {
+              "chapter": 3,
+              "quote": "第三个清晨，已是次日，沈桐从值班室步行到仓库后院。"
+            }
+          },
+          {
+            "id": "2ae2c0a8e45572278f771dcb1ed6b093d0f81b53f65ec6c994378e900445919a",
+            "status": "pass",
+            "notes": "读者随原单对照实际获知本人误抄及重登因果，达到confirmed，未将主管未获告知的事实混同。",
+            "evidence": {
+              "chapter": 3,
+              "quote": "箱内原单写着十七号、四日，与封条查验页相合；外联仍是十七号、五日，誊写和签字都是他自己的。沈桐这才确认，自己把四日抄成五日，才使同一只箱子重复登记。"
+            }
+          }
+        ],
+        "findings": []
+      }
+    },
+    "4": {
+      "draft_hash": "3933717365fe6e8f77405fef600850e0cfbb2392e8efb59ec5de1791ff1f1f44",
+      "report": {
+        "request_ref": "81bd57cd51fb480bfae9d0408dd9e31d89fe646bb6dd42865f5c44dca741c164",
+        "reviewer": "example-independent-reader",
+        "verdict": "pass",
+        "read_complete": true,
+        "checks": [
+          {
+            "id": "outline",
+            "status": "pass",
+            "notes": "已通读实际包、第三章全文与本章完整稿：最后次日回值班室，扣最后一元，分别向主管说明误抄来源和未获许可开箱，主管核单后确认；公开更正重登，警告与暂停权限当场生效，责任节点、主线与承诺都实际收结。"
+          },
+          {
+            "id": "continuity",
+            "status": "pass",
+            "notes": "承接第三章沈桐在后院、已确认来源并决定自报、余额一元；本章时钟3到4，回值班室与原本在此的主管会合。箱与原单没有随身带来，核验用固定查验台按已冻结规则同步的影像，末章仍止于值班室。"
+          },
+          {
+            "id": "assets",
+            "status": "pass",
+            "notes": "唯一金额变化为调阅结案复核档扣最后一元，一归零；同步影像不另收费也非个人副本。更正登记不改箱单归属，处罚明确无罚款，在岗与查单资格保留，没有额外经济损益。"
+          },
+          {
+            "id": "knowledge",
+            "status": "pass",
+            "notes": "开场明言主管尚不知差错原因；沈桐先讲同箱原单四日/外联误抄五日，主管核影像签字才确认source；再自报昨日无许可开箱，主管核实未曾批准才确认opening。读者获知已公开担责和生效处理，未声称其他未出场人员已读更正栏。"
+          },
+          {
+            "id": "causality",
+            "status": "pass",
+            "notes": "调阅复核档提供核验载体，自报两项事实后才登记警告与暂停权限；从本人误抄到撤销重登、从无许可拆箱到实际处理，两条因果分开成立。结尾接受并继续按更正记录工作，后果不是未来口号。"
+          },
+          {
+            "id": "unplanned",
+            "status": "pass",
+            "notes": "完整双向审读十条申报与全章：更正登记在章纲story_events明列，处罚和资格边界在人物choice/cost及冻结规则中明列；未见新人物、伤势、额外收支、资产转移、越界规则或未申报的第三方知情。"
+          }
+        ],
+        "event_checks": [
+          {
+            "id": "38f6ebaeac68e0f53435da7253f46372e208068029199ec184e0da9b423ee184",
+            "status": "pass",
+            "notes": "说明并核实两项责任、公开更正、终端处理生效及本人接受均实际写出，accepted-responsibility达成。",
+            "evidence": {
+              "chapter": 4,
+              "quote": "他调阅结案复核档，支付最后一元查单费，一元余额归零。值班主管还不知道差错的原因，沈桐请他看终端：“十七号箱原单是四日，我把外联誊成五日，同一箱因此登记两遍。”\n\n主管听完，把查验台同步的原单影像与外联对照，核过两处签字，才确认误抄造成了重登。沈桐又说：“原单是我昨日没获许可就拆箱查的。”主管核实自己未曾批准开箱，也确认了这项违规。\n\n沈桐在公开更正栏填明原单四日、本人误抄五日和重复登记的原因，撤销了多出的一笔。主管随即在处理栏登记书面警告、暂停沈桐开箱权限；终端显示处理已生效，在岗与查单资格保留，没有罚款。\n\n“我接受，查单不能当开箱许可。”沈桐在值班室看完更正与处理结果，接着按改正后的记录工作。"
+            }
+          },
+          {
+            "id": "a69cdbeeff7932d8d4c79966d7d040acfd40d8749d61f743dc28727a354313ce",
+            "status": "pass",
+            "notes": "误抄导致重登已更正，违规处理实际生效，来源与本人责任均结清，main可以resolved。",
+            "evidence": {
+              "chapter": 4,
+              "quote": "他调阅结案复核档，支付最后一元查单费，一元余额归零。值班主管还不知道差错的原因，沈桐请他看终端：“十七号箱原单是四日，我把外联誊成五日，同一箱因此登记两遍。”\n\n主管听完，把查验台同步的原单影像与外联对照，核过两处签字，才确认误抄造成了重登。沈桐又说：“原单是我昨日没获许可就拆箱查的。”主管核实自己未曾批准开箱，也确认了这项违规。\n\n沈桐在公开更正栏填明原单四日、本人误抄五日和重复登记的原因，撤销了多出的一笔。主管随即在处理栏登记书面警告、暂停沈桐开箱权限；终端显示处理已生效，在岗与查单资格保留，没有罚款。\n\n“我接受，查单不能当开箱许可。”沈桐在值班室看完更正与处理结果，接着按改正后的记录工作。"
+            }
+          },
+          {
+            "id": "3aab947442662821c73bf3942da8bf72859f172912de09eb9c810745671db0d9",
+            "status": "pass",
+            "notes": "第一章两个日期与经手责任的问题得到具体答案：本人誊错造成重登，本人自报拆箱违规并接受明确处理，承诺实兑。",
+            "evidence": {
+              "chapter": 4,
+              "quote": "他调阅结案复核档，支付最后一元查单费，一元余额归零。值班主管还不知道差错的原因，沈桐请他看终端：“十七号箱原单是四日，我把外联誊成五日，同一箱因此登记两遍。”\n\n主管听完，把查验台同步的原单影像与外联对照，核过两处签字，才确认误抄造成了重登。沈桐又说：“原单是我昨日没获许可就拆箱查的。”主管核实自己未曾批准开箱，也确认了这项违规。\n\n沈桐在公开更正栏填明原单四日、本人误抄五日和重复登记的原因，撤销了多出的一笔。主管随即在处理栏登记书面警告、暂停沈桐开箱权限；终端显示处理已生效，在岗与查单资格保留，没有罚款。\n\n“我接受，查单不能当开箱许可。”沈桐在值班室看完更正与处理结果，接着按改正后的记录工作。"
+            }
+          },
+          {
+            "id": "10c5d612e6804eeef2a8ed6914e1e4b425a1c1c94fdb68bfb700f40825bf7a5a",
+            "status": "pass",
+            "notes": "调阅结案复核档是最后一元扣费原因，一元余额归零；没有另扣罚款。",
+            "evidence": {
+              "chapter": 4,
+              "quote": "他调阅结案复核档，支付最后一元查单费，一元余额归零。"
+            }
+          },
+          {
+            "id": "8fa62bf3cf0b727bb9c7a7f9623fd64695c8f501d64478e90786d118c1fa7bf0",
+            "status": "pass",
+            "notes": "开头从仓库后院走回值班室，结尾仍在值班室继续工作，承接前态无额外移动。",
+            "evidence": {
+              "chapter": 4,
+              "quote": "最后一个次日，沈桐从仓库后院走回值班室。"
+            }
+          },
+          {
+            "id": "c31b804974fce6ddfe0e939d27b9a523e090d29276ef9a01b0907416659ffb51",
+            "status": "pass",
+            "notes": "先听本人说明，再把原单影像与外联和签字核对后才确认误抄造成重登，前态未获知与本章确认一致。",
+            "evidence": {
+              "chapter": 4,
+              "quote": "他调阅结案复核档，支付最后一元查单费，一元余额归零。值班主管还不知道差错的原因，沈桐请他看终端：“十七号箱原单是四日，我把外联誊成五日，同一箱因此登记两遍。”\n\n主管听完，把查验台同步的原单影像与外联对照，核过两处签字，才确认误抄造成了重登。沈桐又说：“原单是我昨日没获许可就拆箱查的。”主管核实自己未曾批准开箱，也确认了这项违规。"
+            }
+          },
+          {
+            "id": "723e4991f2f314b0cc155dee8681353a0e396d3b39a996387e048e889fbeae0b",
+            "status": "pass",
+            "notes": "沈桐明确自报昨日未获许可就拆箱，主管核实自己未批准后确认违规，不靠旁观作者真相。",
+            "evidence": {
+              "chapter": 4,
+              "quote": "他调阅结案复核档，支付最后一元查单费，一元余额归零。值班主管还不知道差错的原因，沈桐请他看终端：“十七号箱原单是四日，我把外联誊成五日，同一箱因此登记两遍。”\n\n主管听完，把查验台同步的原单影像与外联对照，核过两处签字，才确认误抄造成了重登。沈桐又说：“原单是我昨日没获许可就拆箱查的。”主管核实自己未曾批准开箱，也确认了这项违规。"
+            }
+          },
+          {
+            "id": "7f8f69b63c22b8cb91de3742b08f68e0000f95c5b2fc251cf8cccc58063a5f65",
+            "status": "pass",
+            "notes": "他同时自报误抄和开箱，不只挑有利事项；书面警告、暂停开箱权限已生效，明确接受且继续按更正记录工作，choice/cost和终态完整。",
+            "evidence": {
+              "chapter": 4,
+              "quote": "沈桐在公开更正栏填明原单四日、本人误抄五日和重复登记的原因，撤销了多出的一笔。主管随即在处理栏登记书面警告、暂停沈桐开箱权限；终端显示处理已生效，在岗与查单资格保留，没有罚款。\n\n“我接受，查单不能当开箱许可。”沈桐在值班室看完更正与处理结果，接着按改正后的记录工作。"
+            }
+          },
+          {
+            "id": "1f8cfd24927b30aed0f8ba23e8b7e49e65265c7a7327118bc774693260fb2e98",
+            "status": "pass",
+            "notes": "最后一个次日从第三章推进一日到主线第4日，昨日拆箱是回指，不再增减时间。",
+            "evidence": {
+              "chapter": 4,
+              "quote": "最后一个次日，沈桐从仓库后院走回值班室。"
+            }
+          },
+          {
+            "id": "37000ae2983910a23d55425f4d6884c24b282df171b26fd5a883335610ebcaa6",
+            "status": "pass",
+            "notes": "叙述完整展示两项事实核实、更正及当场生效处理，读者可确认责任落实；不把公开可查等同于未出场人员已知。",
+            "evidence": {
+              "chapter": 4,
+              "quote": "他调阅结案复核档，支付最后一元查单费，一元余额归零。值班主管还不知道差错的原因，沈桐请他看终端：“十七号箱原单是四日，我把外联誊成五日，同一箱因此登记两遍。”\n\n主管听完，把查验台同步的原单影像与外联对照，核过两处签字，才确认误抄造成了重登。沈桐又说：“原单是我昨日没获许可就拆箱查的。”主管核实自己未曾批准开箱，也确认了这项违规。\n\n沈桐在公开更正栏填明原单四日、本人误抄五日和重复登记的原因，撤销了多出的一笔。主管随即在处理栏登记书面警告、暂停沈桐开箱权限；终端显示处理已生效，在岗与查单资格保留，没有罚款。\n\n“我接受，查单不能当开箱许可。”沈桐在值班室看完更正与处理结果，接着按改正后的记录工作。"
+            }
+          }
+        ],
+        "findings": []
+      }
+    }
+  },
+  "review_design_hash": "cc8e6564590dc14395c03ee2c47d9f50441f203b03cd39849a872c05eef511e5",
+  "review_style_hash": "82375ffb12b7d4cd61a5fd349245a3ac5764f9593946259cf7bbb876e5547f68"
 }

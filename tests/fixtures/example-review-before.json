@@ -1,0 +1,1441 @@
+{
+  "source": "references/example_project.json before release repairs",
+  "review_reports": {
+    "1": {
+      "draft_hash": "fe4746f4a29eec7c768d9c64ac3eddc59a994769da4026ade9f124cfb80b6993",
+      "report": {
+        "reviewer": "example-independent-reader",
+        "verdict": "needs_material",
+        "read_complete": true,
+        "checks": [
+          {
+            "id": "outline",
+            "status": "fail",
+            "notes": "正文只说核对第一批封条，没有实际写出签字对照、签字制度形成的阻碍或凭据矛盾。"
+          },
+          {
+            "id": "continuity",
+            "status": "pass",
+            "notes": "从初始值班室走到后院，次日推进一天，终点与本章exit一致；没有先到后院又回值班室的矛盾。"
+          },
+          {
+            "id": "assets",
+            "status": "pass",
+            "notes": "正文只花一元车费，按初始四元应余三元；未出现额外获得、借用或转移资产。"
+          },
+          {
+            "id": "knowledge",
+            "status": "uncertain",
+            "notes": "“第一层判断落定”没有说明线索内容，不能确认实际只到hinted，也无法核验人物为何获得这一线索。"
+          },
+          {
+            "id": "causality",
+            "status": "uncertain",
+            "notes": "材料没有给封条与签字的具体矛盾，正文也没有支持来源判断的观察与推理链；不能替作者补造事实。"
+          },
+          {
+            "id": "unplanned",
+            "status": "pass",
+            "notes": "通读没有发现正文新增资产、伤势、关系或新人物；责任交代被表述为未来承诺，没有提前兑现。"
+          }
+        ],
+        "event_checks": [
+          {
+            "id": "2bbe738f6c8dfdc7e0dd324de194faf88ed72c56c93859a94c186d9467c64b2b",
+            "status": "pass",
+            "notes": "提出凭据来历及经手人最终应交代的未解责任，形成未来承诺；没有提前宣称真相或责任已兑现。",
+            "evidence": {
+              "chapter": 1,
+              "quote": "第一批退件凭据的来历，最终要由经手人负责交代。"
+            }
+          },
+          {
+            "id": "0e5addf70cd34feb6a702628818a621ac77d6e5796e7d015cc25760435ffe7fa",
+            "status": "pass",
+            "notes": "本句明确沈桐支出一元车费，结合已给前态4元得到3元；全文没有其他资产变化。",
+            "evidence": {
+              "chapter": 1,
+              "quote": "他花掉一元车费，登记第一批核对记录。"
+            }
+          },
+          {
+            "id": "a6ad63faebdae03e7c7861f443d9d8a229a75cb61b407e50f820f434aa56d58f",
+            "status": "pass",
+            "notes": "本句明确从值班室到仓库后院，完整正文没有额外地点移动，与计划方向及最终位置一致。",
+            "evidence": {
+              "chapter": 1,
+              "quote": "他从值班室走到仓库后院，核对第一批封条。"
+            }
+          },
+          {
+            "id": "7de7517f65258fabad2fb08979b1461f035aadf11ad032649c2b8f526f3617f4",
+            "status": "uncertain",
+            "notes": "“第一层判断落定”没有说明线索内容，不能确认实际只到hinted，也无法核验人物为何获得这一线索。",
+            "evidence": {
+              "chapter": 1,
+              "quote": "凭据来历的第一层判断落定。"
+            }
+          },
+          {
+            "id": "1f8cfd24927b30aed0f8ba23e8b7e49e65265c7a7327118bc774693260fb2e98",
+            "status": "pass",
+            "notes": "“次日清晨”在本章开端明确推进一天，没有第二次跨日描述，与章纲一日推进一致。",
+            "evidence": {
+              "chapter": 1,
+              "quote": "次日清晨，沈桐开始第一批退件的核对。"
+            }
+          }
+        ],
+        "findings": [
+          {
+            "kind": "missing_material",
+            "detail": "需补齐本章封条/签字的具体差异，以及沈桐可看到的线索内容和hinted知情上限。"
+          },
+          {
+            "kind": "outline_execution",
+            "detail": "正文缺签字核对、制度阻碍和具体矛盾，不能以“判断落定”代替事件。"
+          }
+        ]
+      }
+    },
+    "2": {
+      "draft_hash": "42c254de043d1559ad3c0a2a0fb6481bc7bc68735a786750c22649be67c7509f",
+      "report": {
+        "reviewer": "example-independent-reader",
+        "verdict": "needs_material",
+        "read_complete": true,
+        "checks": [
+          {
+            "id": "outline",
+            "status": "fail",
+            "notes": "正文没有展开第二批签字核验、旧凭据对照或场景中声明的制度阻力，只有结果性概述。"
+          },
+          {
+            "id": "continuity",
+            "status": "pass",
+            "notes": "前章停在后院，本章从后院到值班室；次日一日推进和三元减一元均承接前章。"
+          },
+          {
+            "id": "assets",
+            "status": "pass",
+            "notes": "本章只有一元车费支出，前章三元减至二元；无计划外获取、归属转移或消费。"
+          },
+          {
+            "id": "knowledge",
+            "status": "uncertain",
+            "notes": "“第二层判断落定”没有给出怀疑的具体对象或命题，无法确认它与第一章线索的承接及suspected上限。"
+          },
+          {
+            "id": "causality",
+            "status": "uncertain",
+            "notes": "没有旧凭据上可核对的具体信息，也没有本章新增观察；从hinted到suspected缺可审读的理由。"
+          },
+          {
+            "id": "unplanned",
+            "status": "pass",
+            "notes": "全文仅核对、支出、移动及抽象判断，没有另写资产、伤势、人物关系或承诺兑现。"
+          }
+        ],
+        "event_checks": [
+          {
+            "id": "407b81ccf5bbcd7324ab91ce19fc20e06be4d0d81a0466502a47fbcd6d291e41",
+            "status": "pass",
+            "notes": "本句明确沈桐支出一元车费，结合已给前态3元得到2元；全文没有其他资产变化。",
+            "evidence": {
+              "chapter": 2,
+              "quote": "他花掉一元车费，登记第二批核对记录。"
+            }
+          },
+          {
+            "id": "37c73f979fa48cb124e23565f19065c55f26d426f6caf51a0416753d198ebddc",
+            "status": "pass",
+            "notes": "本句明确从仓库后院到值班室，完整正文没有额外地点移动，与计划方向及最终位置一致。",
+            "evidence": {
+              "chapter": 2,
+              "quote": "他从仓库后院走到值班室，核对第二批封条。"
+            }
+          },
+          {
+            "id": "56cc5d009f66f1847441a87fd1bfc7fbc3519db37d048ffccb0872f45f926a27",
+            "status": "uncertain",
+            "notes": "“第二层判断落定”没有给出怀疑的具体对象或命题，无法确认它与第一章线索的承接及suspected上限。",
+            "evidence": {
+              "chapter": 2,
+              "quote": "凭据来历的第二层判断落定。"
+            }
+          },
+          {
+            "id": "1f8cfd24927b30aed0f8ba23e8b7e49e65265c7a7327118bc774693260fb2e98",
+            "status": "pass",
+            "notes": "“次日清晨”在本章开端明确推进一天，没有第二次跨日描述，与章纲一日推进一致。",
+            "evidence": {
+              "chapter": 2,
+              "quote": "次日清晨，沈桐开始第二批退件的核对。"
+            }
+          }
+        ],
+        "findings": [
+          {
+            "kind": "missing_material",
+            "detail": "需补齐第二批旧凭据提供的新增信息、怀疑命题及仍不能确认的部分。"
+          },
+          {
+            "kind": "outline_execution",
+            "detail": "正文未表现旧凭据比较与场景冲突，无法支撑怀疑升级。"
+          }
+        ]
+      }
+    },
+    "3": {
+      "draft_hash": "f4696f3269238ef97c6a0fa1aa4c700aaec69c2ecfdf9d631bcffe143359f659",
+      "report": {
+        "reviewer": "example-independent-reader",
+        "verdict": "needs_material",
+        "read_complete": true,
+        "checks": [
+          {
+            "id": "outline",
+            "status": "fail",
+            "notes": "第三批正文未展示封条与签字如何对上或矛盾如何浮出，未落实已确认场景的冲突与转折。"
+          },
+          {
+            "id": "continuity",
+            "status": "pass",
+            "notes": "由上一章值班室到本章后院，一天推进及二元减至一元均承接既定状态。"
+          },
+          {
+            "id": "assets",
+            "status": "pass",
+            "notes": "正文明确花一元，剩余一元可由前态二元推出；没有另加收支、资产或持有人。"
+          },
+          {
+            "id": "knowledge",
+            "status": "uncertain",
+            "notes": "“第三层判断落定”未明确确认的来源事实；材料也没有定义最终来源，不能把序数视为confirmed的证明。"
+          },
+          {
+            "id": "causality",
+            "status": "uncertain",
+            "notes": "缺少把怀疑排除为确认所需的证据及排除其他可能的原因，不能可靠认定本章已达到confirmed。"
+          },
+          {
+            "id": "unplanned",
+            "status": "pass",
+            "notes": "没有明确新增计划外资产、消费、伤势、关系或读者披露；但来源判断本身仍因缺材料无法通过。"
+          }
+        ],
+        "event_checks": [
+          {
+            "id": "a9644452ba8b4bbcd40fd089c54f5b29f417f26bdd5cd2c5173e645713b8f1d7",
+            "status": "pass",
+            "notes": "本句明确沈桐支出一元车费，结合已给前态2元得到1元；全文没有其他资产变化。",
+            "evidence": {
+              "chapter": 3,
+              "quote": "他花掉一元车费，登记第三批核对记录。"
+            }
+          },
+          {
+            "id": "a6ad63faebdae03e7c7861f443d9d8a229a75cb61b407e50f820f434aa56d58f",
+            "status": "pass",
+            "notes": "本句明确从值班室到仓库后院，完整正文没有额外地点移动，与计划方向及最终位置一致。",
+            "evidence": {
+              "chapter": 3,
+              "quote": "他从值班室走到仓库后院，核对第三批封条。"
+            }
+          },
+          {
+            "id": "5fb07a9c3e2d38be2fbbff9598b5a36695f2122c714026ba6a36f16c2bb66463",
+            "status": "uncertain",
+            "notes": "“第三层判断落定”未明确确认的来源事实；材料也没有定义最终来源，不能把序数视为confirmed的证明。",
+            "evidence": {
+              "chapter": 3,
+              "quote": "凭据来历的第三层判断落定。"
+            }
+          },
+          {
+            "id": "1f8cfd24927b30aed0f8ba23e8b7e49e65265c7a7327118bc774693260fb2e98",
+            "status": "pass",
+            "notes": "“次日清晨”在本章开端明确推进一天，没有第二次跨日描述，与章纲一日推进一致。",
+            "evidence": {
+              "chapter": 3,
+              "quote": "次日清晨，沈桐开始第三批退件的核对。"
+            }
+          }
+        ],
+        "findings": [
+          {
+            "kind": "missing_material",
+            "detail": "需作者明确来源真相与本章可核验的决定性证据，才能区分suspected和confirmed。"
+          },
+          {
+            "kind": "outline_execution",
+            "detail": "“第三层判断落定”既不列结果内容，也不列确认依据。"
+          }
+        ]
+      }
+    },
+    "4": {
+      "draft_hash": "64833685a607b777f8fcbbdcf794bff31725f4f37506566a7542b27e6d0d34d6",
+      "report": {
+        "reviewer": "example-independent-reader",
+        "verdict": "needs_material",
+        "read_complete": true,
+        "checks": [
+          {
+            "id": "outline",
+            "status": "fail",
+            "notes": "末段只宣称来源已交代、责任落实，未说明来源是什么、谁负责或沈桐承担了何种违规开箱后果，未兑现卷高潮与契约结局。"
+          },
+          {
+            "id": "continuity",
+            "status": "uncertain",
+            "notes": "章纲exit要求值班室，正文也止于值班室；卷纲exit_state却写后院，冻结材料自身冲突，不能自行选择改写。"
+          },
+          {
+            "id": "assets",
+            "status": "pass",
+            "notes": "末章明确花最后一元，前态一元归零；未写新增收入、借款或资产归属变化。"
+          },
+          {
+            "id": "knowledge",
+            "status": "uncertain",
+            "notes": "本章无知识增量，正文却又说“第四层判断落定”，无法判断是重述已confirmed事实还是额外认知推进。"
+          },
+          {
+            "id": "causality",
+            "status": "uncertain",
+            "notes": "未提供可公开的来源真相与责任依据，也未交代何种处理构成违规开箱代价；不能编造这些关键事实来补稿。"
+          },
+          {
+            "id": "unplanned",
+            "status": "uncertain",
+            "notes": "“第四层判断”可能形成未申报的知情变化；“当众”没有明确交代听者和披露边界，材料未列可核验的公开对象。"
+          }
+        ],
+        "event_checks": [
+          {
+            "id": "9fb98143db782d36bef3be1c5a651f10cf783d7352d822fbd119165b03093dc2",
+            "status": "fail",
+            "notes": "只宣称当众交代、责任落实，没有提供来源内容或责任结论；读者无法实际得到被承诺的答案。",
+            "evidence": {
+              "chapter": 4,
+              "quote": "第四批退件凭据的来历由沈桐当众交代，责任就此落实。"
+            }
+          },
+          {
+            "id": "cc13fed951ddf01d488da65a93daa91ae168e65483ea3e7afaf62a86247ebf6b",
+            "status": "pass",
+            "notes": "本句明确沈桐支出一元车费，结合已给前态1元得到0元；全文没有其他资产变化。",
+            "evidence": {
+              "chapter": 4,
+              "quote": "他花掉一元车费，登记第四批核对记录。"
+            }
+          },
+          {
+            "id": "37c73f979fa48cb124e23565f19065c55f26d426f6caf51a0416753d198ebddc",
+            "status": "pass",
+            "notes": "本句明确从仓库后院到值班室，完整正文没有额外地点移动，与计划方向及最终位置一致。",
+            "evidence": {
+              "chapter": 4,
+              "quote": "他从仓库后院走到值班室，核对第四批封条。"
+            }
+          },
+          {
+            "id": "1f8cfd24927b30aed0f8ba23e8b7e49e65265c7a7327118bc774693260fb2e98",
+            "status": "pass",
+            "notes": "“次日清晨”在本章开端明确推进一天，没有第二次跨日描述，与章纲一日推进一致。",
+            "evidence": {
+              "chapter": 4,
+              "quote": "次日清晨，沈桐开始第四批退件的核对。"
+            }
+          }
+        ],
+        "findings": [
+          {
+            "kind": "missing_material",
+            "detail": "需明确公开的来源、责任归属和沈桐承担的具体后果；当前材料只给抽象结果。"
+          },
+          {
+            "kind": "contradictory_material",
+            "detail": "卷纲exit_state为后院；末章exit与正文终点为值班室。需先统一冻结材料。"
+          },
+          {
+            "kind": "unfulfilled_promise",
+            "detail": "没有向读者实际交代凭据来历和责任，仅以“责任就此落实”宣布兑现，不能判定payoff。"
+          },
+          {
+            "kind": "uncertain_unplanned",
+            "detail": "无知识增量的末章仍声称第四层判断，可能超出申报。"
+          }
+        ]
+      }
+    }
+  },
+  "project": {
+    "contract": {
+      "title": "夜班退件（独立示例）",
+      "genre": "都市生活",
+      "reader_promise": "一个夜班工人查清退件来源并承担自己的选择。",
+      "ending": "退件来源公开，工人承担违规开箱的后果。",
+      "world_premise": "一座仓库的夜班退件纠纷。",
+      "story_engine": "核对退件来源，追查签字责任。",
+      "opposition": "主管担心调查影响考核。",
+      "voice": "以动作、物件、对白和后果呈现夜班人情。",
+      "style_traits": [
+        "少重复解释。",
+        "因果承接完整。"
+      ],
+      "protagonist_setup": {
+        "id": "shen",
+        "name": "沈桐",
+        "identity": "夜班工人",
+        "desire": "查清责任。",
+        "limit": "不牵连无关同事。"
+      },
+      "world_rules": [
+        "夜班退件必须登记负责人。"
+      ],
+      "narrative_tracking": false,
+      "editorial_features": false,
+      "style_profile": "市井修仙",
+      "chapter_min": 30,
+      "chapter_max": 200,
+      "chapter_aim": 60,
+      "volume_outline": {
+        "scope": "rolling",
+        "words": 2500,
+        "tolerance": 500
+      },
+      "chapter_outline": {
+        "scope": "volume",
+        "words": 60,
+        "tolerance": 30
+      },
+      "volumes": [
+        {
+          "id": "v1",
+          "purpose": "查明来源并面对后果。",
+          "end": 4
+        }
+      ],
+      "entities": [
+        {
+          "id": "shen",
+          "name": "沈桐",
+          "kind": "person"
+        }
+      ],
+      "initial_resources": [
+        {
+          "holder": "shen",
+          "asset": "车费",
+          "unit": "元",
+          "quantity": "4"
+        }
+      ],
+      "places": [
+        {
+          "id": "office",
+          "name": "值班室"
+        },
+        {
+          "id": "yard",
+          "name": "仓库后院"
+        }
+      ],
+      "placements": {
+        "shen": "office"
+      }
+    },
+    "world": {
+      "premise": "一座仓库的夜班退件纠纷。",
+      "geography": [
+        {
+          "id": "office",
+          "name": "值班室",
+          "environment": "夜间照明的作业区。",
+          "resources": "退回的货物与登记册。",
+          "access": "夜班人员可进。",
+          "story_pressure": "退件必须有人签字。",
+          "links": []
+        },
+        {
+          "id": "yard",
+          "name": "仓库后院",
+          "environment": "夜间照明的作业区。",
+          "resources": "退回的货物与登记册。",
+          "access": "夜班人员可进。",
+          "story_pressure": "退件必须有人签字。",
+          "links": []
+        }
+      ],
+      "history": [],
+      "rules": [
+        {
+          "id": "r1",
+          "principle": "夜班退件必须登记负责人。",
+          "scope": "本仓库的夜班退件处理。",
+          "limits": "只约束已登记的退件。",
+          "consequences": "违反者承担登记责任。",
+          "links": []
+        }
+      ],
+      "factions": [],
+      "society": [],
+      "everyday": [],
+      "economy": [
+        {
+          "id": "asset-1",
+          "resource": "车费",
+          "production": "按班次发放。",
+          "distribution": "由主管登记后发放。",
+          "scarcity": "不足时需要自付。",
+          "conflict": "谁承担这笔支出。",
+          "links": []
+        }
+      ],
+      "characters": [
+        {
+          "id": "shen",
+          "name": "沈桐",
+          "role": "夜班工人",
+          "desire": "查清责任。",
+          "limit": "不牵连无关同事。",
+          "knowledge_boundary": "只知自己经手的货物。",
+          "links": [
+            "rules:r1"
+          ]
+        }
+      ],
+      "mysteries": [],
+      "mechanisms": [],
+      "powers": [],
+      "cosmology": []
+    },
+    "volumes": [
+      {
+        "id": "v1",
+        "outline": {
+          "id": "v1",
+          "purpose": "把退件来源从个人纠纷推到制度责任。",
+          "stage": "",
+          "arc": "本卷从一次退回的箱子写起，沈桐先被制度挡在门外，随后用旧凭据撬开缺口，卷末由他公开来源并承担违规的代价。",
+          "turns": [
+            {
+              "at": "卷中",
+              "turn": "旧凭据暴露出签字矛盾。"
+            },
+            {
+              "at": "卷尾",
+              "turn": "沈桐公开来源并接受处理。"
+            }
+          ],
+          "climax": "公开来源与签字矛盾，沈桐承担违规开箱的后果。",
+          "nodes": [],
+          "threads": [],
+          "resources": [],
+          "places": [],
+          "knowledge": [],
+          "characters": [],
+          "clock": {
+            "advance_days": 4,
+            "to": 4
+          },
+          "exit_state": "卷末：车费结余；沈桐在后院；对来源已确认；承诺已兑现。",
+          "style": {
+            "trend": "以短句、动作与凭据核对推进，卷末用较长段落交代责任后果。"
+          },
+          "hooks": [
+            {
+              "id": "hook-v1-required",
+              "text": "读者看到退回凭据的来历，并要知道它最终由谁负责。",
+              "plant": [
+                1,
+                1
+              ],
+              "payoff": [
+                4,
+                4
+              ],
+              "required": true,
+              "continues": false
+            }
+          ]
+        },
+        "chapter_outline": {
+          "volume": "v1",
+          "chapters": [
+            {
+              "chapter": 1,
+              "synopsis": "沈桐核对第一批退件的封条与签字，花掉车费并移动核对位置，对凭据来历形成新的判断。",
+              "plot": {
+                "beat": "沈桐核对封条与签字，逼出下一处矛盾。",
+                "nodes": [],
+                "threads": []
+              },
+              "resources": [
+                {
+                  "key": "[\"shen\",\"车费\",\"元\"]",
+                  "from": "4",
+                  "to": "3",
+                  "reason": "核对退件时花掉一趟车费。"
+                }
+              ],
+              "places": [
+                {
+                  "entity": "shen",
+                  "from": "office",
+                  "to": "yard",
+                  "route": "从值班室走到仓库后院。",
+                  "reason": "换到另一处核对退件。"
+                }
+              ],
+              "knowledge": [
+                {
+                  "who": "shen",
+                  "topic": "source",
+                  "from": null,
+                  "to": "hinted",
+                  "reason": "本章核对让沈桐对来源多了一层判断。"
+                }
+              ],
+              "characters": [],
+              "relations": [],
+              "clock": {
+                "advance_days": 1
+              },
+              "enter": [
+                {
+                  "kind": "clock",
+                  "key": "main",
+                  "expected": 0
+                },
+                {
+                  "kind": "resources",
+                  "key": "[\"shen\",\"车费\",\"元\"]",
+                  "expected": "4"
+                },
+                {
+                  "kind": "places",
+                  "key": "shen",
+                  "expected": "office"
+                },
+                {
+                  "kind": "knowledge",
+                  "key": "shen:source",
+                  "expected": null
+                }
+              ],
+              "exit": [
+                {
+                  "kind": "clock",
+                  "key": "main",
+                  "expected": 1
+                },
+                {
+                  "kind": "resources",
+                  "key": "[\"shen\",\"车费\",\"元\"]",
+                  "expected": "3"
+                },
+                {
+                  "kind": "places",
+                  "key": "shen",
+                  "expected": "yard"
+                },
+                {
+                  "kind": "knowledge",
+                  "key": "shen:source",
+                  "expected": "hinted"
+                }
+              ],
+              "disclosures": [],
+              "world_refs": [
+                "rules:r1",
+                "geography:office",
+                "characters:shen"
+              ],
+              "new_entities": [],
+              "hook_refs": [],
+              "hooks": [
+                {
+                  "hook": "hook-v1-required",
+                  "action": "plant",
+                  "note": "本卷开篇埋下对读者的具体承诺。"
+                }
+              ],
+              "reader_refs": [],
+              "history_refs": [],
+              "scenes": [
+                {
+                  "label": "核对现场",
+                  "intent": "核对第一批退件。",
+                  "conflict": "签字制度挡着开箱。",
+                  "turn": "凭据矛盾浮出。",
+                  "present": [
+                    "shen"
+                  ],
+                  "speakers": [
+                    "shen"
+                  ],
+                  "dialogue_intents": [
+                    {
+                      "entity": "shen",
+                      "seeks": "查清来历。",
+                      "withholds": "不提违规开箱。",
+                      "pressure": "登记制度压着。",
+                      "tactic": "拿旧凭据对照。",
+                      "knowledge_topics": [
+                        "source"
+                      ]
+                    }
+                  ],
+                  "reads": [
+                    {
+                      "kind": "knowledge",
+                      "key": "shen:source"
+                    },
+                    {
+                      "kind": "clock",
+                      "key": "main"
+                    }
+                  ],
+                  "depends_on": []
+                }
+              ],
+              "pacing": {},
+              "style": {
+                "pov": "第三人称限知",
+                "rhythm": "短句交代动作，核对结果后用完整句说明后果。"
+              },
+              "dependency_coverage": "complete"
+            },
+            {
+              "chapter": 2,
+              "synopsis": "沈桐核对第二批退件的封条与签字，花掉车费并移动核对位置，对凭据来历形成新的判断。",
+              "plot": {
+                "beat": "沈桐核对封条与签字，逼出下一处矛盾。",
+                "nodes": [],
+                "threads": []
+              },
+              "resources": [
+                {
+                  "key": "[\"shen\",\"车费\",\"元\"]",
+                  "from": "3",
+                  "to": "2",
+                  "reason": "核对退件时花掉一趟车费。"
+                }
+              ],
+              "places": [
+                {
+                  "entity": "shen",
+                  "from": "yard",
+                  "to": "office",
+                  "route": "从仓库后院走到值班室。",
+                  "reason": "换到另一处核对退件。"
+                }
+              ],
+              "knowledge": [
+                {
+                  "who": "shen",
+                  "topic": "source",
+                  "from": "hinted",
+                  "to": "suspected",
+                  "reason": "本章核对让沈桐对来源多了一层判断。"
+                }
+              ],
+              "characters": [],
+              "relations": [],
+              "clock": {
+                "advance_days": 1
+              },
+              "enter": [
+                {
+                  "kind": "clock",
+                  "key": "main",
+                  "expected": 1
+                },
+                {
+                  "kind": "resources",
+                  "key": "[\"shen\",\"车费\",\"元\"]",
+                  "expected": "3"
+                },
+                {
+                  "kind": "places",
+                  "key": "shen",
+                  "expected": "yard"
+                },
+                {
+                  "kind": "knowledge",
+                  "key": "shen:source",
+                  "expected": "hinted"
+                }
+              ],
+              "exit": [
+                {
+                  "kind": "clock",
+                  "key": "main",
+                  "expected": 2
+                },
+                {
+                  "kind": "resources",
+                  "key": "[\"shen\",\"车费\",\"元\"]",
+                  "expected": "2"
+                },
+                {
+                  "kind": "places",
+                  "key": "shen",
+                  "expected": "office"
+                },
+                {
+                  "kind": "knowledge",
+                  "key": "shen:source",
+                  "expected": "suspected"
+                }
+              ],
+              "disclosures": [],
+              "world_refs": [
+                "rules:r1",
+                "geography:office",
+                "characters:shen"
+              ],
+              "new_entities": [],
+              "hook_refs": [
+                "hook-v1-required"
+              ],
+              "hooks": [],
+              "reader_refs": [],
+              "history_refs": [],
+              "scenes": [
+                {
+                  "label": "核对现场",
+                  "intent": "核对第二批退件。",
+                  "conflict": "签字制度挡着开箱。",
+                  "turn": "凭据矛盾浮出。",
+                  "present": [
+                    "shen"
+                  ],
+                  "speakers": [
+                    "shen"
+                  ],
+                  "dialogue_intents": [
+                    {
+                      "entity": "shen",
+                      "seeks": "查清来历。",
+                      "withholds": "不提违规开箱。",
+                      "pressure": "登记制度压着。",
+                      "tactic": "拿旧凭据对照。",
+                      "knowledge_topics": [
+                        "source"
+                      ]
+                    }
+                  ],
+                  "reads": [
+                    {
+                      "kind": "knowledge",
+                      "key": "shen:source"
+                    },
+                    {
+                      "kind": "clock",
+                      "key": "main"
+                    }
+                  ],
+                  "depends_on": []
+                }
+              ],
+              "pacing": {},
+              "style": {
+                "pov": "第三人称限知",
+                "rhythm": "短句交代动作，核对结果后用完整句说明后果。"
+              },
+              "dependency_coverage": "complete"
+            },
+            {
+              "chapter": 3,
+              "synopsis": "沈桐核对第三批退件的封条与签字，花掉车费并移动核对位置，对凭据来历形成新的判断。",
+              "plot": {
+                "beat": "沈桐核对封条与签字，逼出下一处矛盾。",
+                "nodes": [],
+                "threads": []
+              },
+              "resources": [
+                {
+                  "key": "[\"shen\",\"车费\",\"元\"]",
+                  "from": "2",
+                  "to": "1",
+                  "reason": "核对退件时花掉一趟车费。"
+                }
+              ],
+              "places": [
+                {
+                  "entity": "shen",
+                  "from": "office",
+                  "to": "yard",
+                  "route": "从值班室走到仓库后院。",
+                  "reason": "换到另一处核对退件。"
+                }
+              ],
+              "knowledge": [
+                {
+                  "who": "shen",
+                  "topic": "source",
+                  "from": "suspected",
+                  "to": "confirmed",
+                  "reason": "本章核对让沈桐对来源多了一层判断。"
+                }
+              ],
+              "characters": [],
+              "relations": [],
+              "clock": {
+                "advance_days": 1
+              },
+              "enter": [
+                {
+                  "kind": "clock",
+                  "key": "main",
+                  "expected": 2
+                },
+                {
+                  "kind": "resources",
+                  "key": "[\"shen\",\"车费\",\"元\"]",
+                  "expected": "2"
+                },
+                {
+                  "kind": "places",
+                  "key": "shen",
+                  "expected": "office"
+                },
+                {
+                  "kind": "knowledge",
+                  "key": "shen:source",
+                  "expected": "suspected"
+                }
+              ],
+              "exit": [
+                {
+                  "kind": "clock",
+                  "key": "main",
+                  "expected": 3
+                },
+                {
+                  "kind": "resources",
+                  "key": "[\"shen\",\"车费\",\"元\"]",
+                  "expected": "1"
+                },
+                {
+                  "kind": "places",
+                  "key": "shen",
+                  "expected": "yard"
+                },
+                {
+                  "kind": "knowledge",
+                  "key": "shen:source",
+                  "expected": "confirmed"
+                }
+              ],
+              "disclosures": [],
+              "world_refs": [
+                "rules:r1",
+                "geography:office",
+                "characters:shen"
+              ],
+              "new_entities": [],
+              "hook_refs": [
+                "hook-v1-required"
+              ],
+              "hooks": [],
+              "reader_refs": [],
+              "history_refs": [],
+              "scenes": [
+                {
+                  "label": "核对现场",
+                  "intent": "核对第三批退件。",
+                  "conflict": "签字制度挡着开箱。",
+                  "turn": "凭据矛盾浮出。",
+                  "present": [
+                    "shen"
+                  ],
+                  "speakers": [
+                    "shen"
+                  ],
+                  "dialogue_intents": [
+                    {
+                      "entity": "shen",
+                      "seeks": "查清来历。",
+                      "withholds": "不提违规开箱。",
+                      "pressure": "登记制度压着。",
+                      "tactic": "拿旧凭据对照。",
+                      "knowledge_topics": [
+                        "source"
+                      ]
+                    }
+                  ],
+                  "reads": [
+                    {
+                      "kind": "knowledge",
+                      "key": "shen:source"
+                    },
+                    {
+                      "kind": "clock",
+                      "key": "main"
+                    }
+                  ],
+                  "depends_on": []
+                }
+              ],
+              "pacing": {},
+              "style": {
+                "pov": "第三人称限知",
+                "rhythm": "短句交代动作，核对结果后用完整句说明后果。"
+              },
+              "dependency_coverage": "complete"
+            },
+            {
+              "chapter": 4,
+              "synopsis": "沈桐核对第四批退件的封条与签字，花掉车费并移动核对位置，对凭据来历形成新的判断。",
+              "plot": {
+                "beat": "沈桐核对封条与签字，逼出下一处矛盾。",
+                "nodes": [],
+                "threads": []
+              },
+              "resources": [
+                {
+                  "key": "[\"shen\",\"车费\",\"元\"]",
+                  "from": "1",
+                  "to": "0",
+                  "reason": "核对退件时花掉一趟车费。"
+                }
+              ],
+              "places": [
+                {
+                  "entity": "shen",
+                  "from": "yard",
+                  "to": "office",
+                  "route": "从仓库后院走到值班室。",
+                  "reason": "换到另一处核对退件。"
+                }
+              ],
+              "knowledge": [],
+              "characters": [],
+              "relations": [],
+              "clock": {
+                "advance_days": 1
+              },
+              "enter": [
+                {
+                  "kind": "clock",
+                  "key": "main",
+                  "expected": 3
+                },
+                {
+                  "kind": "resources",
+                  "key": "[\"shen\",\"车费\",\"元\"]",
+                  "expected": "1"
+                },
+                {
+                  "kind": "places",
+                  "key": "shen",
+                  "expected": "yard"
+                }
+              ],
+              "exit": [
+                {
+                  "kind": "clock",
+                  "key": "main",
+                  "expected": 4
+                },
+                {
+                  "kind": "resources",
+                  "key": "[\"shen\",\"车费\",\"元\"]",
+                  "expected": "0"
+                },
+                {
+                  "kind": "places",
+                  "key": "shen",
+                  "expected": "office"
+                }
+              ],
+              "disclosures": [],
+              "world_refs": [
+                "rules:r1",
+                "geography:office",
+                "characters:shen"
+              ],
+              "new_entities": [],
+              "hook_refs": [],
+              "hooks": [
+                {
+                  "hook": "hook-v1-required",
+                  "action": "payoff",
+                  "note": "本卷末兑现本卷承诺。"
+                }
+              ],
+              "reader_refs": [],
+              "history_refs": [],
+              "scenes": [
+                {
+                  "label": "核对现场",
+                  "intent": "核对第四批退件。",
+                  "conflict": "签字制度挡着开箱。",
+                  "turn": "凭据矛盾浮出。",
+                  "present": [
+                    "shen"
+                  ],
+                  "speakers": [
+                    "shen"
+                  ],
+                  "dialogue_intents": [
+                    {
+                      "entity": "shen",
+                      "seeks": "查清来历。",
+                      "withholds": "不提违规开箱。",
+                      "pressure": "登记制度压着。",
+                      "tactic": "拿旧凭据对照。",
+                      "knowledge_topics": [
+                        "source"
+                      ]
+                    }
+                  ],
+                  "reads": [
+                    {
+                      "kind": "knowledge",
+                      "key": "shen:source"
+                    },
+                    {
+                      "kind": "clock",
+                      "key": "main"
+                    }
+                  ],
+                  "depends_on": []
+                }
+              ],
+              "pacing": {},
+              "style": {
+                "pov": "第三人称限知",
+                "rhythm": "短句交代动作，核对结果后用完整句说明后果。"
+              },
+              "dependency_coverage": "complete"
+            }
+          ]
+        }
+      }
+    ],
+    "drafts": {
+      "1": {
+        "title": "第一章 核对",
+        "summary": "沈桐核对第一批退件的封条与签字，花掉车费",
+        "self_check": "本章按章纲完成核对与承诺载体。",
+        "prose": "次日清晨，沈桐开始第一批退件的核对。。他花掉一元车费，登记第一批核对记录。。他从值班室走到仓库后院，核对第一批封条。。凭据来历的第一层判断落定。。第一批退件凭据的来历，最终要由经手人负责交代。。",
+        "drift_check": {
+          "items": [
+            {
+              "kind": "hook",
+              "key": "hook-v1-required",
+              "planned": {
+                "action": "plant"
+              },
+              "status": "kept",
+              "actual": {
+                "action": "plant"
+              },
+              "evidence": {
+                "chapter": 1,
+                "quote": "第一批退件凭据的来历，最终要由经手人负责交代。"
+              }
+            },
+            {
+              "kind": "resources",
+              "key": "[\"shen\",\"车费\",\"元\"]",
+              "planned": {
+                "from": "4",
+                "to": "3"
+              },
+              "status": "kept",
+              "actual": {
+                "to": "3"
+              },
+              "evidence": {
+                "chapter": 1,
+                "quote": "他花掉一元车费，登记第一批核对记录。"
+              }
+            },
+            {
+              "kind": "places",
+              "key": "shen",
+              "planned": {
+                "from": "office",
+                "to": "yard"
+              },
+              "status": "kept",
+              "actual": {
+                "to": "yard"
+              },
+              "evidence": {
+                "chapter": 1,
+                "quote": "他从值班室走到仓库后院，核对第一批封条。"
+              }
+            },
+            {
+              "kind": "knowledge",
+              "key": "shen:source",
+              "planned": {
+                "from": null,
+                "to": "hinted"
+              },
+              "status": "kept",
+              "actual": {
+                "to": "hinted"
+              },
+              "evidence": {
+                "chapter": 1,
+                "quote": "凭据来历的第一层判断落定。"
+              }
+            },
+            {
+              "kind": "clock",
+              "key": "clock",
+              "planned": {
+                "advance_days": 1
+              },
+              "status": "kept",
+              "actual": {
+                "advance_days": 1
+              },
+              "evidence": {
+                "chapter": 1,
+                "quote": "次日清晨，沈桐开始第一批退件的核对。"
+              }
+            }
+          ],
+          "unplanned": [],
+          "verdict": "clean"
+        }
+      },
+      "2": {
+        "title": "第二章 核对",
+        "summary": "沈桐核对第二批退件的封条与签字，花掉车费",
+        "self_check": "本章按章纲完成核对与承诺载体。",
+        "prose": "次日清晨，沈桐开始第二批退件的核对。。他花掉一元车费，登记第二批核对记录。。他从仓库后院走到值班室，核对第二批封条。。凭据来历的第二层判断落定。。",
+        "drift_check": {
+          "items": [
+            {
+              "kind": "resources",
+              "key": "[\"shen\",\"车费\",\"元\"]",
+              "planned": {
+                "from": "3",
+                "to": "2"
+              },
+              "status": "kept",
+              "actual": {
+                "to": "2"
+              },
+              "evidence": {
+                "chapter": 2,
+                "quote": "他花掉一元车费，登记第二批核对记录。"
+              }
+            },
+            {
+              "kind": "places",
+              "key": "shen",
+              "planned": {
+                "from": "yard",
+                "to": "office"
+              },
+              "status": "kept",
+              "actual": {
+                "to": "office"
+              },
+              "evidence": {
+                "chapter": 2,
+                "quote": "他从仓库后院走到值班室，核对第二批封条。"
+              }
+            },
+            {
+              "kind": "knowledge",
+              "key": "shen:source",
+              "planned": {
+                "from": "hinted",
+                "to": "suspected"
+              },
+              "status": "kept",
+              "actual": {
+                "to": "suspected"
+              },
+              "evidence": {
+                "chapter": 2,
+                "quote": "凭据来历的第二层判断落定。"
+              }
+            },
+            {
+              "kind": "clock",
+              "key": "clock",
+              "planned": {
+                "advance_days": 1
+              },
+              "status": "kept",
+              "actual": {
+                "advance_days": 1
+              },
+              "evidence": {
+                "chapter": 2,
+                "quote": "次日清晨，沈桐开始第二批退件的核对。"
+              }
+            }
+          ],
+          "unplanned": [],
+          "verdict": "clean"
+        }
+      },
+      "3": {
+        "title": "第三章 核对",
+        "summary": "沈桐核对第三批退件的封条与签字，花掉车费",
+        "self_check": "本章按章纲完成核对与承诺载体。",
+        "prose": "次日清晨，沈桐开始第三批退件的核对。。他花掉一元车费，登记第三批核对记录。。他从值班室走到仓库后院，核对第三批封条。。凭据来历的第三层判断落定。。",
+        "drift_check": {
+          "items": [
+            {
+              "kind": "resources",
+              "key": "[\"shen\",\"车费\",\"元\"]",
+              "planned": {
+                "from": "2",
+                "to": "1"
+              },
+              "status": "kept",
+              "actual": {
+                "to": "1"
+              },
+              "evidence": {
+                "chapter": 3,
+                "quote": "他花掉一元车费，登记第三批核对记录。"
+              }
+            },
+            {
+              "kind": "places",
+              "key": "shen",
+              "planned": {
+                "from": "office",
+                "to": "yard"
+              },
+              "status": "kept",
+              "actual": {
+                "to": "yard"
+              },
+              "evidence": {
+                "chapter": 3,
+                "quote": "他从值班室走到仓库后院，核对第三批封条。"
+              }
+            },
+            {
+              "kind": "knowledge",
+              "key": "shen:source",
+              "planned": {
+                "from": "suspected",
+                "to": "confirmed"
+              },
+              "status": "kept",
+              "actual": {
+                "to": "confirmed"
+              },
+              "evidence": {
+                "chapter": 3,
+                "quote": "凭据来历的第三层判断落定。"
+              }
+            },
+            {
+              "kind": "clock",
+              "key": "clock",
+              "planned": {
+                "advance_days": 1
+              },
+              "status": "kept",
+              "actual": {
+                "advance_days": 1
+              },
+              "evidence": {
+                "chapter": 3,
+                "quote": "次日清晨，沈桐开始第三批退件的核对。"
+              }
+            }
+          ],
+          "unplanned": [],
+          "verdict": "clean"
+        }
+      },
+      "4": {
+        "title": "第四章 核对",
+        "summary": "沈桐核对第四批退件的封条与签字，花掉车费",
+        "self_check": "本章按章纲完成核对与承诺载体。",
+        "prose": "次日清晨，沈桐开始第四批退件的核对。。他花掉一元车费，登记第四批核对记录。。他从仓库后院走到值班室，核对第四批封条。。凭据来历的第四层判断落定。。第四批退件凭据的来历由沈桐当众交代，责任就此落实。。",
+        "drift_check": {
+          "items": [
+            {
+              "kind": "hook",
+              "key": "hook-v1-required",
+              "planned": {
+                "action": "payoff"
+              },
+              "status": "kept",
+              "actual": {
+                "action": "payoff"
+              },
+              "evidence": {
+                "chapter": 4,
+                "quote": "第四批退件凭据的来历由沈桐当众交代，责任就此落实。"
+              }
+            },
+            {
+              "kind": "resources",
+              "key": "[\"shen\",\"车费\",\"元\"]",
+              "planned": {
+                "from": "1",
+                "to": "0"
+              },
+              "status": "kept",
+              "actual": {
+                "to": "0"
+              },
+              "evidence": {
+                "chapter": 4,
+                "quote": "他花掉一元车费，登记第四批核对记录。"
+              }
+            },
+            {
+              "kind": "places",
+              "key": "shen",
+              "planned": {
+                "from": "yard",
+                "to": "office"
+              },
+              "status": "kept",
+              "actual": {
+                "to": "office"
+              },
+              "evidence": {
+                "chapter": 4,
+                "quote": "他从仓库后院走到值班室，核对第四批封条。"
+              }
+            },
+            {
+              "kind": "clock",
+              "key": "clock",
+              "planned": {
+                "advance_days": 1
+              },
+              "status": "kept",
+              "actual": {
+                "advance_days": 1
+              },
+              "evidence": {
+                "chapter": 4,
+                "quote": "次日清晨，沈桐开始第四批退件的核对。"
+              }
+            }
+          ],
+          "unplanned": [],
+          "verdict": "clean"
+        }
+      }
+    }
+  },
+  "design_hash": "52331b958d09264770c02b8f354d188b0be65fef06e372a2cef6ff373c343a92",
+  "historical_only": true
+}

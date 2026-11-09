@@ -1,6 +1,6 @@
 // 写作模式：右栏的「设定 / 章节 / 正文」面板。
-// 数据来自 novel-ledger-lite 的只读派生产物 .novel-ledger/view.json + 每章 Markdown，
-// 经 workspaceFiles Remote 按行读取；不写会话事件、不改账本。
+// 数据来自只读派生产物 .novel-ledger/view.json 清单与 UTF-8 JSON 分片。
+// 经 workspaceFiles Remote 校验并完整重组；兼容旧视图与逐行正文，不改账本。
 window.__ModuleLoader__.load({
 	id: '@local/novel-writing-mode',
 	factory: (require) => {
@@ -14,7 +14,8 @@ window.__ModuleLoader__.load({
 		const ID = '@local/novel-writing-mode';
 		const NS = 'novelWritingMode';
 		const VIEW_DIR = '.novel-ledger';
-		const MAX_LINES = 5000;
+		const PAGE_LINES = 256;
+		const MAX_TRANSPORT_BYTES = 128 * 1024;
 		const TABS = ['settings', 'chapters', 'text'];
 
 		const CSS = [
@@ -269,6 +270,151 @@ window.__ModuleLoader__.load({
 				h('path', { d: 'M27 7.5c-3.6-1.4-7.1-1.4-11 0v17c3.9-1.4 7.4-1.4 11 0z', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' }));
 		}
 
+		// Kept independent of React so the exact transport used by the panel can be
+		// exercised against a line/byte-limited workspace reader.
+		function createWorkspaceReader(workspaceFiles) {
+			const encoder = new TextEncoder();
+			const hex = /^[0-9a-f]{64}$/;
+
+			function fail(code, message) {
+				const error = new Error(message);
+				error.code = code;
+				throw error;
+			}
+
+			function flag(page, names) {
+				for (const source of [page, page && page.page, page && page.pagination]) {
+					for (const name of names) {
+						if (source && typeof source[name] === 'boolean') return source[name];
+					}
+				}
+				return undefined;
+			}
+
+			async function page(sessionId, path, offset, limit, signal) {
+				const result = await workspaceFiles.read(sessionId, path, { offset, limit }, signal);
+				if (!result || result.ok !== true) {
+					const error = result && result.error;
+					fail((error && error.code) || 'view/read', errText(error) || '读取失败');
+				}
+				if (!result.value || typeof result.value.text !== 'string') fail('view/read', '读取结果缺少正文文本。');
+				return result.value;
+			}
+
+			async function single(sessionId, path, signal, onFound) {
+				const value = await page(sessionId, path, 1, 2, signal);
+				if (onFound) onFound();
+				if (flag(value, ['truncated', 'isTruncated', 'is_truncated']) === true
+					|| flag(value, ['hasMore', 'has_more']) === true) {
+					fail('view/incomplete', '写作视图文件读取不完整，请重新导出后刷新。');
+				}
+				return value.text;
+			}
+
+			async function sha256(text) {
+				if (!globalThis.crypto || !globalThis.crypto.subtle) {
+					fail('view/crypto', '当前界面环境不支持 SHA-256 完整性校验，无法安全读取写作视图。');
+				}
+				const hash = await globalThis.crypto.subtle.digest('SHA-256', encoder.encode(text));
+				return Array.from(new Uint8Array(hash), (byte) => byte.toString(16).padStart(2, '0')).join('');
+			}
+
+			function parse(text) {
+				try { return JSON.parse(text); }
+				catch (error) { fail('view/parse', '写作视图 JSON 不完整或格式错误：' + errText(error)); }
+			}
+
+			async function content(sessionId, base, descriptor, signal) {
+				if (!descriptor || descriptor.schema !== 'novel-writing-content/1'
+					|| !Number.isSafeInteger(descriptor.bytes) || descriptor.bytes < 0
+					|| !hex.test(descriptor.sha256 || '')
+					|| !Array.isArray(descriptor.chunks) || !descriptor.chunks.length) {
+					fail('view/manifest', '写作视图分片清单缺失或版本不受支持。');
+				}
+				const pieces = [];
+				for (let index = 0; index < descriptor.chunks.length; index++) {
+					const reference = descriptor.chunks[index];
+					if (!reference || !hex.test(reference.sha256 || '')
+						|| reference.file !== 'chunks/' + reference.sha256 + '.json'
+						|| !Number.isSafeInteger(reference.bytes) || reference.bytes <= 0
+						|| reference.bytes > MAX_TRANSPORT_BYTES) {
+						fail('view/path', '写作视图分片路径或大小无效，拒绝读取工作区外文件。');
+					}
+					const text = await single(sessionId, joinPath(base, reference.file), signal);
+					if (encoder.encode(text).length !== reference.bytes || await sha256(text) !== reference.sha256) {
+						fail('view/integrity', '写作视图分片缺失、被截断或内容已变化，请重新导出后刷新。');
+					}
+					const chunk = parse(text);
+					if (!chunk || chunk.schema !== 'novel-writing-chunk/1'
+						|| chunk.index !== index || typeof chunk.text !== 'string') {
+						fail('view/chunk', '写作视图分片版本或顺序不正确。');
+					}
+					pieces.push(chunk.text);
+				}
+				const text = pieces.join('');
+				if (encoder.encode(text).length !== descriptor.bytes || await sha256(text) !== descriptor.sha256) {
+					fail('view/integrity', '写作视图分片未能完整重组，请重新导出后刷新。');
+				}
+				return text;
+			}
+
+			async function legacyProse(sessionId, path, signal) {
+				const pieces = [];
+				let offset = 1;
+				while (true) {
+					const value = await page(sessionId, path, offset, PAGE_LINES, signal);
+					const more = flag(value, ['hasMore', 'has_more']);
+					if (flag(value, ['truncated', 'isTruncated', 'is_truncated']) === true
+						|| encoder.encode(value.text).length >= MAX_TRANSPORT_BYTES) {
+						fail('view/incomplete', '旧版正文触及读取上限，请重新导出为分片视图后阅读。');
+					}
+					if (!value.text) {
+						if (more === true) fail('view/incomplete', '旧版正文读取不完整，请重新导出后阅读。');
+						break;
+					}
+					const count = value.text.split('\n').length;
+					if (count > PAGE_LINES || (count < PAGE_LINES && more === true)) {
+						fail('view/incomplete', '旧版正文分页不完整，请重新导出为分片视图后阅读。');
+					}
+					pieces.push(value.text);
+					if (count < PAGE_LINES || more === false) break;
+					offset += count;
+				}
+				return pieces.join('\n');
+			}
+
+			async function safely(action) {
+				try { return { ok: true, value: await action() }; }
+				catch (error) { return { ok: false, error: { code: error.code || 'view/read', message: errText(error) } }; }
+			}
+
+			return {
+				readView: async (sessionId, path, signal) => {
+					let found = false;
+					const result = await safely(async () => {
+						let view = parse(await single(sessionId, path, signal, () => { found = true; }));
+						if (view && view.schema === 'novel-writing-manifest/1') {
+							if (view.view_schema !== 'novel-writing-view/2') fail('view/version', '写作视图版本不受支持。');
+							view = parse(await content(sessionId, dirOf(path), view.content, signal));
+							if (!view || view.schema !== 'novel-writing-view/2') fail('view/version', '写作视图与清单的版本不一致。');
+						}
+						if (!view || !['novel-writing-view/1', 'novel-writing-view/2'].includes(view.schema)
+							|| !view.book || !Array.isArray(view.chapters)) {
+							fail('view/version', '写作视图版本或结构不受支持，请重新导出。');
+						}
+						return view;
+					});
+					return Object.assign(result, { found });
+				},
+				readProse: (sessionId, path, entry, schema, signal) => safely(async () => {
+					if (entry.content) return { text: await content(sessionId, dirOf(path), entry.content, signal) };
+					if (schema !== 'novel-writing-view/1') fail('view/manifest', '正文分片清单缺失，请重新导出。');
+					if (!/^chapters\/ch[0-9]+\.md$/.test(entry.file || '')) fail('view/path', '旧版正文文件路径无效。');
+					return { text: await legacyProse(sessionId, joinPath(dirOf(path), entry.file), signal) };
+				}),
+			};
+		}
+
 		const INJECT = ['slots', 'locale', 'sidebarRightTabs', 'sidebarRight', 'remote', 'remote.workspaceFiles'];
 
 		function definition(t) {
@@ -289,24 +435,7 @@ window.__ModuleLoader__.load({
 
 		function apply(ctx) {
 			const t = ctx.locale.bind(NS);
-
-			async function readPage(sessionId, path, signal) {
-				const result = await ctx.remote.workspaceFiles.read(sessionId, path, { offset: 1, limit: MAX_LINES }, signal);
-				if (!result || result.ok !== true) {
-					return { ok: false, error: (result && result.error) || { code: 'unknown', message: 'read failed' } };
-				}
-				return { ok: true, value: result.value };
-			}
-
-			async function readView(sessionId, path, signal) {
-				const page = await readPage(sessionId, path, signal);
-				if (page.ok !== true) return page;
-				try {
-					return { ok: true, value: JSON.parse(page.value.text), path };
-				} catch (error) {
-					return { ok: false, error: { code: 'view/parse', message: 'view.json 不是合法 JSON：' + errText(error) } };
-				}
-			}
+			const reader = createWorkspaceReader(ctx.remote.workspaceFiles);
 
 			async function listDirectories(sessionId, path, signal) {
 				try {
@@ -335,16 +464,17 @@ window.__ModuleLoader__.load({
 				const candidates = [joinPath(VIEW_DIR, 'view.json')];
 				for (const candidate of candidates) {
 					tried.push(candidate);
-					const hit = await readView(sessionId, candidate, signal);
+					const hit = await reader.readView(sessionId, candidate, signal);
 					if (hit.ok === true) return { ok: true, view: hit.value, path: candidate, tried };
-					if (hit.error && hit.error.code === 'view/parse') return Object.assign({ tried }, hit);
+					if (hit.found) return Object.assign({ tried }, hit);
 				}
 				const dirs = await listDirectories(sessionId, '.', signal);
 				for (const dir of dirs) {
 					const candidate = joinPath(dir, joinPath(VIEW_DIR, 'view.json'));
 					tried.push(candidate);
-					const hit = await readView(sessionId, candidate, signal);
+					const hit = await reader.readView(sessionId, candidate, signal);
 					if (hit.ok === true) return { ok: true, view: hit.value, path: candidate, tried };
+					if (hit.found) return Object.assign({ tried }, hit);
 				}
 				return { ok: false, error: { code: 'workspace-file/not-found', message: 'writing view not found' }, tried };
 			}
@@ -415,9 +545,8 @@ window.__ModuleLoader__.load({
 						return;
 					}
 					let alive = true;
-					const path = joinPath(dirOf(viewPath), current.file);
 					setProse({ kind: 'loading' });
-					readPage(sessionId, path, tab.signal).then((page) => {
+					reader.readProse(sessionId, viewPath, current, view.schema, tab.signal).then((page) => {
 						if (!alive) return;
 						if (page.ok === true) setProse({ kind: 'ready', text: page.value.text });
 						else setProse({ kind: 'error', error: page.error });
@@ -687,6 +816,7 @@ window.__ModuleLoader__.load({
 		}
 
 		exports.inject = INJECT;
+		exports.createWorkspaceReader = createWorkspaceReader;
 		exports.apply = apply;
 		return module.exports;
 	},
