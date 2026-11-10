@@ -1,5 +1,7 @@
 # Markdown 章纲接入与未核实状态
 
+如果来源是 outline-architect 的22文件表格大纲包，改用[原生表格接入](outline-architect.md)，不把 T-CH 重写成章节标题，也不对整个大纲目录运行本标题式导入器。
+
 适用于每卷一个 Markdown 文件，章标题为 `第0001章 标题` 的既有章纲。使用：
 
 ```bash

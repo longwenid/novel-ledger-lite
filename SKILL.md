@@ -16,6 +16,9 @@ description: 在作者已确认总纲、卷纲与章纲后，使用冻结资源�
   卷纲、章纲与提交格式。可运行 `python3 scripts/run_example.py` 验证完整四章示例。
 - 既有 Markdown 章纲可用 [导入与待核实流程](references/markdown-import.md) 建立带原文来源的
   候选清单；候选不能代替引擎账本，缺少的时序、资源和状态不得伪造为零或无变化。
+- 输入是 outline-architect 的22文件表格大纲包时，使用[原生接入流程](references/outline-architect.md)
+  和 `scripts/import_outline_architect.py`，直接保留全包原文、表格、行号及缺章范围，无需重复改写章纲。
+  来源校验不代替作者确认与执行建模；完整卷章及状态链安装通过后才开始本技能的写作流程。
 - 文风必须由作者显式选择：内置档见 [references/style.md](references/style.md)，也可提供
   作者确认的 UTF-8 Markdown 文风档案。五份内置完整档案在 `references/styles/`；
   选中后冻结实际文件；单文件写作包携带本章所需文风材料，必要时由准备者补齐。
