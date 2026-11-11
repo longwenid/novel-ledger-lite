@@ -26,8 +26,7 @@ class ArchitectImportTests(unittest.TestCase):
         self.source.mkdir()
         self.names = {did: did + '-样书.md' for did in adapter.DOCS}
         for name in self.names.values():
-            # write_bytes：Windows 文本模式会把 \n 转成 \r\n，破坏 CRLF 用例的字节前提。
-            (self.source / name).write_bytes('# 样书\n'.encode())
+            (self.source / name).write_text('# 样书\n', encoding='utf-8')
         self.body = table('T-VOL', ['volume_id', '章范围', '卷目标'], [
             ['V01', 'CH0001-CH0002', '查清旧债'], ['V02', 'CH0003-CH0004', '离开城镇']])
         self.body += table('T-UNIT-IDX', ['unit_id', '卷', '章范围'], [
@@ -47,7 +46,7 @@ class ArchitectImportTests(unittest.TestCase):
         (self.source / '_manifest.json').write_text(json.dumps({'files': files}), encoding='utf-8')
 
     def write_outline(self, body):
-        (self.source / self.names['03']).write_bytes(body.encode())
+        (self.source / self.names['03']).write_text(body, encoding='utf-8')
         self.rehash()
 
     def test_native_tables_keep_all_sources_and_partial_volume(self):
@@ -59,7 +58,7 @@ class ArchitectImportTests(unittest.TestCase):
         self.assertEqual(result['volumes'][1]['missing_range'], [4, 4])
         self.assertFalse(result['engine_installed'])
         self.assertEqual(result['delivery_acceptance'], 'not_verified')
-        row = json.loads((self.output / 'volumes/V01_candidate.json').read_text(encoding='utf-8'))['chapters'][0]
+        row = json.loads((self.output / 'volumes/V01_candidate.json').read_text())['chapters'][0]
         self.assertEqual(row['outline_fields']['章目标'], '寻找账页|保留原分隔')
         self.assertIn('\\|', row['outline_text'])
         self.assertEqual(row['review_status'], 'unreviewed')
@@ -73,11 +72,13 @@ class ArchitectImportTests(unittest.TestCase):
 
     def test_bom_crlf_and_audit_are_preserved_byte_for_byte(self):
         path = self.source / self.names['03']
-        raw = b'\xef\xbb\xbf' + path.read_bytes().replace(b'\n', b'\r\n')
+        # setUp 的 write_text 在 Windows 已产生 CRLF；先归一再转，避免 \r\r\n 双重换行。
+        normalized = path.read_bytes().replace(b'\r\n', b'\n')
+        raw = b'\xef\xbb\xbf' + normalized.replace(b'\n', b'\r\n')
         path.write_bytes(raw)
         audit = self.source / '_audit/T-AUDIT.md'
         audit.parent.mkdir()
-        audit.write_bytes('实际签署回执\n'.encode())
+        audit.write_text('实际签署回执\n', encoding='utf-8')
         self.rehash()
         adapter.import_outline_architect(self.source, self.output)
         self.assertEqual((self.output / 'source' / path.name).read_bytes(), raw)
@@ -137,7 +138,7 @@ class ArchitectImportTests(unittest.TestCase):
         for change in ('traversal', 'duplicate', 'bytes'):
             self.rehash()
             path = self.source / '_manifest.json'
-            data = json.loads(path.read_text(encoding='utf-8'))
+            data = json.loads(path.read_text())
             if change == 'traversal':
                 data['files'][0]['name'] = '../00-样书.md'
             elif change == 'duplicate':
@@ -166,11 +167,11 @@ class ArchitectImportTests(unittest.TestCase):
     def test_derived_index_tampering_fails_even_if_payload_hash_is_rewritten(self):
         adapter.import_outline_architect(self.source, self.output)
         path = self.output / 'volumes/V01_candidate.json'
-        data = json.loads(path.read_text(encoding='utf-8'))
+        data = json.loads(path.read_text())
         data['chapters'][0]['outline_fields']['章目标'] = '伪造目标'
         path.write_text(json.dumps(data, ensure_ascii=False), encoding='utf-8')
         manifest_path = self.output / 'manifest.json'
-        manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
+        manifest = json.loads(manifest_path.read_text())
         entry = next(row for row in manifest['files'] if row['name'] == 'volumes/V01_candidate.json')
         entry.update(sha256=adapter.sha(path.read_bytes()), bytes=path.stat().st_size)
         manifest_path.write_text(json.dumps(manifest))
