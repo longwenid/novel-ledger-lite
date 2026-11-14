@@ -354,8 +354,7 @@ def submit(book, store, chapter, draft):
                                            book.get('world'), prose=prose)
     findings = list(settlement['findings'])
     contract = book['contract']
-    band = (narrative.budget_for(book, chapter) if contract.get('narrative_tracking')
-            else {'minimum': contract['chapter_min'], 'maximum': contract['chapter_max']})
+    band = narrative.budget_for(book, chapter)
     count = han_count(prose)
     if not band['minimum'] <= count <= band['maximum']:
         findings.append({'criterion': 'substance', 'severity': 'quality', 'target_chapter': chapter,
@@ -544,6 +543,7 @@ def verify_full(book, store):
     state = facts.seed(initial_contract)
     problems = []
     previous_chain = None
+    written_han = 0
     rows = store.headers('main')
     outline_copies = {}
     for plans in book['chapter_outlines'].values():
@@ -567,7 +567,7 @@ def verify_full(book, store):
             prose = store.read_document(row['prose'])
             events = store.read_document(row['events'])
             committed_plan = store.read_document(row['plan'])
-            store.read_document(contract_hash)
+            committed_contract = store.read_document(contract_hash)
         except Error as error:
             problems.append({'chapter': row['n'], 'kind': 'record', 'detail': error.message,
                              'code': error.code})
@@ -579,6 +579,14 @@ def verify_full(book, store):
             problems.append({'chapter': row['n'], 'kind': 'outline_history',
                              'detail': '卷内历史章纲与该章提交时的不可变章纲不符。'})
         try:
+            band = narrative.budget_for(book, row['n'], contract=committed_contract,
+                                        plan=committed_plan, written_han=written_han)
+            count = han_count(prose)
+            if row['han'] != count or not band['minimum'] <= count <= band['maximum']:
+                problems.append({'chapter': row['n'], 'kind': 'word_budget',
+                                 'detail': '历史正文章幅或汉字计数与提交时冻结预算不符。',
+                                 'actual_han': count, 'recorded_han': row['han'],
+                                 'allowed': [band['minimum'], band['maximum']]})
             from . import content_review
             content_review.verify_committed(store, row, before_state_hash=digest(state),
                                             previous_chain=previous_chain)
@@ -594,6 +602,7 @@ def verify_full(book, store):
         if row.get('chain') != expected_chain:
             problems.append({'chapter': row['n'], 'kind': 'chain', 'detail': '链哈希重算不符。'})
         previous_chain = row.get('chain')
+        written_han += count
     if previous_chain != store.chain_head():
         problems.append({'kind': 'chain_head', 'detail': '链头与已提交章节不符。'})
     matches_book = digest(state) == digest(book['state'])

@@ -448,7 +448,7 @@ def build(book, store, chapter, group=None, *, cache=None):
                                                        if k.startswith('mysteries:')
                                                        and (k in selected_world or k.split(':', 1)[1] in topics)],
                                     'source': '幕后真相不下发；作者真相不能自动成为人物知情或本章披露。'})
-    if contract.get('narrative_tracking'):
+    if contract.get('narrative_tracking') or 'word_budget' in plan:
         add('word_budget', narrative.budget_for(book, chapter))
     # 文风规格（作者要求：写章派工简报必须带所选档的文风规格）。
     # - style：每章必读的规格＋当前基线锚（与提交门比对同源）；

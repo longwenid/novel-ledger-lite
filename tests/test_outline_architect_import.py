@@ -58,7 +58,7 @@ class ArchitectImportTests(unittest.TestCase):
         self.assertEqual(result['volumes'][1]['missing_range'], [4, 4])
         self.assertFalse(result['engine_installed'])
         self.assertEqual(result['delivery_acceptance'], 'not_verified')
-        row = json.loads((self.output / 'volumes/V01_candidate.json').read_text())['chapters'][0]
+        row = json.loads((self.output / 'volumes/V01_candidate.json').read_text(encoding='utf-8'))['chapters'][0]
         self.assertEqual(row['outline_fields']['章目标'], '寻找账页|保留原分隔')
         self.assertIn('\\|', row['outline_text'])
         self.assertEqual(row['review_status'], 'unreviewed')
@@ -138,7 +138,7 @@ class ArchitectImportTests(unittest.TestCase):
         for change in ('traversal', 'duplicate', 'bytes'):
             self.rehash()
             path = self.source / '_manifest.json'
-            data = json.loads(path.read_text())
+            data = json.loads(path.read_text(encoding='utf-8'))
             if change == 'traversal':
                 data['files'][0]['name'] = '../00-样书.md'
             elif change == 'duplicate':
@@ -167,11 +167,11 @@ class ArchitectImportTests(unittest.TestCase):
     def test_derived_index_tampering_fails_even_if_payload_hash_is_rewritten(self):
         adapter.import_outline_architect(self.source, self.output)
         path = self.output / 'volumes/V01_candidate.json'
-        data = json.loads(path.read_text())
+        data = json.loads(path.read_text(encoding='utf-8'))
         data['chapters'][0]['outline_fields']['章目标'] = '伪造目标'
         path.write_text(json.dumps(data, ensure_ascii=False), encoding='utf-8')
         manifest_path = self.output / 'manifest.json'
-        manifest = json.loads(manifest_path.read_text())
+        manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
         entry = next(row for row in manifest['files'] if row['name'] == 'volumes/V01_candidate.json')
         entry.update(sha256=adapter.sha(path.read_bytes()), bytes=path.stat().st_size)
         manifest_path.write_text(json.dumps(manifest))
@@ -194,8 +194,8 @@ class ArchitectImportTests(unittest.TestCase):
 
     def test_duplicate_json_keys_cannot_override_manifest_fields(self):
         path = self.source / '_manifest.json'
-        raw = path.read_text()
-        path.write_text('{"files": [],' + raw[1:])
+        raw = path.read_text(encoding='utf-8')
+        path.write_text('{"files": [],' + raw[1:], encoding='utf-8')
         with self.assertRaises(ValueError):
             adapter.import_outline_architect(self.source, self.output)
         self.assertFalse(self.output.exists())

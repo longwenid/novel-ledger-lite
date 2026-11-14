@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import copy
 from decimal import Decimal, InvalidOperation
-from .contracts import require, text
+from .contracts import policy_default, require, text
 
 STATUSES = ('seeded', 'advanced', 'resolved')
 REVEALS = ('hinted', 'suspected', 'misled', 'confirmed', 'retracted')
@@ -147,18 +147,52 @@ def closure(book):
             {'nodes': missing, 'threads': open_lines, 'recover': '在正文中兑现并通过提交核账；改变终局要求须走作者改约。'})
 
 
-def budget_for(book, chapter, through=None):
+def validate_word_budget(value, *, chapter=None):
+    """Validate an explicitly declared chapter exception; never infer missing limits."""
+    require(isinstance(value, dict) and set(value) == {'min', 'aim', 'max'}
+            and all(type(value[key]) is int and value[key] > 0 for key in ('min', 'aim', 'max'))
+            and value['min'] <= value['aim'] <= value['max']
+            and value['max'] <= policy_default('chapter_max_ceiling'),
+            'word_budget', '章级 word_budget 须为正整数 {min,aim,max}，min<=aim<=max，'
+            '且 max 不超过策略章幅上限。', {'chapter': chapter, 'budget': value})
+    return copy.deepcopy(value)
+
+
+def budget_for(book, chapter, through=None, *, contract=None, plan=None, written_han=None):
+    """One budget resolver for dispatch, submission and historical replay.
+
+    Replay supplies the committed contract/plan and the actual preceding word count.
+    Only explicit chapter exceptions change the projected total; other chapters keep
+    the contract's defaults and do not have to pad a declared short chapter's deficit.
+    """
     # A pending carry row is fixed only beyond the chapter/window being rewritten.
     # Future alignment can clear plans while their original prose remains queued.
     boundary = chapter if through is None else through
     carried = [r for r in (book.get('revision_run') or {}).get('carry', []) if r['n'] > boundary]
-    contract = copy.deepcopy(book['contract'])
+    contract = copy.deepcopy(book['contract'] if contract is None else contract)
     for volume in contract['volumes']:
         volume['end'] = book.get('scope_ends', {}).get(volume['id'], volume['end'])
-    return word_budget(contract, book['written_han'], chapter, sum(r['han'] for r in carried), len(carried))
+    plans = book.get('plans') or {}
+    current = plans.get(str(chapter), {}) if plan is None else plan
+    if not contract.get('narrative_tracking'):
+        own = (validate_word_budget(current['word_budget'], chapter=chapter)
+               if 'word_budget' in current else
+               {'min': contract['chapter_min'], 'aim': contract['chapter_aim'], 'max': contract['chapter_max']})
+        return {'chapter': chapter, 'minimum': own['min'], 'maximum': own['max'], 'aim': own['aim']}
+    budgets = {int(key): validate_word_budget(row['word_budget'], chapter=int(key))
+               for key, row in plans.items() if 'word_budget' in row}
+    # The immutable committed row is authoritative during replay.
+    if 'word_budget' in current:
+        budgets[chapter] = validate_word_budget(current['word_budget'], chapter=chapter)
+    else:
+        budgets.pop(chapter, None)
+    return word_budget(contract, book['written_han'] if written_han is None else written_han,
+                       chapter, sum(r['han'] for r in carried), len(carried),
+                       chapter_budgets=budgets, reserved_numbers={r['n'] for r in carried})
 
 
-def word_budget(contract, written, chapter, reserved_han=0, reserved_chapters=0):
+def word_budget(contract, written, chapter, reserved_han=0, reserved_chapters=0, *,
+                chapter_budgets=None, reserved_numbers=()):
     last = contract['volumes'][-1]['end']
     remaining = last - chapter + 1 - reserved_chapters
     effective = written + reserved_han
@@ -166,12 +200,26 @@ def word_budget(contract, written, chapter, reserved_han=0, reserved_chapters=0)
     # here from the count in force: an authorized append or revision moves the count and the band
     # together, and a budget read off a stale frozen band would refuse a legal extension.
     lo, hi = last * contract['chapter_min'], last * contract['chapter_max']
-    minimum = max(contract['chapter_min'], lo - effective - max(0, remaining - 1) * contract['chapter_max'])
-    maximum = min(contract['chapter_max'], hi - effective - max(0, remaining - 1) * contract['chapter_min'])
+    own_min, own_aim, own_max = contract['chapter_min'], contract['chapter_aim'], contract['chapter_max']
+    future_min = max(0, remaining - 1) * contract['chapter_min']
+    future_max = max(0, remaining - 1) * contract['chapter_max']
+    for number, raw in (chapter_budgets or {}).items():
+        budget = validate_word_budget(raw, chapter=number)
+        if not 1 <= number <= last:
+            continue
+        lo += budget['min'] - contract['chapter_min']
+        hi += budget['max'] - contract['chapter_max']
+        if number == chapter:
+            own_min, own_aim, own_max = budget['min'], budget['aim'], budget['max']
+        elif number > chapter and number not in reserved_numbers:
+            future_min += budget['min'] - contract['chapter_min']
+            future_max += budget['max'] - contract['chapter_max']
+    minimum = max(own_min, lo - effective - future_max)
+    maximum = min(own_max, hi - effective - future_min)
     require(remaining > 0 and minimum <= maximum, 'word_budget', '剩余章数已无法达到总篇幅约定。',
             {'written_han': written, 'remaining_chapters': remaining,
-            'reachable_total': [effective + remaining * contract['chapter_min'], effective + remaining * contract['chapter_max']],
+            'reachable_total': [effective + own_min + future_min, effective + own_max + future_max],
              'required_total': [lo, hi], 'recover': '修订前文展开或由作者改约；不要继续写无法完成的章节。'})
     return {'chapter': chapter, 'minimum': minimum, 'maximum': maximum,
-            'aim': min(maximum, max(minimum, contract['chapter_aim'])), 'remaining_chapters': remaining,
+            'aim': min(maximum, max(minimum, own_aim)), 'remaining_chapters': remaining,
             'fixed_suffix_han': reserved_han, 'fixed_suffix_chapters': reserved_chapters}

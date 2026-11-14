@@ -27,7 +27,7 @@ VOLUME_FIELDS = ('id', 'purpose', 'stage', 'arc', 'turns', 'climax', 'nodes', 't
 CHAPTER_FIELDS = ('chapter', 'synopsis', 'plot', 'resources', 'places', 'knowledge', 'characters',
                   'relations', 'clock', 'enter', 'exit', 'disclosures', 'world_refs', 'new_entities',
                   'hook_refs', 'hooks', 'reader_refs', 'history_refs', 'scenes', 'pacing', 'style',
-                  'story_events', 'reader_effect', 'timeline')
+                  'story_events', 'reader_effect', 'timeline', 'word_budget')
 
 
 # The five increment arrays plus the clock: what a chapter declares it changes. `relations` is the
@@ -734,6 +734,8 @@ def plan_rows(chapters):
         row['dependency_coverage'] = chapter.get('dependency_coverage') or 'partial'
         if chapter.get('style') is not None:
             row['style'] = copy.deepcopy(chapter['style'])
+        if 'word_budget' in chapter:
+            row['word_budget'] = copy.deepcopy(chapter['word_budget'])
         for field in DELTA_KINDS:
             row[field] = copy.deepcopy(chapter.get(field) or ({} if field == 'clock' else []))
         rows.append(row)

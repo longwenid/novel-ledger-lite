@@ -12,7 +12,7 @@ from .entities import register as register_entity
 
 from .drift import CHAPTER_FIELDS, EXPRESSION_FIELDS, HOOK_ACTIONS, PROTOCOL_FIELDS, REVEALS, VOLUME_FIELDS, _coord_key, _declared, _deltas, _enter_rows, _entity_ids, _finding, _kind_of, _number, _place_id, _project, _reject, _resource_known, _safe, _same, _window, _world_ids, _world_index
 from .drift_simulation import _hook_registry, _node_registry, _thread_registry, simulate
-from . import drift, entities, world
+from . import drift, entities, narrative, world
 
 
 # ------------------------------------------------------- outline validation
@@ -627,7 +627,12 @@ def _normalize_chapter(chapter, state, world, registry=None, hooks=None):
     moved or which promise it touched, the volume outline owns what that promise is and when it may
     be closed.
     """
-    normalized = {key: copy.deepcopy(chapter.get(key)) for key in CHAPTER_FIELDS}
+    # Keep absent optional budgets absent: old committed outlines retain their exact shape/hash.
+    normalized = {key: copy.deepcopy(chapter.get(key)) for key in CHAPTER_FIELDS
+                  if key != 'word_budget' or key in chapter}
+    if 'word_budget' in normalized:
+        normalized['word_budget'] = narrative.validate_word_budget(
+            normalized['word_budget'], chapter=chapter['chapter'])
     normalized['chapter'] = chapter['chapter']
     normalized['synopsis'] = chapter.get('synopsis')
     plot = chapter.get('plot') if isinstance(chapter.get('plot'), dict) else {}
