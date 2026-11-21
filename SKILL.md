@@ -35,6 +35,15 @@ description: 在作者已确认总纲、卷纲与章纲后，使用冻结资源�
 以下是 Python API。将本技能的 `scripts` 目录加入导入路径；相对路径须由调用方按技能
 实际位置解析，避免依赖调用时的工作目录。创建 `store = LiteStore()` 后依次执行：
 
+角色隔离是硬门槛：主会话（准备者）只负责发包、派工、登记与提交，不亲自执笔正文。
+写作者与独立读者各自由独立子代理、新开的 agent 任务或全新会话担任，二者互不相同；
+每章开全新的写作者上下文，不在同一上下文连续写多章。正文与写作包全文不进主会话：
+包以文件交给写作者，写作者把完整 draft 连同 `package_ref` 写成 JSON 文件交回，
+审读报告同样落成 JSON 文件；准备者只在 Python 内从文件读入，不在会话或命令行里
+粘贴正文。宿主没有子代理或新会话原语时停下告知作者，不得降级为主会话执笔。
+主会话每章只流动文件路径、`package_ref`/`review_ref` 与报告引用；正文进主会话会
+随章节累积，挤占调度上下文并重新引入记忆漂移，正是本技能要用账本消除的东西。
+
 1. `book = pipeline.open_book(contract, source, world_model)`：导入作者确认的约束；
    `source` 说明决定来源，`world_model` 可省略。世界模型与文风档案在导入时保存冻结副本。
 2. 每卷执行 `pipeline.install_outlines(book, volume_id, volume_outline, chapters_data)`。
@@ -46,10 +55,12 @@ description: 在作者已确认总纲、卷纲与章纲后，使用冻结资源�
 4. 上一章提交通过后，准备者调用 `package = pipeline.chapter_package(book, store, chapter, group_row)`，
    将 `package["text"]` 以 UTF-8 写为本章 Markdown 文件。写作前用
    `pipeline.validate_chapter_package(book, store, 文件内容)` 校验文件完整性和账本时效。
+   把包文件路径交给独立子代理或全新会话执笔（写作者开场指令见
+   [references/architecture.md](references/architecture.md#角色隔离与派工模板)）；
    正文写作者只读取这一个文件；发现缺失、冲突或不确定时停止，由准备者补齐后重新生成并校验。
    生成细节和补充资料接口见 [references/architecture.md](references/architecture.md#单章-markdown-写作包)。
    写作后调用 `review = pipeline.review_request(book, store, chapter, draft, writer=写作者标识)`，
-   将 `review["text"]` 完整交给不同于写作者的独立读者。可用独立子代理或另一真实审读会话；
+   将 `review["text"]` 完整交给不同于写作者的另一个独立子代理或真实会话；
    无独立读者时停在待审，不由写作者替自己填通过报告。读者先读材料与整章，再逐项核对并返回包内约定的报告。
    准备者原样记录实际报告：`draft["review_ref"] = pipeline.record_content_review(book, store, review["request_ref"], report)`，
    然后用 `pipeline.submit(book, store, chapter, draft)` 提交。
