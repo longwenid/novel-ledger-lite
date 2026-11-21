@@ -5,7 +5,7 @@ import re
 import pytest
 
 import fixtures
-from novel_ledger_lite import pipeline
+from novel_ledger_lite import compose, drift, package_context, pipeline
 from novel_ledger_lite.contracts import Error, digest
 from novel_ledger_lite.store import LiteStore
 
@@ -77,6 +77,9 @@ def test_standalone_history_growth_keeps_a_bounded_locator_and_full_current_cons
         assert deferred['by_kind']['reader_knowledge'] == count
         assert deferred['by_kind']['developments'] == 1
         assert deferred['shown'] == 20 and deferred['has_more']
+        # deferred 定位行与 recall_manifest 同口径：只含 {kind,key,preview≤48}（P5）。
+        assert all(set(row) == {'kind', 'key', 'preview'} and len(row['preview']) <= 48
+                   for row in deferred['items'])
         assert '不可猜测的完整尾句' not in packet['text']
         assert '读者完整尾句' not in packet['text']
         assert pipeline.validate_chapter_package(book, store, packet)
@@ -84,6 +87,29 @@ def test_standalone_history_growth_keeps_a_bounded_locator_and_full_current_cons
         sizes.append(packet['metrics']['bytes'])
     # The extra 1,800 historical values change counts, not the writer's material volume.
     assert abs(sizes[1] - sizes[0]) < 500
+
+
+def test_execution_rows_point_at_chapter_outline_instead_of_copying_planned():
+    """execution 行只保留引擎派生段（kind/key/opening_state/action_reason/planned_after 与
+    resources 派生键），planned/details 不再逐字复抄——完整章纲声明以同包必读的
+    chapter_outline 为准（declared_in 指针），opening_state/planned_after 值不变（P2 钉）。"""
+    book, store = prepared(count=2)
+    plan = book['plans']['3']
+    execution = package_context.execution(book, compose.participants(plan, book), plan)
+    assert execution['changes'], '夹具第 3 章应有计划增量行'
+    for row in execution['changes']:
+        assert 'planned' not in row and 'details' not in row
+        assert row['declared_in'] == 'chapter_outline'
+        if row['kind'] != 'hook':
+            assert row['opening_state'] == drift.project(book['state'], row['kind'], row['key'])
+    rows = {row['kind']: row for row in execution['changes']}
+    assert rows['clock']['opening_state'] == book['state']['clock']
+    assert rows['clock']['planned_after'] == book['state']['clock'] + 1
+    assert rows['knowledge']['planned_after'] == 'confirmed'      # 第 3 章知情阶梯：suspected→confirmed
+    assert rows['knowledge']['opening_state'] == drift.project(book['state'], 'knowledge', rows['knowledge']['key'])
+    resource_row = rows['resources']
+    assert {'resource_key', 'holder', 'asset', 'unit'} <= set(resource_row)
+    assert 'declared_in' in execution['rule'] or '章纲为准' in execution['rule']
 
 
 def test_named_and_pinned_far_knowledge_and_reader_boundary_are_fully_preserved():

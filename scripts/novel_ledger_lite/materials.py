@@ -169,6 +169,17 @@ def catalog(book, plan=None, people=(), view=None, *, kind=None, query='', page=
             'boundary': 'preview 只是定位片段，不是可据以写作的完整事实；knowledge 属于人物，reader_knowledge 属于读者。'}
 
 
+# 派工定位行（recall_manifest / deferred_history）统一口径：只留定位所需三键，preview 截短。
+# name/last_chapter 属宿主检索 API（catalog 保持全形状）；真值一律经 pipeline.resource 取。
+LOCATOR_PREVIEW = 48
+
+
+def locator_rows(rows):
+    """定位行投影 {kind,key,preview≤48}：manifest 只负责定位，不重复实体名与翻页元数据。"""
+    return [{'kind': row['kind'], 'key': row['key'],
+             'preview': row['preview'][:LOCATOR_PREVIEW]} for row in rows]
+
+
 def package_supplements(book, plan, people, view, *, included=()):
     """Preserve the verified projection; never turn its omitted history back into mandatory input.
 
@@ -191,8 +202,9 @@ def package_supplements(book, plan, people, view, *, included=()):
             counts[row['kind']] = counts.get(row['kind'], 0) + 1
         else:
             full.append(row)
+    # deferred 行随包下发，只留定位三键（full 行仅按 kind/key 取真值，形状不外泄）。
     return full, {
-        'items': deferred[:20], 'total': len(deferred), 'by_kind': counts,
+        'items': locator_rows(deferred[:20]), 'total': len(deferred), 'by_kind': counts,
         'shown': min(20, len(deferred)), 'has_more': len(deferred) > 20,
         'scope': 'declared_dependencies' if complete else 'conservative',
         'boundary': '这里只列完整依赖声明下未点名的远期历史定位片段，不是事实正文，也不表示人物或读者不知道。'

@@ -6,7 +6,7 @@ import copy
 
 import pytest
 
-from novel_ledger_lite import book_state, pipeline, story_memory
+from novel_ledger_lite import book_state, drift_reconcile, pipeline, story_memory
 from novel_ledger_lite.contracts import Error
 
 import fixtures
@@ -97,3 +97,48 @@ def test_absorbs_writes_back_and_rejects_double_absorb():
     data2['chapters'][1]['absorbs'] = ['drift-1']
     with pytest.raises(Error):
         pipeline.install_outlines(book, volume['id'], volume_row(volume), data2)
+
+
+@pytest.mark.parametrize('field', ['resources', 'knowledge'])
+def test_same_chapter_duplicate_coordinates_are_refused_at_install(field):
+    """同章重复坐标（覆盖恒等式：非 hook 用 (kind,key)）在安装期报 drift_shape blocker
+    （P4 前移）：重复行曾「安装通过、提交永久死锁」整章报废，或 knowledge 双结算。"""
+    book, _, _ = open_installed_book()
+    volume = book['contract']['volumes'][0]
+    data = chapter_rows(book, with_scenes=True)
+    row = data['chapters'][0]
+    row[field].append(copy.deepcopy(row[field][0]))      # 两条同 (kind,key)
+    before = dict(book['plans'])
+    with pytest.raises(Error) as caught:
+        pipeline.install_outlines(book, volume['id'], volume_row(volume), data)
+    assert caught.value.code == 'design_drift'
+    assert any(f['criterion'] == 'drift_shape' and f['severity'] == 'blocker'
+               for f in caught.value.details['findings'])
+    assert book['plans'] == before                        # 拒绝即不冻结
+
+
+def test_same_chapter_hook_plant_then_payoff_still_passes():
+    """同章同伏笔先 plant 后 payoff 合法（恒等式按 (kind,key,action) 豁免）：
+    一章卷的章纲同章埋设并兑现，安装门通过。"""
+    book = pipeline.open_book(contract(1), '作者确认单章卷', fixtures.world_fixture())
+    volume = book['contract']['volumes'][0]
+    assert volume['first'] == volume['end'] == 1
+    data = chapter_rows(book)
+    actions = [entry['action'] for entry in data['chapters'][0]['hooks']]
+    assert actions == ['plant', 'payoff']
+    outline = volume_row(volume)
+    outline['clock'] = {'advance_days': 1, 'to': 1}       # 夹具卷纲时钟默认 4 章，对齐单章卷
+    report = pipeline.install_outlines(book, volume['id'], outline, data)
+    assert report['chapters'] == [1]
+
+
+def test_dispatch_state_mismatch_drops_duplicate_shape_findings():
+    """派工路径回归（消费方③钉住）：state_mismatch 对 _deltas(row, []) 一次性丢弃形状
+    findings、只取坐标做前态比对——含重复坐标的章纲返回的 conflicts 不因新增 blocker 改变。"""
+    book, _, _ = open_installed_book()
+    row = copy.deepcopy(book['plans']['1'])
+    single = drift_reconcile.state_mismatch(book['state'], row)
+    row['resources'].append(copy.deepcopy(row['resources'][0]))      # 同章同 (kind,key) 重复
+    duplicated = drift_reconcile.state_mismatch(book['state'], row)
+    assert duplicated == single
+    assert all(f.get('criterion') != 'drift_shape' for f in duplicated)

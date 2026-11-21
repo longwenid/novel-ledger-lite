@@ -20,6 +20,23 @@ STANCES = {'hinted': 'suspects', 'suspected': 'suspects', 'misled': 'believes',
 # and a chapter outline speaks the reveal stage the reader is at.
 STANCE_REVEALS = {stance: reveal for reveal, stance in STANCES.items()}
 
+# The two vocabularies are not one-to-one: `hinted` and `suspected` are the same stance, and
+# `misled`/`confirmed`/`retracted` each have exactly one. Comparing a declared stage with a settled
+# projection therefore compares canonical forms — the same normalization drift._same applies — so
+# a chapter that declared `suspected` does not look unmet the moment the state settled the same
+# stance under its other spelling. drift delegates here one-way (it already imports this module
+# for the tables); a dict-shaped expectation/projection is compared by value, never hashed.
+REVEAL_CANON = {reveal: STANCE_REVEALS[stance] for reveal, stance in STANCES.items()}
+
+
+def canonical_reveal(value):
+    """The representative stage two spellings of the same stance agree on."""
+    try:
+        return REVEAL_CANON.get(value, value)
+    except TypeError:
+        # 不可哈希值（如 dict 型期望/投影）按原值比较，dict 相等性由 == 完成。
+        return value
+
 
 def registry(book):
     """The book's node and thread registry.
@@ -73,7 +90,8 @@ def same(kind, expect, got):
     """Whether a declared coordinate value equals the projection, reading quantities as numbers.
 
     `state['resources']` stores decimal strings while an outline declares `from: 0`; comparing those
-    as strings would report every resource precondition as unmet.
+    as strings would report every resource precondition as unmet. Knowledge stages compare in their
+    canonical form, matching the drift gate: `hinted` and `suspected` are one stance.
     """
     if kind in ('resources', 'clock'):
         if isinstance(expect, bool) or isinstance(got, bool):
@@ -83,6 +101,8 @@ def same(kind, expect, got):
             return left.is_finite() and right.is_finite() and left == right
         except (InvalidOperation, TypeError, ValueError):
             return False
+    if kind in ('knowledge', 'disclosure'):
+        return canonical_reveal(expect) == canonical_reveal(got)
     return expect == got
 
 

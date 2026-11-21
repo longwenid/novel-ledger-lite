@@ -38,7 +38,10 @@ def _block(value):
     if isinstance(value, str):
         content, language = value, 'text'
     else:
-        content, language = json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True), 'json'
+        # 紧凑渲染与信封 materials.render 同口径（materials.py 的 separators）；语义、
+        # 排序与双哈希元数据不变，validate 按正文重算哈希，缩进不触碰完整性门槛。
+        content, language = json.dumps(value, ensure_ascii=False, sort_keys=True,
+                                       separators=(',', ':')), 'json'
     # Never let backticks in arbitrary source material terminate the containing fence.
     import re
     runs = [len(match.group()) for match in re.finditer(r'`+', content)]

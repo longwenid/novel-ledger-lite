@@ -20,7 +20,7 @@ def execution(book, people, plan):
                'action_reason': detail.get('reason') or detail.get('choice') or detail.get('change')
                                 or detail.get('outcome') or detail.get('note'),
                'planned_after': copy.deepcopy(planned.get('to', planned.get('after', planned.get('action')))),
-               'planned': copy.deepcopy(planned), 'details': copy.deepcopy(detail)}
+               'declared_in': 'chapter_outline'}
         if kind == 'clock':
             row['planned_after'] = opening + planned['advance_days']
         if kind == 'resources':
@@ -42,6 +42,7 @@ def execution(book, people, plan):
                                    'asset': asset, 'unit': unit, 'quantity': copy.deepcopy(quantity)})
     return {'chapter': plan['chapter'], 'changes': changes, 'current_assets': current_assets,
             'rule': 'opening_state 是本章开写前真实状态，不冒充同章每一步之前的状态；planned_after 是章纲要求的结果。'
+                    '各步的完整章纲声明（planned 与细节）以 declared_in 指向的本包章纲为准，本表不逐字复抄。'
                     'changes 按核账接口分组，正文顺序遵循场景和章纲因果；'
                     '同章先 plant 后 payoff 时须先写埋设再兑现，不能跳过中间动作。'
                     '按行动原因在正文中完成变化，未列变化的已有资产保持原状。'

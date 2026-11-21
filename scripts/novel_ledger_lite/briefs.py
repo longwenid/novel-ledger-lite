@@ -66,7 +66,7 @@ def _style_block(spec):
         lines.append('- 生效文风档：%s（内置目录档；其注册锚是首章认可前的形状地板）。'
                      % spec.get('profile', ''))
         lines.append('- 内置写法读 style_guide 的冻结执行摘要；完整分析可经 style_reference 按需补读。')
-    lines.append('- 声线、节奏、滚动基线与容差读 style；冻结核心约束读 core_context，不另复制规格。')
+    lines.append('- 声线与冻结核心约束读 core_context（不另复制规格）；节奏、滚动基线与容差读 style。')
     return lines
 
 
@@ -84,9 +84,14 @@ def write_brief(book, chapter, plan, anchor_pack, style_spec=None):
     if not anchor_lines:
         anchor_lines.append('- 本章纲未点名可内联的历史原句；需要更早前文时用 recall 按倒排定位。')
     scene_lines = []
-    for row in scene.get('anchors') or []:
-        scene_lines.append('- [%d] 开篇、收束与摘要见 anchor_sentences。' % row['chapter'])
     near = policy_default('adjacent_window_chapters')
+    for row in scene.get('anchors') or []:
+        if row['chapter'] >= chapter - near:
+            # 该章全文已在 previous_chapter:N 携带，anchor_sentences 只补开篇/收束段，不另列摘要。
+            scene_lines.append('- [%d] 开篇与收束段见 anchor_sentences；全文见 previous_chapter:%d，摘要不另列。'
+                               % (row['chapter'], row['chapter']))
+        else:
+            scene_lines.append('- [%d] 开篇、收束与摘要见 anchor_sentences。' % row['chapter'])
     lines = [
         '## 本阶段任务（write·第 %d 章）' % chapter,
         '按冻结章纲执笔本章正文：事实与知情边界按章纲固定；行动、阻力、选择与后果可以跨章承接，'
@@ -95,7 +100,7 @@ def write_brief(book, chapter, plan, anchor_pack, style_spec=None):
         '## 写作材料怎么读（差量信封）',
         '- 必读见 required：core_context 为核心约束，chapter_outline 是唯一章纲正文，'
         'state 为当前真值与近期历史，dependencies 说明已核验依赖。当前状态不按年龄淘汰。',
-        '- recall_manifest 提供未携带资源的名称、ID 和定位片段；需要时向宿主请求 '
+        '- recall_manifest 提供未携带资源的种类（kind）、标识（key）与定位片段；需要时向宿主请求 '
         'pipeline.catalog 搜索/翻页，再调 pipeline.resource 取完整值；历史证据用 recall。'
         '目录片段不能代替真值，未携带不代表不存在，人物知情与读者知情不能混用。',
         '- 前文只带前 %d 章全文；更早的前情靠下面的锚句与 scene_sources，不再整章携带。' % near,
@@ -108,7 +113,7 @@ def write_brief(book, chapter, plan, anchor_pack, style_spec=None):
         '## 前情锚句（章纲点名的历史原句，已逐字核验）',
         *anchor_lines,
         '',
-        '## 场景锚句（前窗开篇/收束句＋summary）',
+        '## 场景锚句（前窗开篇/收束段＋summary）',
         *scene_lines,
         '',
         *_style_block(spec),

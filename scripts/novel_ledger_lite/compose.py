@@ -151,18 +151,17 @@ def style_spec(book, store, volume, chapter_row, chapter):
     # 外部源路径下 style_profile 可缺（锚由档案自身约定承担），锚为 None 时按空处理。
     anchor = style.current_anchor(book, recent) or {}
     external = text(contract.get('style_source') or '')
-    return {'voice': contract.get('voice', ''), 'tone': contract.get('tone', ''),
-            'pov': contract.get('pov', ''), 'style_traits': list(contract.get('style_traits') or []),
-            'profile': resolve_style_profile(contract.get('style_profile')) or '',
+    # voice/tone/pov/style_traits 不在此复制：必读 core_context.constraints 携带同字段且值相等
+    # （materials.core）；提交门 style.examine 直接读契约与章纲声明，不读本记录。
+    return {'profile': resolve_style_profile(contract.get('style_profile')) or '',
             'style_source': contract.get('style_source') or '',
             'source_kind': 'external_archive' if external else 'builtin_catalog',
             'guard': contract.get('style_guard', DEFAULTS['style_guard']),
             'anchor': anchor,
             'window': style.merged_window(contract, volume_style),
             'volume': dict(volume_style), 'chapter': dict(chapter_style),
-            'baseline_note': '文风基线：最近 %d 章已提交正文的滚动中位（本信封 basis=%s，origin=%s）；'
-                             '尚无已提交章时回落生效档的注册锚或外部档案约定。'
-                             'guard=observe 只观察形状变化，strict 才把锚点偏离判为 finding。'
+            'baseline_note': '文风基线=最近 %d 章已提交正文滚动中位（basis=%s，origin=%s）；'
+                             '无已提交章回落注册锚或外部档案约定；observe 只观察，strict 判 finding。'
                              % (style.STYLE_BASELINE_WINDOW, (anchor or {}).get('basis') or [],
                                 (anchor or {}).get('origin', 'default'))}
 
@@ -413,18 +412,25 @@ def build(book, store, chapter, group=None, *, cache=None):
             volume_context['threads'] = [row for row in volume_row.get('threads') or [] if row['id'] in threads]
             add('volume_context', volume_context, cacheable=True)
     add('state', state_view)
-    add('recall_manifest', materials.catalog(book, plan, people, state_view,
-                                           per=policy_default('far_reference_limit')))
+    manifest = materials.catalog(book, plan, people, state_view,
+                                 per=policy_default('far_reference_limit'))
+    # 定位行只留 {kind,key,preview≤48}（materials.locator_rows）：name/last_chapter 属宿主
+    # 检索 API（materials.catalog/pipeline.catalog 保持全形状），真值仍走 pipeline.resource。
+    manifest['items'] = materials.locator_rows(manifest['items'])
+    add('recall_manifest', manifest)
     if warnings:
         add('projection_warnings', warnings)
     slice_ = drift_slice(book, plan, chapter, contract)
     if slice_['active']:
         add('design_drift', slice_)
     hook_rows = state_view.get('hooks', {})
+    # 可选记录：必读 state 切片（同源筛选）已携带同批 open hooks，本记录唯一增量是 source 注；
+    # 内容寻址登记保留，宿主与回退读取不受影响（P8）。
     add('hooks', {'open': [{'id': k, 'text': v.get('text', ''), 'due': v.get('due')}
                            for k, v in sorted(hook_rows.items())],
                   'source': '到期承诺切片：open 且（本章 hook_refs 或参与者关联）；'
-                            '完整承诺账由宿主经 history_source（各章 events）或 recall 倒排补读。'})
+                            '完整承诺账由宿主经 history_source（各章 events）或 recall 倒排补读。'},
+        needed=False)
     if book.get('world') and plan:
         records_by_id = world.index(book['world'])
         selected_world = set(plan.get('world_refs', []))
@@ -479,8 +485,9 @@ def build(book, store, chapter, group=None, *, cache=None):
     prior = anchors.prior_anchors(book, store, plan, chapter)
     scene = anchors.scene_anchors(book, store, chapter)
     if prior['anchors'] or scene['anchors']:
-        add('anchor_sentences', {'prior': prior, 'scene': scene,
-                                 'note': '引用已内联、无需 recall；确需更长前文才用 recall/history_source 补读。'})
+        # 按唯一引文聚合（一条引文携带 prior/scene 角色），被前章全文窗携带的章不再重复摘要。
+        full_window = set(range(max(1, chapter - policy_default('adjacent_window_chapters')), chapter))
+        add('anchor_sentences', anchors.aggregate(prior, scene, full_chapters=full_window))
     references = {ident for scene_ in plan.get('scenes', []) for ident in scene_.get('depends_on', [])}
     local_ids = {s['id'] for s in plan.get('scenes', [])}
     external = references - local_ids
@@ -509,7 +516,8 @@ def build(book, store, chapter, group=None, *, cache=None):
         name = 'previous_chapter:' + str(n)
         records[name] = row['prose']
         required.append(name)
-        previous.append({'chapter': n, 'prose_hash': row['prose'], 'record': name, 'summary': row['summary']})
+        # prose_hash 不随行下发（64B/行）：写作者不需自算哈希，正文全文已按记录名携带。
+        previous.append({'chapter': n, 'record': name, 'summary': row['summary']})
     add('previous_chapters', previous)
     add('history_source', {'head': store.chain_head(), 'chapters': store.last_chapter(),
                            'locate': '宿主按倒排定位（pipeline.recall）后取页下发；'

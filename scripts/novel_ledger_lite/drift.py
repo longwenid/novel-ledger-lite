@@ -316,11 +316,16 @@ def _resource_coordinate(state, key, asset=None):
 
 
 def _resource_known(state, model, key):
+    """A declared resource coordinate must exist in the registered state or the world model.
+
+    空状态不再放行：没有登记任何资源时，未登记的 key 同样按未确立拒绝——否则卷纲/章纲
+    可以凭空确立新资源，把「资源坐标须先登记」的口径变成只在有存量时才生效。
+    """
     if _resource_coordinate(state, key) is not None:
         return True
     if text(key) and key in _world_ids(model):
         return True
-    return not (state or {}).get('resources')
+    return False
 
 
 def _resource_parts(coordinate, item, planned):
@@ -396,7 +401,11 @@ def _declared(kind, key, value, state, model):
 
 def _canonical_reveal(value):
     """The representative stage two spellings of the same stance agree on."""
-    return REVEAL_CANON.get(value, value)
+    try:
+        return REVEAL_CANON.get(value, value)
+    except TypeError:
+        # 不可哈希值（如 dict 型期望/投影）按原值比较，dict 相等性由 == 完成。
+        return value
 
 
 def _same(kind, expect, got):
@@ -585,6 +594,22 @@ def _deltas(chapter, findings):
         coords.append({'kind': 'hook', 'key': hook_id, 'from': None, 'to': action,
                        'reason': row.get('note') or '',
                        'detail': {'note': row.get('note')}})
+    # 同章重复坐标在安装期即拒绝（覆盖恒等式与 drift_reconcile._coverage_key 一致：非 hook
+    # 用 (kind,key)，hook 用 (kind,key,action)，hook 行 to=action）。结算侧每个坐标只认
+    # 一步：非知情坐标重复会让「安装通过、提交永久死锁」整章报废，knowledge 重复行则
+    # 静默双结算。两步知情/两段资源流应拆成两个坐标或拆章表达；同章同伏笔先 plant 后
+    # payoff 是两个动作、按恒等式豁免，包内规则同口径声明。
+    counts = {}
+    for coord in coords:
+        identity = ((coord['kind'], coord['key'], coord.get('to')) if coord['kind'] == 'hook'
+                    else (coord['kind'], coord['key']))
+        counts[identity] = counts.get(identity, 0) + 1
+    for identity, total in counts.items():
+        if total > 1:
+            findings.append(_finding(chapter_no, identity[0], identity[1], '每坐标一步', 'duplicate',
+                                     '同章同一坐标重复声明 %d 次：两步知情/两段资源流应拆成两个坐标'
+                                     '或拆章表达；同章同伏笔先 plant 后 payoff 合法（两个动作各算一步）。'
+                                     % total, 'drift_shape', 'blocker', 'outline'))
     return coords
 
 

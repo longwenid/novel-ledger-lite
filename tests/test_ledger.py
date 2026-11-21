@@ -7,7 +7,7 @@ import copy
 
 import pytest
 
-from novel_ledger_lite import delta as delta_ledger, facts, pipeline
+from novel_ledger_lite import delta as delta_ledger, drift, drift_validation, facts, narrative, pipeline
 from novel_ledger_lite.contracts import Error, digest, han_count
 from novel_ledger_lite.store import LiteStore
 
@@ -63,6 +63,65 @@ def test_rejects_before_value_contradicting_projection():
     result = fixtures.submit_reviewed(book, store, 1, draft)
     assert not result['ok']
     assert any(f['criterion'] == 'drift_before' for f in result['findings'])
+
+
+def test_knowledge_precondition_reads_canonical_reveal_like_the_drift_gate():
+    """知情档位统一口径（P3a）：前章结算 stance='suspects'（facts 只存 stance，投影经
+    STANCE_REVEALS 读回 'suspected'），派工前置 expected='hinted' 与投影是同一 stance 的
+    两种写法 → canonical 归一后派工门放行，不再误报 context_dependencies；expected='confirmed'
+    对 'suspected' 是真冲突，仍拒。函数级两个方向同钉。"""
+    assert narrative.same('knowledge', 'hinted', 'suspected') is True
+    assert narrative.same('knowledge', 'suspected', 'hinted') is True
+    book, _, _ = open_installed_book()
+    store = _store()
+    assert fixtures.submit_reviewed(book, store, 1, draft_for(book, 1))['ok']
+    assert book['state']['knowledge']['shen:source']['stance'] == 'suspects'
+    assert narrative.value(book['state'], {'kind': 'knowledge', 'key': 'shen:source'}) == 'suspected'
+    book['plans']['2']['preconditions'] = [{'kind': 'knowledge', 'key': 'shen:source',
+                                            'expected': 'hinted'}]
+    pipeline.envelope(book, store, 2)                    # canonical 等价 → 通过
+    book['plans']['2']['preconditions'] = [{'kind': 'knowledge', 'key': 'shen:source',
+                                            'expected': 'confirmed'}]
+    with pytest.raises(Error) as caught:
+        pipeline.envelope(book, store, 2)
+    assert caught.value.code == 'context_dependencies'
+    assert any(row['key'] == 'shen:source' and row['expected'] == 'confirmed'
+               for row in caught.value.details['conflicts'])
+
+
+def test_unhashable_expectation_falls_back_to_value_equality():
+    """dict 型期望/投影不可哈希：canonical 按原值返回、相等性交 ==，干净 blocker 不变成
+    引擎异常（随移的 TypeError 守卫钉住；drift 与 narrative 两侧一致）。"""
+    value = {'a': 1}
+    assert drift._canonical_reveal(value) == {'a': 1}
+    assert narrative.canonical_reveal(value) == {'a': 1}
+    assert drift._same('knowledge', {'a': 1}, 'hinted') is False
+    assert narrative.same('knowledge', {'a': 1}, 'hinted') is False
+
+
+def test_volume_outline_resource_gate_refuses_unregistered_key_on_empty_state():
+    """卷纲资源门空态口径对齐（P3b，直接单测 validate_volume_outline；该门在本仓库
+    无调用方，属未接线门的口径对齐）：state={} 时未登记资源 key 由静默放行改为
+    volume_reference blocker（design_drift 抛出）；同一 key 在 state.resources 登记 →
+    不抛且卷纲行正常归一返回。"""
+    contract_row = {'volumes': [{'id': 'v1', 'first': 1, 'end': 4}]}
+    volume = {
+        'id': 'v1', 'purpose': '卷职责一句话。', 'arc': '卷内弧线一句话。', 'climax': '卷末高潮一句话。',
+        'exit_state': '卷末状态一句话。', 'style': {'trend': '短句推进，卷末放缓。'},
+        'clock': {'advance_days': 4, 'to': 4}, 'turns': [],
+        'nodes': [], 'threads': [], 'hooks': [], 'places': [], 'knowledge': [],
+        'characters': [], 'relations': [], 'reader_knowledge': [],
+        'resources': [{'key': '["shen","灵石","块"]', 'from': 0, 'to': 3, 'reason': '逐步积攒。'}],
+    }
+    data = {'volumes': [volume]}
+    with pytest.raises(Error) as caught:
+        drift_validation.validate_volume_outline(data, contract_row, world_fixture(), state={})
+    assert caught.value.code == 'design_drift'
+    assert any(row['criterion'] == 'volume_reference' for row in caught.value.details['findings'])
+    report = drift_validation.validate_volume_outline(
+        data, contract_row, world_fixture(), state={'resources': {'["shen","灵石","块"]': '3'}})
+    assert report['v1']['resources'] == volume['resources']
+    assert report['v1']['clock'] == {'advance_days': 4, 'to': 4}
 
 
 def test_rejects_duplicate_prose_across_window():

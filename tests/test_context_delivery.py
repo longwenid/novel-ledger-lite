@@ -223,8 +223,57 @@ def test_canonical_delivery_has_one_outline_and_measures_actual_input():
     assert sum(rendered['metrics']['category_bytes'].values()) == sum(
         row['bytes'] for row in rendered['metrics']['by_record'].values())
     assert '- characters：' not in work['brief']
-    for quote in store.read_document(work['records'].get('anchor_sentences', work['records']['hooks'])).get('prior', {}).get('anchors', []):
+    anchors_record = store.read_document(
+        work['records'].get('anchor_sentences', work['records']['hooks']))
+    for quote in anchors_record.get('quotes', []):
         assert quote['quote'] not in work['brief']
+
+
+def test_recall_manifest_rows_are_slim_locators_and_host_catalog_keeps_full_shape():
+    """派工定位行瘦身（P5）：recall_manifest 行只含 {kind,key,preview≤48}；宿主检索 API
+    materials.catalog 保持全形状（name/last_chapter 不变）；简报指引与行形状同步。"""
+    book, store = installed(near_window_chapters=1)
+    for n in (1, 2, 3):
+        assert fixtures.submit_reviewed(book, store, n, fixtures.draft_for(book, n))['ok']
+    for n in range(30):                       # 远窗知情：真值不进投影，只在 manifest 定位
+        key = 'shen:far-%02d' % n
+        book['state']['knowledge'][key] = {'claim': '远期旧事第%s条，' % n + '细节完整不再重复。' * 6,
+                                           'status': 'confirmed'}
+        book['delta_index']['knowledge\x00' + key] = 1
+    work = pipeline.envelope(book, store, 4)
+    manifest = store.read_document(work['records']['recall_manifest'])
+    assert manifest['items'], '远窗知情应进入补读目录'
+    for row in manifest['items']:
+        assert set(row) == {'kind', 'key', 'preview'}
+        assert len(row['preview']) <= 48
+    catalog = materials.catalog(book, None, (), None)
+    assert catalog['items'] and all(
+        {'kind', 'key', 'name', 'preview', 'last_chapter'} <= set(row) for row in catalog['items'])
+    assert '名称、ID' not in work['brief']
+    assert '种类（kind）、标识（key）与定位片段' in work['brief']
+
+
+def test_dispatch_records_deduplicate_small_fields():
+    """派工记录小字段去重（P7）：style 四字段只在必读 core_context 出现；baseline_note 压行
+    保留滚动中位口径；previous_chapters 行不含 prose_hash；相邻窗重叠章的 summary 只在
+    previous_chapters 行出现；简报文风行不再指引 style 含声线。"""
+    book, store = installed()
+    assert fixtures.submit_reviewed(book, store, 1, fixtures.draft_for(book, 1))['ok']
+    work = pipeline.envelope(book, store, 2)
+    records = {name: store.read_document(key) for name, key in work['records'].items()}
+    style_row = records['style']
+    assert not {'voice', 'tone', 'pov', 'style_traits'} & set(style_row)
+    core = records['core_context']['constraints']
+    assert {'voice', 'style_traits'} <= set(core)
+    assert core['voice'] == book['contract']['voice']          # 值逐字相等（去重不丢信息）
+    assert '滚动中位' in style_row['baseline_note']
+    assert 'observe' in style_row['baseline_note'] and 'strict' in style_row['baseline_note']
+    previous = records['previous_chapters']
+    assert previous and all('prose_hash' not in row and row['summary'] for row in previous)
+    anchors = records['anchor_sentences']
+    assert [row['chapter'] for row in anchors['summaries']] == []   # 重叠章摘要不进锚句记录
+    assert '声线与冻结核心约束读 core_context' in work['brief']
+    assert '声线、节奏、滚动基线与容差读 style' not in work['brief']
 
 
 def test_brief_references_historical_quotes_without_copying_them():
@@ -232,8 +281,10 @@ def test_brief_references_historical_quotes_without_copying_them():
     assert fixtures.submit_reviewed(book, store, 1, fixtures.draft_for(book, 1))['ok']
     work = pipeline.envelope(book, store, 2)
     anchors = store.read_document(work['records']['anchor_sentences'])
-    assert anchors['prior']['anchors']
-    for quote in anchors['prior']['anchors']:
+    prior_quotes = [quote for quote in anchors['quotes']
+                    if any(role.startswith('prior.') for role in quote['roles'])]
+    assert prior_quotes
+    for quote in prior_quotes:
         assert quote['quote'] not in work['brief']
         assert quote['quote'] in pipeline.materialize(work, store)['text']
 

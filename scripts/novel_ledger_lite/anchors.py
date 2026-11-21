@@ -1,6 +1,6 @@
-"""Verbatim historical and adjacent-scene quotes from committed events.
+"""Verbatim historical and adjacent-scene quotes from committed chapters.
 
-章纲点名的资产按倒排取证据；相邻场景固定抽取首末事件原句与摘要。
+章纲点名的资产按倒排取事件证据句；相邻章固定抽取已提交正文的首/末非空段与摘要。
 抽取结果核对冻结正文，异常留痕，减少重复读取整章历史。"""
 from __future__ import annotations
 
@@ -59,11 +59,30 @@ def prior_anchors(book, store, plan, chapter):
     return {'anchors': anchors, 'unmatched': findings}
 
 
-def scene_anchors(book, store, chapter):
-    """窗口驱动的开篇/收束句：[{chapter, position, quote, summary}]。
+def _paragraph_quotes(prose):
+    """已提交正文的首/末非空段及其原文偏移 [(start, 段落原文), ...]；空正文返回 []。
 
-    每章固定首/末事件各一句（选取规则可调，引擎确定性抽取零模型）；2~3 章约
-    具体条数由 scene_anchor_chapters 决定，不携带窗口之外的整章正文。
+    确定性抽取零模型：段落按换行切分、去首尾空白，start 是段落在原文中的偏移，
+    供 evidence 按位置逐字核验（重复段落也可核验）。"""
+    picks = []
+    offset = 0
+    for segment in prose.split('\n'):
+        stripped = segment.strip()
+        if stripped:
+            picks.append((offset + (len(segment) - len(segment.lstrip())), stripped))
+        offset += len(segment) + 1
+    if not picks:
+        return []
+    return picks[0], picks[-1]
+
+
+def scene_anchors(book, store, chapter):
+    """窗口驱动的开篇/收束段：[{chapter, position, quote, summary}]。
+
+    每章固定取已提交正文（store.prose_page）的首/末非空段——章界声线衔接取真实叙事段，
+    不再取核账用的证据句；事件证据句只保留在 prior 引用通道（prior_anchors）。抽取结果
+    仍经 evidence 逐字核验（带 start），异常留痕；2~3 章条数由 scene_anchor_chapters 决定，
+    不携带窗口之外的整章正文。
     """
     window = policy_default('scene_anchor_chapters')
     rows = []
@@ -72,13 +91,45 @@ def scene_anchors(book, store, chapter):
         row = store.chapter('main', n)
         if row is None:
             continue
-        events = store.events_page(n)
+        prose = store.prose_page(n)
         picks = []
-        if events:
-            for position, event in (('open', events[0]), ('close', events[-1])):
-                quote = _event_quote(event, store, n, findings)
-                if quote:
-                    quote['position'] = position
-                    picks.append(quote)
+        for position, (start, quote) in zip(('open', 'close'), _paragraph_quotes(prose)):
+            try:
+                checked = verify_quote({'chapter': n, 'quote': quote, 'start': start}, {n: prose})
+            except Exception as error:      # 引文与冻结正文不一致：锚句宁缺毋滥，但必须留痕。
+                findings.append({'asset': 'chapter:%d' % n, 'reason': str(error)})
+                continue
+            picks.append({'chapter': n, 'start': checked['start'], 'quote': checked['quote'],
+                          'position': position})
         rows.append({'chapter': n, 'summary': row.get('summary', ''), 'quotes': picks})
     return {'anchors': rows, 'unmatched': findings}
+
+
+def aggregate(prior, scene, *, full_chapters=()):
+    """按引文文本聚合信封锚句：一条唯一引文携带全部角色，同一原句只下发一次。
+
+    角色写作 prior.<ref_kind>#<asset>（章纲点名的历史证据句）与 scene.<position>
+    （前窗开篇/收束段）；被 previous_chapter:N 全文携带的章（full_chapters）不再重复
+    摘要，其余窗口章保留一行。unmatched 留痕原样合并。"""
+    quotes, index = [], {}
+
+    def carry(quote, role):
+        entry = index.get(quote['quote'])
+        if entry is None:
+            entry = {'chapter': quote['chapter'], 'start': quote['start'],
+                     'quote': quote['quote'], 'roles': []}
+            index[quote['quote']] = entry
+            quotes.append(entry)
+        entry['roles'].append(role)
+
+    for quote in prior.get('anchors') or []:
+        carry(quote, 'prior.%s#%s' % (quote['ref_kind'], quote['asset']))
+    for row in scene.get('anchors') or []:
+        for quote in row.get('quotes') or []:
+            carry(quote, 'scene.%s' % quote['position'])
+    return {'quotes': quotes,
+            'summaries': [{'chapter': row['chapter'], 'summary': row.get('summary', '')}
+                          for row in scene.get('anchors') or []
+                          if row['chapter'] not in full_chapters and row.get('summary')],
+            'unmatched': [*(prior.get('unmatched') or []), *(scene.get('unmatched') or [])],
+            'note': '引用已内联、无需 recall；确需更长前文才用 recall/history_source 补读。'}

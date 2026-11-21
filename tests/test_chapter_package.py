@@ -1,5 +1,7 @@
 """A writer receives one complete chapter file; the host retains the ledger."""
 import copy
+import json
+import re
 from pathlib import Path
 
 import pytest
@@ -36,6 +38,22 @@ def test_single_file_includes_current_chapter_and_frozen_style_and_survives_disk
     assert pipeline.validate_chapter_package(book, store, delivered) is True
     with pytest.raises(Error):
         pipeline.validate_chapter_package(book, store, delivered + '额外内容')
+
+
+def test_package_json_sections_are_compact_single_line_and_still_validate():
+    """包内 JSON 小节与信封 materials.render 同口径：紧凑单行（无 indent 缩进），
+    语义不变且 validate 按正文重算哈希仍通过（P1 回归钉）。"""
+    book, store = installed(style_source=ARCHIVE)
+    package = pipeline.chapter_package(book, store, 1)
+    text = package['text']
+    fences = list(re.finditer(r'^(`{3,})json\n(.*?)\n^\1$', text, re.MULTILINE | re.DOTALL))
+    assert fences, '包内应存在 JSON 小节'
+    for match in fences:
+        body = match.group(2)
+        assert '\n' not in body, 'JSON 小节须为紧凑单行（无 indent 缩进）'
+        json.loads(body)                       # 语义不变
+    assert json.loads(fences[0].group(2))['chapter'] == 1
+    assert pipeline.validate_chapter_package(book, store, package['text']) is True
 
 
 def test_package_requires_next_chapter_and_matching_book_store_progress():

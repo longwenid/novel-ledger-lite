@@ -76,7 +76,7 @@ def test_drift_slice_rules():
 
 
 def test_envelope_carries_anchors_and_previous_chapter():
-    """差量信封：前 1 章全文＋前情锚句（hook_refs 引用驱动）＋场景锚句（窗口驱动）。"""
+    """差量信封：前 1 章全文＋前情锚句（hook_refs 引用驱动）＋场景锚段（窗口驱动）。"""
     book, _, _ = open_installed_book()
     store = store_module.LiteStore()
     assert fixtures.submit_reviewed(book, store, 1, draft_for(book, 1))['ok']
@@ -85,19 +85,75 @@ def test_envelope_carries_anchors_and_previous_chapter():
     # 前文窗口降维：默认只带前 1 章全文。
     assert 'previous_chapter:1' in envelope['required']
     assert all(not name.startswith('previous_chapter:0') for name in envelope['records'])
-    # 前情锚句：第 2 章 hook_refs 点名 hook-v1-required（第 1 章 plant），原句内联。
+    # 前情锚句：第 2 章 hook_refs 点名 hook-v1-required（第 1 章 plant），原句按唯一引文聚合。
     anchors_record = records.get('anchor_sentences')
     assert anchors_record is not None
-    prior_quotes = anchors_record['prior']['anchors']
-    assert any(a['asset'] == fixtures.HOOK_ID and a['op'] == 'hook' for a in prior_quotes)
-    # 场景锚句：前窗首/末事件 quote＋summary 行。
-    assert anchors_record['scene']['anchors'][0]['chapter'] == 1
-    assert anchors_record['scene']['anchors'][0]['quotes']
+    roles = [role for quote in anchors_record['quotes'] for role in quote['roles']]
+    assert any(role == 'prior.hook_ref#' + fixtures.HOOK_ID for role in roles)
+    assert any(role == 'scene.open' for role in roles)
+    # 唯一引文数==唯一文本数（聚合不重复下发同一原句）。
+    quotes = anchors_record['quotes']
+    assert len(quotes) == len({quote['quote'] for quote in quotes})
+    # 被前章全文窗携带的章不重复摘要；开篇/收束段取该章正文首/末非空段。
+    assert anchors_record['summaries'] == []
+    prose = store.prose_page(1)
+    paragraphs = [segment.strip() for segment in prose.split('\n') if segment.strip()]
+    by_key = {(quote['chapter'], role): quote for quote in quotes for role in quote['roles']}
+    assert by_key[(1, 'scene.open')]['quote'] == paragraphs[0]
+    assert by_key[(1, 'scene.close')]['quote'] == paragraphs[-1]
     # 简报与信封同源：brief 里带前情锚句小节。
     assert '前情锚句' in envelope['brief']
     # L4 历史层在场（可选读），recall 由此兜底。
     assert 'history_source' in envelope['records']
     assert 'history_source' not in envelope['required']
+
+
+def test_scene_anchor_quotes_are_committed_prose_paragraphs_and_pass_evidence():
+    """场景开篇/收束句改取已提交正文首/末非空段（P6）：多段正文的章，开篇段与收束段
+    分别成锚，且全部引文过 evidence 逐字校验（带 start 定位）；brief 不含引文，
+    materialize 含引文。"""
+    from novel_ledger_lite import evidence as evidence_module
+    book, _, _ = open_installed_book()
+    store = store_module.LiteStore()
+    assert fixtures.submit_reviewed(book, store, 1, draft_for(book, 1))['ok']
+    draft = draft_for(book, 2)                       # 第 2 章改多段正文提交（句子不变，只加换行）
+    prose = draft['prose']
+    middle = prose.index('他从')
+    draft['prose'] = prose[:middle] + '\n' + prose[middle:]
+    assert fixtures.submit_reviewed(book, store, 2, draft)['ok']
+    envelope = pipeline.envelope(book, store, 3)
+    record = store.read_document(envelope['records']['anchor_sentences'])
+    quotes = record['quotes']
+    assert len(quotes) == len({quote['quote'] for quote in quotes})
+    by_key = {(quote['chapter'], role): quote for quote in quotes for role in quote['roles']}
+    paragraphs = [segment.strip() for segment in store.prose_page(2).split('\n') if segment.strip()]
+    assert len(paragraphs) == 2
+    assert by_key[(2, 'scene.open')]['quote'] == paragraphs[0]
+    assert by_key[(2, 'scene.close')]['quote'] == paragraphs[-1]
+    for quote in quotes:
+        checked = evidence_module.evidence({'chapter': quote['chapter'], 'quote': quote['quote'],
+                                            'start': quote['start']},
+                                           {quote['chapter']: store.prose_page(quote['chapter'])})
+        assert checked['quote'] == quote['quote']
+        assert quote['quote'] not in envelope['brief']
+        assert quote['quote'] in pipeline.materialize(envelope, store)['text']
+    # 第 2 章全文已随 previous_chapter:2 携带，摘要不重复；第 1 章不在相邻窗，摘要保留。
+    assert [row['chapter'] for row in record['summaries']] == [1]
+
+
+def test_hooks_record_is_optional_but_still_registered():
+    """hooks 记录降为可选（P8）：必读 state 切片已携带同批 open hooks；记录仍内容寻址
+    登记（宿主与回退读取可用），只是不再进必读清单。"""
+    book, _, _ = open_installed_book()
+    store = store_module.LiteStore()
+    envelope = pipeline.envelope(book, store, 1)
+    assert 'hooks' not in envelope['required']
+    assert 'hooks' in envelope['records']
+    record = store.read_document(envelope['records']['hooks'])
+    assert record['source'] and isinstance(record['open'], list)
+    # 必读 state 切片携带同批承诺（信息可达性不因可选化丢失）。
+    state_view = store.read_document(envelope['records']['state'])
+    assert set(state_view.get('hooks') or {}) >= {entry['id'] for entry in record['open']}
 
 
 def test_envelope_conservative_warning_travels_with_task():
